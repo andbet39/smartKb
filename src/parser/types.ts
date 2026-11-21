@@ -11,6 +11,7 @@ export interface DocumentInput {
 }
 
 export interface ParserOptions {
+  onProgress?: (message: string) => void;
   llm: Pick<BaseChatModel, "withStructuredOutput">;
   countTokens(text: string): number;
   /** Payload budget, excluding instructions, schema and response. */
@@ -38,6 +39,11 @@ export interface DocumentSection {
 
 export interface DocumentMap {
   documentId: number;
+  originalFileName?: string;
+  title?: string;
+  author?: string;
+  fileType?: string;
+  tags?: string[];
   lineCount: number;
   summary: string;
   short_description: string;

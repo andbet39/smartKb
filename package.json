@@ -2,26 +2,36 @@
   "name": "workspace-document-parser",
   "version": "0.1.0",
   "type": "module",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./kb": "./dist/kb/index.js"
+  },
   "types": "./dist/index.d.ts",
   "files": ["dist"],
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsc",
     "preprova": "npm run build",
-    "prova": "node prova-documento.mjs",
+    "preprova:ocr": "npm run build",
+    "prova:ocr": "node prova-ocr.mjs",
+    "prova": "node --env-file=.env prova-documento.mjs",
     "test": "npm run build && node --test test/parser.test.mjs",
     "test:azure": "npm run build && node --test test/azure.test.mjs"
   },
   "dependencies": {
     "@firecrawl/anydoc": "0.2.5",
+    "@hyzyla/pdfium": "^2.1.13",
+    "@tesseract.js-data/ita": "1.0.0",
     "pdf-lib": "^1.17.1",
+    "pngjs": "^7.0.0",
+    "tesseract.js": "^7.0.0",
     "zod": "^4.1.0"
   },
   "peerDependencies": { "@langchain/core": "^1.0.0" },
   "devDependencies": {
     "@langchain/openai": "^1.0.0",
     "@types/node": "^22.0.0",
+    "@types/pngjs": "^6.0.0",
     "js-tiktoken": "^1.0.21",
     "typescript": "^5.9.0"
   }

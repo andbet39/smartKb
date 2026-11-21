@@ -1,0 +1,1178 @@
+{
+    "map": {
+        "documentId": 2,
+        "originalFileName": "xor.pdf",
+        "lineCount": 1363,
+        "summary": "This document is the Texas Instruments datasheet for the SN74HC86 and SN54HC86, quad two-input XOR logic devices whose outputs are HIGH when their inputs differ. It covers functional diagrams, pin assignments, truth-table behavior, operating features and applications such as clock phase detection. Electrical, switching, power-dissipation, absolute-maximum, recommended-operating and thermal specifications are provided with test conditions and measurement diagrams. Design guidance addresses supply bypassing, power and thermal estimates, output loading, input transition rates, unused pins and PCB layout. Ordering tables and package materials describe device variants, lifecycle and environmental data, temperature ranges, markings, packaging, mechanical dimensions, land patterns and soldering recommendations. The document also includes support resources, ESD cautions, qualification notes and TI’s important notice: materials are provided “as is,” without warranties, and users are responsible for product selection, application design, validation, testing and regulatory compliance. Resource use is limited to developing applications using the described TI products; liability is disclaimed, and users should consult current product terms and information.",
+        "keywords": [
+            "SN74HC86",
+            "SN54HC86",
+            "Texas Instruments",
+            "quad XOR gates",
+            "pin configuration",
+            "truth table",
+            "electrical characteristics",
+            "switching characteristics",
+            "clock phase detection",
+            "CMOS design",
+            "power and thermal considerations",
+            "PCB layout",
+            "orderable parts",
+            "package drawings",
+            "RoHS",
+            "ESD",
+            "TI disclaimer",
+            "as-is resources",
+            "warranty disclaimer",
+            "application validation",
+            "regulatory compliance",
+            "product terms"
+        ],
+        "short_description": "HC86 quad-XOR datasheet with specifications, design guidance, package details, and TI terms.",
+        "sections": [
+            {
+                "title": "Device Description and Package Information",
+                "range": [
+                    1,
+                    16
+                ],
+                "summary": "Describes the SN74HC86 and SN54HC86 as devices containing four independent two-input XOR gates, with the Boolean function Y = A ⊕ B. A device information table lists orderable part numbers, package types, and nominal body dimensions; it also points readers to the orderable addendum for package availability.",
+                "keywords": [
+                    "SN74HC86",
+                    "SN54HC86",
+                    "XOR gates",
+                    "device description",
+                    "packages"
+                ],
+                "short_description": "Introduces the quad XOR gate and lists available device packages.",
+                "id": 1,
+                "order": 1,
+                "tokens": 345,
+                "totalTokens": 24415,
+                "pageRange": [
+                    1,
+                    1
+                ]
+            },
+            {
+                "title": "Features, Applications, and Document Overview",
+                "range": [
+                    17,
+                    50
+                ],
+                "summary": "Lists buffered inputs, the 2-V-to-6-V operating range, temperature range, LSTTL fanout, and power-reduction benefits. Example applications include detecting phase differences and creating a selectable inverter or buffer. The section also provides a functional pinout, table of contents, and revision history noting updates in Revision F.",
+                "keywords": [
+                    "features",
+                    "applications",
+                    "operating voltage",
+                    "functional pinout",
+                    "revision history"
+                ],
+                "short_description": "Summarizes device features, use cases, document contents, and revision changes.",
+                "id": 2,
+                "order": 2,
+                "tokens": 758,
+                "totalTokens": 24415,
+                "pageRange": [
+                    1,
+                    2
+                ]
+            },
+            {
+                "title": "Pin Configuration and Functions",
+                "range": [
+                    51,
+                    110
+                ],
+                "summary": "Presents top-view pin configurations for the 14-pin D, N, NS, PW, J, and W packages and the 20-pin FK package. A pin-function table maps each XOR channel's A and B inputs and Y output, identifies ground and positive supply pins, and lists the FK package's not-connected pins.",
+                "keywords": [
+                    "pin configuration",
+                    "pin functions",
+                    "package pinout",
+                    "inputs",
+                    "outputs",
+                    "GND",
+                    "VCC"
+                ],
+                "short_description": "Shows package pinouts and identifies each channel's inputs and output.",
+                "id": 3,
+                "order": 3,
+                "tokens": 710,
+                "totalTokens": 24415,
+                "pageRange": [
+                    2,
+                    4
+                ]
+            },
+            {
+                "title": "Absolute Maximum, Recommended Operating, and Thermal Ratings",
+                "range": [
+                    111,
+                    177
+                ],
+                "summary": "Defines absolute maximum voltage, current, junction-temperature, and storage-temperature ratings, with warnings that these are stress limits rather than functional operating conditions. Recommended operating conditions specify supply, input and output voltages, input thresholds, transition rates, and temperature ranges. Thermal tables provide package-specific resistance and characterization values.",
+                "keywords": [
+                    "absolute maximum ratings",
+                    "recommended operating conditions",
+                    "thermal information",
+                    "supply voltage",
+                    "temperature"
+                ],
+                "short_description": "Gives device stress limits, operating conditions, and package thermal metrics.",
+                "id": 4,
+                "order": 4,
+                "tokens": 974,
+                "totalTokens": 24415,
+                "pageRange": [
+                    4,
+                    5
+                ]
+            },
+            {
+                "title": "Electrical Characteristics",
+                "range": [
+                    178,
+                    242
+                ],
+                "summary": "Presents electrical-characteristics data for the SN74HC86 and SN54HC86 over their specified free-air temperature ranges. The tables cover high- and low-level output voltages under stated supply, load, and current conditions, along with input leakage current, supply current, and input capacitance.",
+                "keywords": [
+                    "electrical characteristics",
+                    "SN74HC86",
+                    "SN54HC86",
+                    "high-level output voltage",
+                    "low-level output voltage",
+                    "input leakage current",
+                    "supply current",
+                    "input capacitance",
+                    "test conditions",
+                    "temperature range"
+                ],
+                "short_description": "Electrical output, leakage, supply-current, and capacitance specifications.",
+                "id": 5,
+                "order": 5,
+                "tokens": 1132,
+                "totalTokens": 24415,
+                "pageRange": [
+                    5,
+                    6
+                ]
+            },
+            {
+                "title": "Switching Characteristics",
+                "range": [
+                    243,
+                    278
+                ],
+                "summary": "Provides switching characteristics for the SN74HC86 and SN54HC86 across supply voltages. The tables specify propagation delay from inputs A or B to output Y and output transition time, including typical and maximum values across the stated temperature ranges.",
+                "keywords": [
+                    "switching characteristics",
+                    "propagation delay",
+                    "transition time",
+                    "SN74HC86",
+                    "SN54HC86"
+                ],
+                "short_description": "Propagation delay and transition-time specifications for 74 and 54 devices.",
+                "id": 6,
+                "order": 6,
+                "tokens": 427,
+                "totalTokens": 24415,
+                "pageRange": [
+                    6,
+                    6
+                ]
+            },
+            {
+                "title": "Operating Characteristics and Typical Output Graphs",
+                "range": [
+                    279,
+                    328
+                ],
+                "summary": "Lists the per-gate power dissipation capacitance under no-load conditions, then presents typical characteristics measured at 25°C. The figures show output high voltage versus high-state output current and output low voltage versus low-state output current for multiple supply voltages.",
+                "keywords": [
+                    "power dissipation capacitance",
+                    "typical characteristics",
+                    "output high voltage",
+                    "output low voltage",
+                    "current"
+                ],
+                "short_description": "Power dissipation capacitance and typical high- and low-state output curves.",
+                "id": 7,
+                "order": 7,
+                "tokens": 352,
+                "totalTokens": 24415,
+                "pageRange": [
+                    6,
+                    7
+                ]
+            },
+            {
+                "title": "Parameter Measurement Information",
+                "range": [
+                    329,
+                    365
+                ],
+                "summary": "Describes measurement conditions, including generator pulse rate, source impedance, edge time, and measuring outputs one at a time. Diagrams define the load circuit and voltage waveforms used to measure transition times and propagation delays; the propagation-delay value is the larger of tPLH and tPHL.",
+                "keywords": [
+                    "measurement information",
+                    "test conditions",
+                    "load circuit",
+                    "transition times",
+                    "propagation delays"
+                ],
+                "short_description": "Test setup and waveform definitions for transition-time and propagation-delay measurements.",
+                "id": 8,
+                "order": 8,
+                "tokens": 380,
+                "totalTokens": 24415,
+                "pageRange": [
+                    8,
+                    9
+                ]
+            },
+            {
+                "title": "Detailed Description and Functional Modes",
+                "range": [
+                    366,
+                    423
+                ],
+                "summary": "Explains that the device contains four independent two-input XOR gates and describes balanced push-pull outputs, standard CMOS inputs, and input/output clamp diodes. It cautions against excessive output loading, slow or noisy input edges, and voltages beyond rated limits. The function table shows the output is HIGH when inputs differ.",
+                "keywords": [
+                    "XOR gates",
+                    "CMOS inputs",
+                    "push-pull outputs",
+                    "clamp diodes",
+                    "function table"
+                ],
+                "short_description": "XOR gate operation, CMOS input/output guidance, clamp diodes, and the function table.",
+                "id": 9,
+                "order": 9,
+                "tokens": 783,
+                "totalTokens": 24415,
+                "pageRange": [
+                    9,
+                    11
+                ]
+            },
+            {
+                "title": "Application and Implementation",
+                "range": [
+                    424,
+                    493
+                ],
+                "summary": "An XOR gate can detect phase differences between two clocks; filtering its pulsed output provides a phase-difference signal. Design guidance covers supply and current limits, power and thermal estimates using TI’s CMOS Power Consumption and Cpd Calculation report, unused inputs, CMOS edge rates, output loading, decoupling, and a recommended output capacitance of 70 pF or less. A typical clock timing diagram follows.",
+                "keywords": [
+                    "phase detector",
+                    "XOR gate",
+                    "power considerations",
+                    "thermal considerations",
+                    "Cpd calculation",
+                    "input considerations",
+                    "output considerations",
+                    "decoupling",
+                    "capacitive load",
+                    "timing diagram"
+                ],
+                "short_description": "XOR phase detection, practical design limits, thermal guidance, and a clock timing diagram.",
+                "id": 10,
+                "order": 10,
+                "tokens": 1180,
+                "totalTokens": 24415,
+                "pageRange": [
+                    11,
+                    13
+                ]
+            },
+            {
+                "title": "Power Supply Recommendations",
+                "range": [
+                    494,
+                    499
+                ],
+                "summary": "The power supply may use any voltage within the recommended operating range. Each VCC terminal should have a bypass capacitor to limit power disturbances; TI recommends 0.1 μF. Multiple capacitors, commonly 0.1 μF and 1 μF in parallel, may be used to address different noise frequencies. Place the bypass capacitor as close as possible to the power terminal.",
+                "keywords": [
+                    "power supply",
+                    "VCC",
+                    "bypass capacitor",
+                    "noise",
+                    "recommended operating conditions"
+                ],
+                "short_description": "Supply-voltage range and bypass-capacitor recommendations for the device.",
+                "id": 11,
+                "order": 11,
+                "tokens": 126,
+                "totalTokens": 24415,
+                "pageRange": [
+                    13,
+                    13
+                ]
+            },
+            {
+                "title": "Layout Guidelines and Example",
+                "range": [
+                    500,
+                    532
+                ],
+                "summary": "The layout guidance says never to leave unused logic inputs floating; connect them to a valid logic-high or logic-low voltage, selected to suit the function. The example layout shows a bypass capacitor close to the device, recommends a ground flood fill for isolation, noise reduction, and thermal dissipation, leaves unused outputs floating, ties unused inputs to VCC, and advises avoiding 90° signal-trace corners.",
+                "keywords": [
+                    "layout guidelines",
+                    "unused inputs",
+                    "floating inputs",
+                    "bypass capacitor",
+                    "ground flood fill",
+                    "signal routing"
+                ],
+                "short_description": "Covers unused-pin handling and the example PCB layout for the SN74HC86.",
+                "id": 12,
+                "order": 12,
+                "tokens": 425,
+                "totalTokens": 24415,
+                "pageRange": [
+                    13,
+                    14
+                ]
+            },
+            {
+                "title": "Device and Documentation Support",
+                "range": [
+                    533,
+                    566
+                ],
+                "summary": "This support section points readers to related TI documents on HCMOS design, CMOS power consumption and Cpd calculation, and logic design. It also introduces support resources and related links, identifies TI E2E as a forum for engineering help, notes trademark ownership, cautions that ESD can damage the integrated circuit, and directs readers to the TI glossary.",
+                "keywords": [
+                    "documentation support",
+                    "related documentation",
+                    "TI E2E",
+                    "trademarks",
+                    "ESD",
+                    "glossary"
+                ],
+                "short_description": "Lists documentation, support channels, trademark notes, and ESD precautions.",
+                "id": 13,
+                "order": 13,
+                "tokens": 416,
+                "totalTokens": 24415,
+                "pageRange": [
+                    14,
+                    14
+                ]
+            },
+            {
+                "title": "Package Option Addendum",
+                "range": [
+                    567,
+                    629
+                ],
+                "summary": "The addendum lists orderable SN54HC86 and SN74HC86 package variants, including LCCC, CDIP, CFP, SOIC, PDIP, SOP, and TSSOP. Entries identify status, material, pin count, quantity and carrier, RoHS and lead finish, moisture/reflow rating, operating-temperature range, and device marking. The TSSOP continuation includes an obsolete part and active tape-and-reel options rated −40 to 85°C or −40 to 125°C.",
+                "keywords": [
+                    "SN54HC86",
+                    "SN74HC86",
+                    "package options",
+                    "orderable part numbers",
+                    "LCCC",
+                    "CDIP",
+                    "CFP",
+                    "SOIC",
+                    "PDIP",
+                    "SOP",
+                    "TSSOP",
+                    "RoHS",
+                    "operating temperature",
+                    "device marking"
+                ],
+                "short_description": "Details orderable HC86 package variants, status, ratings, and manufacturing information.",
+                "id": 14,
+                "order": 14,
+                "tokens": 2752,
+                "totalTokens": 24415,
+                "pageRange": [
+                    15,
+                    15
+                ]
+            },
+            {
+                "title": "SN74HC86 Orderable Parts",
+                "range": [
+                    630,
+                    658
+                ],
+                "summary": "A complete orderable-parts table lists military and commercial SN74HC86 variants. It includes package types, quantities, carriers, RoHS and lead-finish information, moisture sensitivity, temperature ranges, and part markings. The TSSOP entries conclude with active PWRG4 options.",
+                "keywords": [
+                    "SN74HC86",
+                    "SN54HC86",
+                    "orderable parts",
+                    "package",
+                    "RoHS",
+                    "temperature range"
+                ],
+                "short_description": "Summarizes SN74HC86 orderable parts across package types and ratings.",
+                "id": 15,
+                "order": 15,
+                "tokens": 1365,
+                "totalTokens": 24415,
+                "pageRange": [
+                    15,
+                    15
+                ]
+            },
+            {
+                "title": "Repeated SN74HC86 Orderable-Parts Table",
+                "range": [
+                    659,
+                    687
+                ],
+                "summary": "This section repeats the SN74HC86 orderable-parts table, covering military-grade LCCC, CDIP, and CFP options alongside commercial SOIC, PDIP, SOP, and TSSOP variants. Rows show active or obsolete status, packaging, environmental details, operating temperatures, and part markings.",
+                "keywords": [
+                    "SN74HC86",
+                    "SN54HC86",
+                    "package variants",
+                    "active",
+                    "obsolete",
+                    "part markings"
+                ],
+                "short_description": "Repeats the SN74HC86 package, availability, and ordering details.",
+                "id": 16,
+                "order": 16,
+                "tokens": 1365,
+                "totalTokens": 24415,
+                "pageRange": [
+                    15,
+                    15
+                ]
+            },
+            {
+                "title": "Orderable-Parts Table Continuation",
+                "range": [
+                    688,
+                    716
+                ],
+                "summary": "The repeated SN74HC86 orderable-parts table covers military-grade devices and commercial SOIC, PDIP, SOP, and TSSOP variants, ending with SN74HC86DR.A. Entries provide package and pin count, lifecycle status, quantity and carrier, production material, RoHS/lead and moisture details, operating-temperature range, and part marking; some options are obsolete while others are active.",
+                "keywords": [
+                    "SN74HC86",
+                    "SN54HC86",
+                    "orderable parts",
+                    "SOIC",
+                    "PDIP",
+                    "SOP",
+                    "TSSOP",
+                    "military-grade packages",
+                    "lifecycle status",
+                    "operating temperature"
+                ],
+                "short_description": "Lists SN74HC86 orderable packages, statuses, compliance details, and operating ranges.",
+                "id": 17,
+                "order": 17,
+                "tokens": 1365,
+                "totalTokens": 24415,
+                "pageRange": [
+                    15,
+                    15
+                ]
+            },
+            {
+                "title": "Package Option Addendum",
+                "range": [
+                    717,
+                    735
+                ],
+                "summary": "The package option addendum presents orderable SN74HCS86 and SNJ54HC86 devices. The listed variants include a 14-pin SOT-23-THIN option and military-temperature parts in LCCC, CDIP, and CFP packages. Rows specify active production status, quantity and tube or tape-and-reel carrier, RoHS and lead-finish details, temperature range, and part markings.",
+                "keywords": [
+                    "package option addendum",
+                    "SN74HCS86",
+                    "SNJ54HC86",
+                    "military parts",
+                    "package"
+                ],
+                "short_description": "Introduces addendum orderable parts, including HCS86 and military HC86 variants.",
+                "id": 18,
+                "order": 18,
+                "tokens": 589,
+                "totalTokens": 24415,
+                "pageRange": [
+                    15,
+                    16
+                ]
+            },
+            {
+                "title": "Repeated Package Option Table",
+                "range": [
+                    736,
+                    751
+                ],
+                "summary": "This table repeats the addendum’s orderable-part entries for SN74HCS86DYYR and its suffix variant, followed by SNJ54HC86FK, SNJ54HC86J, and SNJ54HC86W variants. It records package type and pin count, active production status, package quantity and carrier, material and moisture information, operating-temperature limits, and device marking.",
+                "keywords": [
+                    "orderable parts",
+                    "SN74HCS86DYYR",
+                    "SNJ54HC86",
+                    "package specifications",
+                    "part marking"
+                ],
+                "short_description": "Repeats the package options and specifications for HCS86 and SNJ54HC86 parts.",
+                "id": 19,
+                "order": 19,
+                "tokens": 566,
+                "totalTokens": 24415,
+                "pageRange": [
+                    16,
+                    16
+                ]
+            },
+            {
+                "title": "Repeated Package Option Table",
+                "range": [
+                    752,
+                    767
+                ],
+                "summary": "A further repeated package option table lists the SN74HCS86 thin SOT-23 parts and SNJ54HC86 variants in LCCC, CDIP, and CFP packages. The entries retain their active production status and provide order quantities, tube or large tape-and-reel carriers, RoHS and lead-finish information, moisture ratings, operating-temperature ranges, and part markings.",
+                "keywords": [
+                    "package options",
+                    "SOT-23-THIN",
+                    "LCCC",
+                    "CDIP",
+                    "CFP"
+                ],
+                "short_description": "Repeats orderable-part details for the SOT-23-THIN and military packages.",
+                "id": 20,
+                "order": 20,
+                "tokens": 566,
+                "totalTokens": 24415,
+                "pageRange": [
+                    16,
+                    16
+                ]
+            },
+            {
+                "title": "Repeated Package Option Table",
+                "range": [
+                    768,
+                    783
+                ],
+                "summary": "This section reproduces the orderable-part table for the SN74HCS86DYYR variants and military SNJ54HC86 parts. It identifies package styles and pin counts, production status, package quantities and shipping carriers, RoHS and lead-finish data, moisture ratings, temperature ranges, and part markings. The repeated rows preserve the same specifications as the preceding listing.",
+                "keywords": [
+                    "SN74HCS86",
+                    "SNJ54HC86",
+                    "orderable variants",
+                    "shipping carrier",
+                    "temperature range"
+                ],
+                "short_description": "Provides another repeated listing of HCS86 and SNJ54HC86 orderable variants.",
+                "id": 21,
+                "order": 21,
+                "tokens": 566,
+                "totalTokens": 24415,
+                "pageRange": [
+                    16,
+                    16
+                ]
+            },
+            {
+                "title": "Repeated Package Option Table",
+                "range": [
+                    784,
+                    799
+                ],
+                "summary": "The final repeated orderable-parts table again covers the 14-pin SN74HCS86 thin-package options and SNJ54HC86 military variants in LCCC, CDIP, and CFP packages. It reports status, package quantities and carriers, RoHS and lead-finish details, moisture ratings, operating-temperature ranges, and part markings; all listed devices are active production parts.",
+                "keywords": [
+                    "orderable-parts table",
+                    "SN74HCS86",
+                    "SNJ54HC86",
+                    "active production",
+                    "part marking"
+                ],
+                "short_description": "Repeats the table of orderable HCS86 and military HC86 package variants.",
+                "id": 22,
+                "order": 22,
+                "tokens": 566,
+                "totalTokens": 24415,
+                "pageRange": [
+                    16,
+                    16
+                ]
+            },
+            {
+                "title": "Status and Material Definitions",
+                "range": [
+                    800,
+                    825
+                ],
+                "summary": "The addendum defines product-status and material-type fields, noting that preproduction parts may be experimental, unqualified, changeable or discontinued, and sold only under a purchase waiver without warranties. It lists RoHS values and explains lead finishes, ball materials, MSL and peak-reflow data, markings, disclaimers, qualified SN54HC86/SN74HC86 versions, and qualification categories.",
+                "keywords": [
+                    "product status",
+                    "preproduction parts",
+                    "material type",
+                    "RoHS",
+                    "lead finish",
+                    "ball material",
+                    "MSL rating",
+                    "peak reflow",
+                    "part marking",
+                    "disclaimer",
+                    "qualified versions",
+                    "qualification categories"
+                ],
+                "short_description": "Defines product-status and RoHS fields, package data, markings, and qualification notes.",
+                "id": 23,
+                "order": 23,
+                "tokens": 653,
+                "totalTokens": 24415,
+                "pageRange": [
+                    16,
+                    17
+                ]
+            },
+            {
+                "title": "Package Materials Information",
+                "range": [
+                    826,
+                    909
+                ],
+                "summary": "Provides package-material data for TI devices, including tape-and-reel dimensions, carrier-tape pocket and pin-one orientation information, and nominal reel measurements. Tables list device-specific package types, drawings, pin counts, quantities, dimensions, and orientation, followed by box dimensions and tube-packaging measurements.",
+                "keywords": [
+                    "package materials",
+                    "tape and reel",
+                    "reel dimensions",
+                    "box dimensions",
+                    "tube dimensions",
+                    "SPQ"
+                ],
+                "short_description": "Lists reel, tape, box, and tube packaging dimensions for device variants.",
+                "id": 24,
+                "order": 24,
+                "tokens": 1566,
+                "totalTokens": 24415,
+                "pageRange": [
+                    18,
+                    20
+                ]
+            },
+            {
+                "title": "DYY0014A Package and Assembly Drawings",
+                "range": [
+                    910,
+                    1022
+                ],
+                "summary": "Contains the DYY0014A SOT-23-THIN, 1.1 mm maximum-height package drawing and its dimensional notes, including tolerances and the JEDEC reference. Example board-layout and stencil-design diagrams give recommended land patterns, solder-mask details, paste dimensions, and notes on IPC guidance and fabrication or assembly-site variation.",
+                "keywords": [
+                    "DYY0014A",
+                    "SOT-23-THIN",
+                    "package outline",
+                    "board layout",
+                    "solder mask",
+                    "stencil design"
+                ],
+                "short_description": "Shows the SOT-23-THIN package outline, board layout, and stencil guidance.",
+                "id": 25,
+                "order": 25,
+                "tokens": 818,
+                "totalTokens": 24415,
+                "pageRange": [
+                    21,
+                    23
+                ]
+            },
+            {
+                "title": "D0014A SOIC Package Outline",
+                "range": [
+                    1023,
+                    1103
+                ],
+                "summary": "Documents the D0014A 14-pin SOIC package outline and assembly guidance. It covers top and side dimensions, pin spacing and identification, seating plane, detail view, JEDEC reference, and example board land pattern, solder mask, and stencil. Notes specify units, tolerances, flash limits, aperture design, and site-dependent layout variation.",
+                "keywords": [
+                    "D0014A",
+                    "SOIC",
+                    "package outline",
+                    "dimensions",
+                    "pin spacing",
+                    "JEDEC",
+                    "land pattern",
+                    "solder mask",
+                    "stencil design",
+                    "tolerances"
+                ],
+                "short_description": "SOIC package dimensions and board-layout, solder-mask, and stencil guidance.",
+                "id": 26,
+                "order": 26,
+                "tokens": 770,
+                "totalTokens": 24415,
+                "pageRange": [
+                    24,
+                    26
+                ]
+            },
+            {
+                "title": "Plastic Small-Outline Package Mechanical Data",
+                "range": [
+                    1104,
+                    1135
+                ],
+                "summary": "Mechanical data for a plastic small-outline package, with 14 pins shown. The drawing provides package dimensions, pin and body measurements, and maximum and minimum body lengths for listed options. Notes specify millimeter units, changeability of the drawing, and the mold-flash or protrusion allowance.",
+                "keywords": [
+                    "mechanical data",
+                    "plastic package",
+                    "small-outline",
+                    "14 pins",
+                    "dimensions"
+                ],
+                "short_description": "Mechanical dimensions and notes for a 14-pin plastic small-outline package.",
+                "id": 27,
+                "order": 27,
+                "tokens": 241,
+                "totalTokens": 24415,
+                "pageRange": [
+                    26,
+                    27
+                ]
+            },
+            {
+                "title": "Ceramic Dual Flatpack Mechanical Data",
+                "range": [
+                    1136,
+                    1167
+                ],
+                "summary": "Mechanical drawing for the W ceramic dual flatpack, showing package and lead dimensions, seating-plane details, and the 14-terminal arrangement. Notes state that dimensions are given in inches with millimeter equivalents, describe ceramic-lid hermetic sealing with glass frit, identify the cap index point, and cite the applicable MIL-STD package designation.",
+                "keywords": [
+                    "ceramic dual flatpack",
+                    "mechanical data",
+                    "package dimensions",
+                    "hermetic seal",
+                    "MIL-STD"
+                ],
+                "short_description": "Dimensions, sealing information, and identification notes for a ceramic dual flatpack.",
+                "id": 28,
+                "order": 28,
+                "tokens": 322,
+                "totalTokens": 24415,
+                "pageRange": [
+                    28,
+                    28
+                ]
+            },
+            {
+                "title": "Generic Package Views",
+                "range": [
+                    1168,
+                    1191
+                ],
+                "summary": "Generic package-family views identify the FK 20 leadless ceramic chip carrier and J 14 ceramic dual in-line package. The FK description gives its 8.89 mm body dimensions and 1.27 mm pitch; the J description gives a 5.08 mm maximum height. The images are representative, and package-specific details should be checked in the product data sheet.",
+                "keywords": [
+                    "generic package view",
+                    "LCCC",
+                    "CDIP",
+                    "ceramic package",
+                    "package family"
+                ],
+                "short_description": "Family illustrations for leadless ceramic chip-carrier and ceramic DIP packages.",
+                "id": 29,
+                "order": 29,
+                "tokens": 185,
+                "totalTokens": 24415,
+                "pageRange": [
+                    29,
+                    30
+                ]
+            },
+            {
+                "title": "J0014A CDIP Package Outline and Board Layout",
+                "range": [
+                    1192,
+                    1239
+                ],
+                "summary": "The J0014A ceramic dual in-line package section includes a package outline and an example board layout. The outline gives inch dimensions with millimeter equivalents, terminal spacing, seating-plane and gage-plane details, and notes on ceramic-lid sealing and terminal identification. The board example shows land-pattern and solder-mask details, including dimensional tolerances.",
+                "keywords": [
+                    "J0014A",
+                    "CDIP",
+                    "package outline",
+                    "board layout",
+                    "land pattern"
+                ],
+                "short_description": "Package dimensions and example land pattern for the 14-pin ceramic DIP.",
+                "id": 30,
+                "order": 30,
+                "tokens": 630,
+                "totalTokens": 24415,
+                "pageRange": [
+                    31,
+                    32
+                ]
+            },
+            {
+                "title": "Plastic Dual-In-Line Package Mechanical Data",
+                "range": [
+                    1240,
+                    1273
+                ],
+                "summary": "Mechanical data for the N plastic dual-in-line package, with a 16-pin example. The drawing presents body, lead, and spacing dimensions, seating-plane details, and maximum and minimum body lengths for multiple options. Notes identify inch and millimeter units, the JEDEC MS-001 relationship, and a vendor option for the 20-pin end-lead shoulder width.",
+                "keywords": [
+                    "plastic DIP",
+                    "mechanical data",
+                    "16 pins",
+                    "JEDEC MS-001",
+                    "package dimensions"
+                ],
+                "short_description": "Mechanical dimensions and JEDEC-related notes for a plastic dual-in-line package.",
+                "id": 31,
+                "order": 31,
+                "tokens": 365,
+                "totalTokens": 24415,
+                "pageRange": [
+                    33,
+                    33
+                ]
+            },
+            {
+                "title": "PW0014A TSSOP Package Outline",
+                "range": [
+                    1274,
+                    1328
+                ],
+                "summary": "Package outline for the PW0014A TSSOP, with a 1.2 mm maximum height. The drawing identifies the pin-1 index area and provides body, lead-pitch, lead-width, and overall dimensions, plus seating-plane and detail views. Notes specify millimeter units, drawing status, mold-flash and interlead-flash limits, and the JEDEC MO-153 reference.",
+                "keywords": [
+                    "PW0014A",
+                    "TSSOP",
+                    "package outline",
+                    "14-pin",
+                    "MO-153"
+                ],
+                "short_description": "Outline dimensions and tolerance notes for the 14-pin TSSOP package.",
+                "id": 32,
+                "order": 32,
+                "tokens": 342,
+                "totalTokens": 24415,
+                "pageRange": [
+                    34,
+                    34
+                ]
+            },
+            {
+                "title": "PW0014A TSSOP Board Layout and Stencil Design",
+                "range": [
+                    1329,
+                    1357
+                ],
+                "summary": "Example board layout and stencil design for the PW0014A TSSOP. The layout shows pad pitch and dimensions, exposed-metal and solder-mask configurations, and land-pattern details. The stencil example is based on a 0.125 mm stencil. Notes point to IPC guidance and explain that stencil and solder-mask recommendations can vary by design and assembly site.",
+                "keywords": [
+                    "TSSOP",
+                    "board layout",
+                    "stencil",
+                    "solder mask",
+                    "land pattern"
+                ],
+                "short_description": "Example TSSOP land pattern, solder-mask details, and stencil apertures.",
+                "id": 33,
+                "order": 33,
+                "tokens": 426,
+                "totalTokens": 24415,
+                "pageRange": [
+                    35,
+                    36
+                ]
+            },
+            {
+                "title": "Important Notice and Disclaimer",
+                "range": [
+                    1358,
+                    1360
+                ],
+                "summary": "The document transitions from package drawings and fabrication examples to an Important Notice and Disclaimer section. The assigned lines contain the section heading but no disclaimer text.",
+                "keywords": [
+                    "important notice",
+                    "disclaimer"
+                ],
+                "short_description": "Begins the document’s important notice and disclaimer section.",
+                "id": 34,
+                "order": 34,
+                "tokens": 11,
+                "totalTokens": 24415,
+                "pageRange": [
+                    36,
+                    37
+                ]
+            },
+            {
+                "title": "Important Notice and Disclaimer",
+                "range": [
+                    1361,
+                    1363
+                ],
+                "summary": "TI provides technical, design, and other resources as-is, disclaims warranties, and places responsibility for product selection, application design, validation, testing, and compliance on the user. Resource use is limited to developing applications with the described TI products; TI rejects liability and unapproved terms. The notice also identifies applicable product terms and provides copyright and update information.",
+                "keywords": [
+                    "TI disclaimer",
+                    "warranties",
+                    "resource use",
+                    "developer responsibility",
+                    "product terms",
+                    "copyright"
+                ],
+                "short_description": "TI’s disclaimer, permitted use of resources, product terms, and copyright details.",
+                "id": 35,
+                "order": 35,
+                "tokens": 379,
+                "totalTokens": 24415,
+                "pageRange": [
+                    37,
+                    37
+                ]
+            }
+        ]
+    },
+    "pages": [
+        {
+            "page": 1,
+            "range": [
+                1,
+                42
+            ]
+        },
+        {
+            "page": 2,
+            "range": [
+                43,
+                52
+            ]
+        },
+        {
+            "page": 3,
+            "range": [
+                53,
+                106
+            ]
+        },
+        {
+            "page": 4,
+            "range": [
+                107,
+                161
+            ]
+        },
+        {
+            "page": 5,
+            "range": [
+                162,
+                227
+            ]
+        },
+        {
+            "page": 6,
+            "range": [
+                228,
+                291
+            ]
+        },
+        {
+            "page": 7,
+            "range": [
+                292,
+                328
+            ]
+        },
+        {
+            "page": 8,
+            "range": [
+                329,
+                363
+            ]
+        },
+        {
+            "page": 9,
+            "range": [
+                364,
+                394
+            ]
+        },
+        {
+            "page": 10,
+            "range": [
+                395,
+                421
+            ]
+        },
+        {
+            "page": 11,
+            "range": [
+                422,
+                462
+            ]
+        },
+        {
+            "page": 12,
+            "range": [
+                463,
+                491
+            ]
+        },
+        {
+            "page": 13,
+            "range": [
+                492,
+                530
+            ]
+        },
+        {
+            "page": 14,
+            "range": [
+                531,
+                566
+            ]
+        },
+        {
+            "page": 15,
+            "range": [
+                567,
+                718
+            ]
+        },
+        {
+            "page": 16,
+            "range": [
+                719,
+                810
+            ]
+        },
+        {
+            "page": 17,
+            "range": [
+                811,
+                825
+            ]
+        },
+        {
+            "page": 18,
+            "range": [
+                826,
+                859
+            ]
+        },
+        {
+            "page": 19,
+            "range": [
+                860,
+                881
+            ]
+        },
+        {
+            "page": 20,
+            "range": [
+                882,
+                909
+            ]
+        },
+        {
+            "page": 21,
+            "range": [
+                910,
+                956
+            ]
+        },
+        {
+            "page": 22,
+            "range": [
+                957,
+                993
+            ]
+        },
+        {
+            "page": 23,
+            "range": [
+                994,
+                1022
+            ]
+        },
+        {
+            "page": 24,
+            "range": [
+                1023,
+                1072
+            ]
+        },
+        {
+            "page": 25,
+            "range": [
+                1073,
+                1090
+            ]
+        },
+        {
+            "page": 26,
+            "range": [
+                1091,
+                1105
+            ]
+        },
+        {
+            "page": 27,
+            "range": [
+                1106,
+                1135
+            ]
+        },
+        {
+            "page": 28,
+            "range": [
+                1136,
+                1167
+            ]
+        },
+        {
+            "page": 29,
+            "range": [
+                1168,
+                1179
+            ]
+        },
+        {
+            "page": 30,
+            "range": [
+                1180,
+                1191
+            ]
+        },
+        {
+            "page": 31,
+            "range": [
+                1192,
+                1227
+            ]
+        },
+        {
+            "page": 32,
+            "range": [
+                1228,
+                1239
+            ]
+        },
+        {
+            "page": 33,
+            "range": [
+                1240,
+                1273
+            ]
+        },
+        {
+            "page": 34,
+            "range": [
+                1274,
+                1328
+            ]
+        },
+        {
+            "page": 35,
+            "range": [
+                1329,
+                1343
+            ]
+        },
+        {
+            "page": 36,
+            "range": [
+                1344,
+                1358
+            ]
+        },
+        {
+            "page": 37,
+            "range": [
+                1359,
+                1363
+            ]
+        }
+    ]
+}

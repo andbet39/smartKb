@@ -2,19 +2,10 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { AzureChatOpenAI } from "@langchain/openai";
 import { getEncoding } from "js-tiktoken";
-import { createDocumentParser, saveDocumentMarkdown } from "workspace-document-parser";
-import { getDocumentTableOfContents } from "workspace-document-parser";
+import { createDocumentParser, persist } from "workspace-document-parser";
+import { createProgressLogger } from "./cli-progress.mjs";
 
-// Le variabili d'ambiente hanno precedenza sui valori a destra di ||.
-const azureConfig = {
-  azureOpenAIApiKey: process.env.AZURE_OPENAI_API_KEY || "91589eab63ad4ef28082f4c78014d825",
-  azureOpenAIApiInstanceName: process.env.AZURE_OPENAI_API_INSTANCE_NAME || "openai-chatgpt-bizdev",
-  azureOpenAIApiDeploymentName: process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME || "gpt-6-luna-dev",
-  azureOpenAIApiVersion: process.env.AZURE_OPENAI_API_VERSION || "2025-04-01-preview",
-  model: process.env.AZURE_OPENAI_MODEL || "gpt-6-luna",
-};
-
-async function main(args) {
+async function main(args, log) {
   const usage = 'Uso: npm run prova -- "percorso del documento"';
   if (args.length === 1 && args[0] === "--help") {
     console.log(usage);
@@ -22,14 +13,14 @@ async function main(args) {
   }
   if (args.length !== 1) throw new Error(usage);
 
-  for (const [name, value] of Object.entries(azureConfig)) {
-    if (!value.trim()) throw new Error(`Configurazione Azure mancante: ${name}`);
-  }
   const file = args[0];
+  log("Lettura del documento.");
   const bytes = await readFile(file);
+  log("Preparazione tokenizer e modello Azure.");
   const encoding = getEncoding("o200k_base");
   const parser = createDocumentParser({
-    llm: new AzureChatOpenAI({ ...azureConfig, maxRetries: 0, timeout: 60000 }),
+    onProgress: log,
+    llm: new AzureChatOpenAI({ model: process.env.AZURE_OPENAI_MODEL, maxRetries: 0, timeout: 60000 }),
     countTokens: text => encoding.encode(text).length,
     targetChars: { documentSummary: 800, sectionSummary: 300, shortDescription: 80 },
   });
@@ -37,18 +28,17 @@ async function main(args) {
     documentId: 1,
     fileName: basename(file),
     bytes,
-    sectionSize: { minChars: 500, maxChars: 2500 },
+    sectionSize: { minChars: 1000, maxChars: 4000 },
   });
+  log("Scrittura JSON su stdout.");
   console.log(JSON.stringify(result, null, 2));
-
-  await saveDocumentMarkdown(result, `${basename(file)}.md`, { sectionMarkers: true });
-  const toc = getDocumentTableOfContents(result);
-  console.log("Table of Contents:")
-  console.log(JSON.stringify(toc));
-  
+  log("Salvataggio knowledge base in kb1.");
+  await persist(result, "./kb1");
+  log("Salvataggio completato.");
 }
 
-main(process.argv.slice(2)).catch(error => {
+const progress = createProgressLogger();
+main(process.argv.slice(2), progress.log).catch(error => {
   console.error(error.message);
   process.exitCode = 1;
-});
+}).finally(progress.close);
