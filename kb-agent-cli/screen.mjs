@@ -25,7 +25,7 @@ export function openScreen(folder, model, submit, interactive) {
     title: "Benvenuto in KB Studio",
     detail: (process.stdout.rows >= 16 && process.stdout.columns >= 42
       ? "    _____ _____\n   /     V     \\\n  /  === | ===  \\\n /_______|_______\\\n\n" : "")
-      + "Interroga i tuoi documenti o aggiungi un file con /add.",
+      + "Interroga i tuoi documenti, aggiungi un file con /add o rimuovilo con /delete.",
     color: "cyan",
   }] : [];
   let documents = [], progress = "", busy = false;
@@ -38,7 +38,7 @@ export function openScreen(folder, model, submit, interactive) {
       h(Box, { width: "55%", flexDirection: "column", paddingRight: 1 },
         h(Text, { bold: true, color: "cyan" }, "KB Studio"),
         h(Text, null, clean(`${folder} · ${model ?? "Azure"}`)),
-        h(Text, { dimColor: true }, "/add <percorso> · /tools on|off · Invio a vuoto per uscire"),
+        h(Text, { dimColor: true }, "/add <percorso> · /delete <ID> · /tools on|off · Invio a vuoto per uscire"),
         busy ? h(Text, { dimColor: true }, "Elaborazione in corso…") : interactive && h(Input, { onSubmit: submit })),
       h(Box, { width: "45%", flexDirection: "column" },
         h(Text, { bold: true }, `Documenti in KB (${documents.length})`),

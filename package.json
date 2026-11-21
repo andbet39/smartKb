@@ -8,19 +8,20 @@
   },
   "types": "./dist/index.d.ts",
   "files": ["dist"],
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=20.12" },
   "scripts": {
     "build": "tsc",
     "preprova": "npm run build",
     "preprova:ocr": "npm run build",
     "prova:ocr": "node prova-ocr.mjs",
-    "prova": "node --env-file=.env prova-documento.mjs",
-    "test": "npm run build && node --test test/parser.test.mjs",
+    "prova": "node prova-documento.mjs",
+    "test": "npm run build && node --test test/parser.test.mjs test/kb-agentic.test.mjs",
     "test:azure": "npm run build && node --test test/azure.test.mjs"
   },
   "dependencies": {
     "@firecrawl/anydoc": "0.2.5",
     "@hyzyla/pdfium": "^2.1.13",
+    "@langchain/openai": "1.5.8",
     "@tesseract.js-data/ita": "1.0.0",
     "pdf-lib": "^1.17.1",
     "pngjs": "^7.0.0",
@@ -29,7 +30,6 @@
   },
   "peerDependencies": { "@langchain/core": "^1.0.0" },
   "devDependencies": {
-    "@langchain/openai": "^1.0.0",
     "@types/node": "^22.0.0",
     "@types/pngjs": "^6.0.0",
     "js-tiktoken": "^1.0.21",

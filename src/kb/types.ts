@@ -67,3 +67,12 @@ export interface FileSpec {
 export interface SearchResult {
   matches: { snippet: string; source: PassageSource }[];
 }
+
+export type AgentSearchReference =
+  | { kind: "passage"; source: PassageSource }
+  | { kind: "summary"; source: DocumentSource };
+
+export interface AgentSearchResult {
+  answer: string;
+  references: AgentSearchReference[];
+}

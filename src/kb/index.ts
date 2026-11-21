@@ -1,11 +1,13 @@
-import { readdir } from "node:fs/promises";
+import { readdir, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { tool, type StructuredToolInterface } from "@langchain/core/tools";
 import { z } from "zod";
-import { loadMarkdown, loadMetadataFiles } from "../parser/persistence.js";
+import { findMarkdownFile, loadMarkdown, loadMetadataFiles } from "../parser/persistence.js";
 import type { DocumentLineRange, DocumentSection, ParsedDocument } from "../parser/types.js";
+import { runKbAgent } from "./agent.js";
 import type {
-  DocumentSource, FileContent, FileInfo, FileSpec, FileSummary, FileTableOfContents,
+  AgentSearchResult, DocumentSource, FileContent, FileInfo, FileSpec, FileSummary, FileTableOfContents,
   KbTableOfContents, PassageSource, SearchQuery, SearchResult, SectionContent, SectionSource,
 } from "./types.js";
 
@@ -13,6 +15,7 @@ export type * from "./types.js";
 
 interface Entry extends Omit<ParsedDocument, "markdown"> {
   folder: string;
+  manifestPath: string;
 }
 
 async function* documentFolders(folder: string): AsyncGenerator<string> {
@@ -79,25 +82,60 @@ function lineMatcher(query: SearchQuery): (line: string) => boolean {
 }
 
 export class KbSmartManager {
-  private constructor(private readonly documents: Map<number, Entry>) {}
+  private constructor(
+    private readonly documents: Map<number, Entry>,
+    private readonly llm?: Pick<BaseChatModel, "bindTools">,
+  ) {}
 
-  static async open(baseFolder: string): Promise<KbSmartManager> {
+  static async open(
+    baseFolder: string | readonly string[],
+    llm?: Pick<BaseChatModel, "bindTools">,
+  ): Promise<KbSmartManager> {
     const documents = new Map<number, Entry>();
-    for await (const folder of documentFolders(resolve(baseFolder))) {
-      for (const data of await loadMetadataFiles(folder)) {
-        const id = data.map.documentId;
-        const previous = documents.get(id);
-        if (previous) throw new Error(`Duplicate document ${id}: ${previous.folder} and ${folder}`);
-        documents.set(id, { ...data, folder });
+    for (const root of typeof baseFolder === "string" ? [baseFolder] : baseFolder) {
+      for await (const folder of documentFolders(resolve(root))) {
+        for (const data of await loadMetadataFiles(folder)) {
+          const id = data.map.documentId;
+          const previous = documents.get(id);
+          if (previous) throw new Error(`Duplicate document ${id}: ${previous.folder} and ${folder}`);
+          documents.set(id, { ...data, folder });
+        }
       }
     }
-    return new KbSmartManager(documents);
+    return new KbSmartManager(documents, llm);
   }
 
   private document(id: number): Entry {
     const entry = this.documents.get(id);
     if (!entry) throw new Error(`Unknown document ${id}`);
     return entry;
+  }
+
+  async deleteDocument(documentId: number): Promise<void> {
+    const { folder, manifestPath, map } = this.document(documentId);
+    const markdown = await findMarkdownFile(folder, map.originalFileName);
+    if (markdown) {
+      let shared = false;
+      for (const other of this.documents.values()) {
+        if (other.map.documentId === documentId || other.folder !== folder) continue;
+        const file = await findMarkdownFile(folder, other.map.originalFileName);
+        if (file && file.stats.dev === markdown.stats.dev && file.stats.ino === markdown.stats.ino) {
+          shared = true;
+          break;
+        }
+      }
+      if (!shared) await unlink(markdown.path);
+    }
+    await unlink(manifestPath);
+    this.documents.delete(documentId);
+  }
+
+  getAgentSearchTool(): StructuredToolInterface {
+    return tool(({ question }) => this.searchWithReferences(question), {
+      name: "kbAgentSearch",
+      description: "Search the knowledge base and return a structured result with a Markdown answer and references to retrieved evidence.",
+      schema: z.object({ question: z.string().trim().min(1) }),
+    });
   }
 
   getTools(): StructuredToolInterface[] {
@@ -110,22 +148,41 @@ export class KbSmartManager {
       z.object({ kind: z.literal("regex"), pattern: z.string(), caseSensitive: z.boolean().optional() }),
     ]);
     return [
-      tool(() => this.kbGetTableOfContents(), { name: "kbGetTableOfContents", description: "Elenca i documenti della KB.", schema: z.object({}) }),
-      fileTool("kbFileGetTableOfContents", "Elenca le sezioni del documento e i loro ID."),
-      fileTool("kbFileGetInfo", "Leggi i metadati del documento."),
-      fileTool("kbFileReadSummary", "Leggi la sintesi per orientare la ricerca."),
-      fileTool("kbFileRead", "Leggi il testo integrale e la fonte."),
+      tool(() => this.kbGetTableOfContents(), { name: "kbGetTableOfContents", description: "List the documents in the knowledge base.", schema: z.object({}) }),
+      fileTool("kbFileGetTableOfContents", "List the sections of a document and their IDs."),
+      fileTool("kbFileGetInfo", "Read the metadata for a document."),
+      fileTool("kbFileReadSummary", "Read a document summary to guide your search."),
+      fileTool("kbFileRead", "Read the full text of a document and its source information."),
       tool(({ documentId, section }) => "sectionId" in section
         ? this.kbFileReadSection(documentId, section.sectionId)
         : this.kbFileReadSection(documentId, section.fromLine, section.toLine), {
-        name: "kbFileReadSection", description: "Leggi una sezione per ID o un intervallo di righe inclusivo.",
+        name: "kbFileReadSection", description: "Read a document section by ID or read an inclusive line range.",
         schema: document.extend({ section }),
       }),
       tool(({ query, fileSpec }) => this.kbFileSearchByKeywords(query, fileSpec), {
-        name: "kbFileSearchByKeywords", description: "Cerca parole o una regex nel testo, anche limitando i documenti.",
+        name: "kbFileSearchByKeywords", description: "Search document text by keyword or regular expression, optionally filtering by document ID.",
         schema: z.object({ query, fileSpec: z.object({ documentIds: z.array(z.int()) }).optional() }),
       }),
     ];
+  }
+
+  async kbAgenticSearch(question: string): Promise<string> {
+    const { answer } = await this.searchWithReferences(question);
+    return answer;
+  }
+
+  private async searchWithReferences(question: string): Promise<AgentSearchResult> {
+    // Build the index from loaded metadata without reading the Markdown files.
+    const toc = Array.from(this.documents.values(), entry => ({
+      ...documentSource(entry),
+      shortDescription: entry.map.short_description,
+      sections: entry.map.sections.map(section => ({
+        sectionId: section.id,
+        title: section.title,
+        shortDescription: section.short_description,
+      })),
+    }));
+    return runKbAgent({ tools: this.getTools(), question, toc, llm: this.llm });
   }
 
   async kbGetTableOfContents(): Promise<KbTableOfContents> {

@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": { "start": "node --env-file=.env cli.mjs" },
   "dependencies": {
+    "@langchain/core": "^1.5.0",
     "@langchain/openai": "1.5.8",
     "deepagents": "1.8.0",
     "ink": "^5.2.1",
@@ -12,6 +13,7 @@
     "ink-text-input": "^6.0.0",
     "js-tiktoken": "^1.0.21",
     "react": "^18.3.1",
-    "workspace-document-parser": "file:.."
+    "workspace-document-parser": "file:..",
+    "zod": "^4.6.7"
   }
 }

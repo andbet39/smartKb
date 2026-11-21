@@ -50,8 +50,11 @@ export function load(folder: string): Promise<ParsedDocument>;
 ```ts
 export declare class KbSmartManager {
   private constructor();
-  static open(baseFolder: string): Promise<KbSmartManager>;
+  static open(baseFolder: string | readonly string[], llm?: Pick<BaseChatModel, "bindTools">): Promise<KbSmartManager>;
+  deleteDocument(documentId: number): Promise<void>;
+  getAgentSearchTool(): StructuredToolInterface;
   getTools(): StructuredToolInterface[];
+  kbAgenticSearch(question: string): Promise<string>;
   kbGetTableOfContents(): Promise<KbTableOfContents>;
   kbFileGetTableOfContents(documentId: number): Promise<FileTableOfContents>;
   kbFileGetInfo(documentId: number): Promise<FileInfo>;
@@ -63,8 +66,12 @@ export declare class KbSmartManager {
 }
 ```
 
-- `open` legge i manifest nella radice e nelle sottocartelle, anche più di uno per cartella. Metadati non validi o ID documento duplicati impediscono l'apertura.
-- `getTools` espone i sette metodi con prefisso `kb` come tool LangChain.
+- `open` legge i manifest in ogni radice e nelle sottocartelle, anche più di uno per cartella. Metadati non validi o ID documento duplicati, anche tra radici diverse, impediscono l'apertura.
+- `deleteDocument` rimuove il manifest, il Markdown se non condiviso e la voce dall'indice corrente. Non rimuove i file originali né le cartelle.
+- `getTools` espone i sette metodi di consultazione come tool LangChain; non espone `kbAgenticSearch` né `deleteDocument`.
+- `getAgentSearchTool` restituisce il tool LangChain `kbAgentSearch`, che accetta un oggetto con una `question` non vuota e restituisce un `AgentSearchResult`. Le fonti rappresentano i passaggi e le sintesi recuperati, senza duplicati; indici e metadati non contano come fonti.
+- `kbAgenticSearch` e `kbAgentSearch` usano il modello LangChain passato a `open`, che deve supportare `bindTools`. Se omesso, usano il modello Azure configurato nel file `.env` della root.
+- `kbAgenticSearch` richiede una domanda non vuota. Invia nel prompt di sistema gli indici di tutti i documenti e delle sezioni caricate. Restituisce la risposta Markdown del modello; segnala un errore se il modello chiede altri tool dopo otto turni di tool calling.
 - `kbFileRead` restituisce una stringa vuota e la sola fonte del documento se non ci sono righe.
 - `kbFileReadSection` per intervallo richiede righe intere con `1 ≤ fromLine ≤ toLine ≤ lineCount`; altrimenti segnala `RangeError`.
 - `kbFileSearchByKeywords` cerca in tutta la KB se `fileSpec` è omesso. Con un filtro, visita gli ID indicati senza duplicati. Restituisce una voce per riga corrispondente, in ordine di riga per documento, oppure `matches: []`.
@@ -72,6 +79,17 @@ export declare class KbSmartManager {
 Un ID di documento o di sezione sconosciuto produce un errore. La lettura del testo e la ricerca falliscono se il numero di righe del Markdown non coincide con i metadati.
 
 ## Tipi
+
+```ts
+export type AgentSearchReference =
+  | { kind: "passage"; source: PassageSource }
+  | { kind: "summary"; source: DocumentSource };
+
+export interface AgentSearchResult {
+  answer: string;
+  references: AgentSearchReference[];
+}
+```
 
 **Parser**
 

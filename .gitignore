@@ -3,3 +3,5 @@ dist/
 .env
 .env.*
 !.env.example
+kb1/doc-6/Handbook_Operativo_datakube-test.docx.md
+kb1/doc-6/Handbook_Operativo_datakube-test.docx.json

@@ -1,6 +1,6 @@
 # Workspace Document Parser
 
-Libreria TypeScript per Node.js 20+ (ESM). Converte file in memoria con AnyDoc e usa un chat model LangChain con output strutturato per ottenere una mappa delle sezioni.
+Libreria TypeScript per Node.js 20.12+ (ESM). Converte file in memoria con AnyDoc e usa un chat model LangChain con output strutturato per ottenere una mappa delle sezioni.
 
 Il codice del [parser](./src/parser) e quello del [KB manager](./src/kb) sono in cartelle separate. Entrambi restano disponibili dall'entry point principale del pacchetto.
 
@@ -9,13 +9,12 @@ Il codice del [parser](./src/parser) e quello del [KB manager](./src/kb) sono in
 Dalla cartella del progetto: `npm ci` e `npm run build`. Questo esempio usa un deployment GPT-4o; per un altro modello scegliere il tokenizer corrispondente.
 
 ```ts
-import { AzureChatOpenAI } from "@langchain/openai";
 import { getEncoding } from "js-tiktoken";
-import { createDocumentParser, getSectionMarkdown } from "workspace-document-parser";
+import { createDocumentParser, getDocumentModel, getSectionMarkdown } from "workspace-document-parser";
 
 const encoding = getEncoding("o200k_base");
 const parser = createDocumentParser({
-  llm: new AzureChatOpenAI({ model: "gpt-4o" }),
+  llm: getDocumentModel(),
   countTokens: text => encoding.encode(text).length,
 });
 
@@ -33,7 +32,7 @@ export async function processUpload(bytes: Buffer) {
 }
 ```
 
-Il client Azure legge `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_API_INSTANCE_NAME`, `AZURE_OPENAI_API_DEPLOYMENT_NAME` e `AZURE_OPENAI_API_VERSION` dall'ambiente. Il deployment deve supportare output strutturato. Il file viene convertito localmente; il testo delle finestre e le sintesi vengono inviati al modello configurato.
+`getDocumentModel()` legge modello, credenziali e deployment Azure dal file `.env` della root. Il deployment deve supportare output strutturato. Il file viene convertito localmente; il testo delle finestre e le sintesi vengono inviati al modello configurato.
 
 ## Contratto
 
@@ -108,7 +107,20 @@ for (const { snippet, source } of matches) {
 
 Ogni voce citabile include `source.documentId` e `source.originalFileName`: il parser conserva in `map.originalFileName` il nome con estensione, senza percorso. Per le mappe precedenti o gli input senza nome la fonte riporta `null`. I passaggi aggiungono le righe assolute inclusive e `pages`, una lista di `{ pageNumber, fromLine, toLine }` limitata al testo citato (`null` senza paginazione). Sintesi, metadati e documenti vuoti non inventano riferimenti di riga o pagina.
 
+`await kb.deleteDocument(42)` rimuove il documento dalla KB e aggiorna subito l'indice. Cancella il manifest e il Markdown se non è condiviso con altri documenti; non tocca il file originale. Un ID sconosciuto produce un errore.
+
 La ricerca restituisce una voce per riga che contiene almeno una parola o stringa richiesta. In alternativa usa `{ kind: "regex", pattern: "^art\\." }` (sintassi JavaScript). Entrambe le modalità ignorano maiuscole e minuscole salvo `caseSensitive: true`. Omettendo `fileSpec` si cerca in tutta la KB. Nessun risultato restituisce `{ matches: [] }`; regex non valide, documenti o sezioni sconosciuti e intervalli fuori limite producono un errore.
+
+#### Ricerca agentica dalla libreria
+
+Passa un chat model LangChain con supporto a `bindTools` come secondo argomento di `open`: verrà usato sia da `kbAgenticSearch` sia dal tool `kbAgentSearch`. Se lo ometti, la ricerca usa il modello Azure del file `.env` della root. L'apertura della KB e la consultazione diretta non richiedono un modello.
+
+```ts
+const kb = await KbSmartManager.open(["./manuali", "./procedure"], llm);
+const risposta = await kb.kbAgenticSearch("Quali sono i requisiti di installazione?");
+```
+
+Puoi passare anche una sola cartella. Gli ID dei documenti devono essere univoci tra tutte le cartelle. Ogni domanda avvia una ricerca indipendente e restituisce una stringa Markdown. Il modello riceve subito l'indice di tutti i documenti e delle relative sezioni, insieme alla domanda; il testo viene letto con i tool su richiesta. Se il modello continua a richiedere tool dopo otto turni di tool calling, il metodo segnala un errore.
 
 ### Esportazione con marcatori
 
@@ -134,17 +146,17 @@ La funzione scrive in UTF-8 e sovrascrive il file di destinazione. Inserisce un 
 
 ## Verifica
 
-Parser e agent hanno due `.env` indipendenti, esclusi da Git. In un nuovo checkout copia [.env.example](./.env.example) in `.env` e in `kb-agent-cli/.env`, poi compila chiave, istanza, deployment, versione API e modello in ciascuno. I comandi `npm run prova` e `npm start` caricano il file del rispettivo progetto con Node (20.6+); le variabili già presenti nell'ambiente hanno precedenza.
+I due file `.env` sono indipendenti ed esclusi da Git. Il [modello della root](.env.example) configura `getDocumentModel()` e il fallback della ricerca da libreria. Il [modello della CLI](kb-agent-cli/.env.example) separa `AZURE_OPENAI_*` per il Deep Agent, `KB_SEARCH_AZURE_OPENAI_*` per la ricerca e `KB_IMPORT_AZURE_OPENAI_*` per `/add`. Per ciascun gruppo configura chiave, istanza oppure endpoint, deployment, versione API e modello. Il gruppo di importazione serve solo quando usi `/add` e non ripiega sulla configurazione della root. Le variabili di processo già presenti hanno precedenza.
 
 ```powershell
 npm run prova -- ".\manuale.pdf"
 ```
 
-Il comando compila la libreria, stampa il risultato JSON e scrive la KB in `kb1`, sovrascrivendo il documento precedente. Scegli un documento di prova che puoi inviare ad Azure. Per salvare solo il JSON, dopo la build usa `node --env-file=.env .\prova-documento.mjs ".\manuale.pdf" > risultato.json`.
+Il comando compila la libreria, stampa il risultato JSON e scrive la KB in `kb1`, sovrascrivendo il documento precedente. Scegli un documento di prova che puoi inviare ad Azure. Per salvare solo il JSON, dopo la build usa `node .\prova-documento.mjs ".\manuale.pdf" > risultato.json`.
 
 ### Fare domande alla KB
 
-Con `AZURE_OPENAI_MODEL=gpt-6-luna` la CLI invia `reasoning_effort: "none"`: questo modello lo richiede per usare i tool su Chat Completions. Per gli altri modelli la CLI non imposta questo parametro.
+Per ciascuna istanza configurata con `gpt-6-luna` la CLI invia `reasoning_effort: "none"`: questo modello lo richiede per usare i tool su Chat Completions.
 
 Con la libreria compilata (`npm ci` e `npm run build` dalla root), avvia la [CLI](./kb-agent-cli/cli.mjs):
 
@@ -154,17 +166,19 @@ npm ci
 npm start -- ..\kb1
 ```
 
-`kb.getTools()` espone i sette metodi di consultazione come tool LangChain. Il Deep Agent li usa per cercare e leggere i passaggi: il prompt richiede fonte e righe (pagina se disponibile), oppure una risposta di informazione non trovata. Non viene aggiunto alcun motore di ricerca esterno. Il deployment Azure deve supportare il tool calling e riceve le domande e i risultati dei tool. Ogni domanda è indipendente; premi Invio a vuoto per uscire.
+Il Deep Agent della CLI vede solo `kbAgentSearch`, fornito dal manager tramite `kb.getAgentSearchTool()`. Il tool restituisce un oggetto con `answer` (la risposta in Markdown) e `references` (i passaggi e le sintesi effettivamente recuperati, senza duplicati). I passaggi riportano documento, righe, sezione e pagine quando disponibili; le sintesi riportano solo il documento. I riferimenti descrivono le fonti recuperate, non necessariamente tutte citate nella risposta. Non viene aggiunto alcun motore di ricerca esterno. Entrambi i deployment Azure della CLI devono supportare il tool calling e ricevono le domande e i risultati dei rispettivi tool. Ogni domanda è indipendente; premi Invio a vuoto per uscire.
 
 All'avvio interattivo **KB Studio** pulisce l'area visibile del terminale e mostra un benvenuto con un libro in ASCII sopra il pannello in basso. Puoi scrivere subito accanto a `›`: con Invio il campo si svuota e il benvenuto scorre insieme alla traccia. Se l'input o l'output è rediretto, non viene pulito lo schermo e non viene stampato il benvenuto. La traccia Ink mostra in tempo reale le chiamate ai tool con argomenti ed eventuali errori. Ogni evento indica i millisecondi trascorsi; il numero di chiamata collega gli eventuali risultati ai rispettivi tool anche in parallelo. La risposta finale appare in un riquadro separato.
 
-Il riquadro **Metriche elaborazione** riepiloga la singola domanda, anche in caso di errore: durata totale, turni del modello (una chiamata avviata = un turno), chiamate ai tool ed errori dei tool. I token di input e output sono sommati su tutti i turni, non solo sulla risposta finale. Se mancano dati, `n/d` indica che non ci sono conteggi disponibili; `(2/3 turni)` indica una somma parziale sui soli due turni con dati.
+Il riquadro **Metriche elaborazione** riepiloga la singola domanda, anche in caso di errore: durata totale, turni del modello (una chiamata avviata = un turno), chiamate ai tool ed errori dei tool. I token di input e output sono sommati separatamente per **Deep Agent (CLI)** e **Agente KbSmartManager**, su tutti i rispettivi turni. `—` indica che il modello non è stato chiamato; `n/d` che è stato chiamato ma non ci sono conteggi disponibili; `(2/3 turni)` indica una somma parziale sui due turni con dati.
 
 Accanto a ogni nome nel pannello **Documenti in KB**, `car.` indica la lunghezza del Markdown indicizzato, inclusi spazi e a capo, non il peso del file originale in byte.
 
 La risposta finale viene renderizzata in Markdown nel terminale. Le chiamate e i loro parametri sono sempre visibili. I risultati dei tool sono nascosti all'avvio: `/tools on` li mostra per le domande successive, `/tools off` li nasconde e `/tools` mostra lo stato corrente. Errori e metriche restano visibili in entrambe le modalità.
 
-Per importare un documento nella KB aperta, digita `/add "C:\Documenti\Manuale tecnico.pdf"` al prompt della CLI. I percorsi relativi partono dalla cartella di avvio. Il pannello destro elenca i documenti indicizzati e mostra le fasi reali del parser durante l'importazione (incluse le percentuali quando disponibili). Il parser usa la configurazione Azure della CLI: importa solo file che puoi inviare al deployment. Ogni file viene salvato in una sottocartella distinta ed è interrogabile appena compare **Pronto nella KB**, senza riavviare. Le richieste vengono elaborate una alla volta.
+Per importare un documento nella KB aperta, digita `/add "C:\Documenti\Manuale tecnico.pdf"` al prompt della CLI. I percorsi relativi partono dalla cartella di avvio. Il pannello destro elenca i documenti indicizzati e mostra le fasi reali del parser durante l'importazione (incluse le percentuali quando disponibili). Importa solo file che puoi inviare al deployment `KB_IMPORT_AZURE_OPENAI_*`, che deve supportare l'output strutturato. Ogni file viene salvato in una sottocartella distinta ed è interrogabile appena compare **Pronto nella KB**, senza riavviare. Le richieste vengono elaborate una alla volta.
+
+Per rimuovere un documento, digita `/delete 42` (o `/delete #42`), usando l'ID nel pannello **Documenti in KB**. La cancellazione dalla KB è definitiva e aggiorna subito il pannello. Il file originale non viene cancellato.
 
 ```sh
 npm test

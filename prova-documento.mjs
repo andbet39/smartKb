@@ -1,8 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { AzureChatOpenAI } from "@langchain/openai";
 import { getEncoding } from "js-tiktoken";
-import { createDocumentParser, persist } from "workspace-document-parser";
+import { createDocumentParser, getDocumentModel, persist } from "workspace-document-parser";
 import { createProgressLogger } from "./cli-progress.mjs";
 
 async function main(args, log) {
@@ -20,7 +19,7 @@ async function main(args, log) {
   const encoding = getEncoding("o200k_base");
   const parser = createDocumentParser({
     onProgress: log,
-    llm: new AzureChatOpenAI({ model: process.env.AZURE_OPENAI_MODEL, maxRetries: 0, timeout: 60000 }),
+    llm: getDocumentModel(),
     countTokens: text => encoding.encode(text).length,
     targetChars: { documentSummary: 800, sectionSummary: 300, shortDescription: 80 },
   });

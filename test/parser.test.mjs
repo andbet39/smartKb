@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
@@ -218,6 +218,43 @@ test("KB discovers multiple source-named manifests in one folder", async t => {
   assert.deepEqual((await kb.kbGetTableOfContents()).documents.map(doc => doc.source.documentId), [1, 2]);
   assert.equal((await kb.kbFileRead(1)).markdown, "First document");
   assert.equal((await kb.kbFileRead(2)).markdown, "Second document");
+
+  await writeFile(join(root, "first.pdf"), "Original document");
+  await kb.deleteDocument(1);
+  await assert.rejects(kb.kbFileRead(1), /Unknown document 1/);
+  await assert.rejects(kb.deleteDocument(1), /Unknown document 1/);
+  await assert.rejects(readFile(join(root, "first.pdf.md")), { code: "ENOENT" });
+  await assert.rejects(readFile(join(root, "first.pdf.json")), { code: "ENOENT" });
+  assert.equal(await readFile(join(root, "first.pdf"), "utf8"), "Original document");
+  assert.deepEqual((await kb.kbGetTableOfContents()).documents.map(doc => doc.source.documentId), [2]);
+  const { matches } = await kb.kbFileSearchByKeywords({ kind: "keywords", keywords: ["document"] });
+  assert.deepEqual(matches.map(hit => hit.source.documentId), [2]);
+  assert.equal((await (await KbSmartManager.open(root)).kbFileRead(2)).markdown, "Second document");
+});
+
+test("KB deletes the actual legacy manifest without removing Markdown still in use", async t => {
+  const root = await mkdtemp(join(tmpdir(), "kb-delete-legacy-"));
+  t.after(() => rm(root, { recursive: true }));
+  const map = { summary: "", short_description: "", keywords: [], sections: [], lineCount: 1 };
+  const doc = { markdown: "Legacy text", map: { ...map, documentId: 1, originalFileName: "legacy.txt" } };
+  await persist(doc, root);
+  await rename(join(root, "legacy.txt.json"), join(root, "metadata.json"));
+  await rename(join(root, "legacy.txt.md"), join(root, "document.md"));
+  await writeFile(join(root, "other.json"), JSON.stringify({ map: { ...map, documentId: 2 } }));
+  await writeFile(join(root, "no-text.json"), JSON.stringify({ map: { ...map, documentId: 3 } }));
+
+  const kb = await KbSmartManager.open(root);
+  await kb.deleteDocument(1);
+  await assert.rejects(readFile(join(root, "metadata.json")), { code: "ENOENT" });
+  assert.equal((await kb.kbFileRead(2)).markdown, doc.markdown);
+  await kb.deleteDocument(2);
+  assert.equal((await kb.kbFileRead(3)).markdown, doc.markdown);
+  await kb.deleteDocument(3);
+  await assert.rejects(readFile(join(root, "document.md")), { code: "ENOENT" });
+
+  await writeFile(join(root, "no-text.json"), JSON.stringify({ map: { ...map, documentId: 4 } }));
+  await (await KbSmartManager.open(root)).deleteDocument(4);
+  assert.deepEqual(await (await KbSmartManager.open(root)).kbGetTableOfContents(), { documents: [] });
 });
 
 test("a blank document has an empty TOC and does not call the model", async () => {

@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { z } from "zod";
 import type { ParsedDocument } from "./types.js";
@@ -39,13 +39,34 @@ export async function persist(doc: ParsedDocument, folder: string): Promise<void
   await writeFile(join(folder, metadataFile), JSON.stringify({ map: doc.map, pages: doc.pages }), "utf8");
 }
 
-export function loadMarkdown(folder: string, originalFileName?: string): Promise<string> {
+function markdownPaths(folder: string, originalFileName?: string): string[] {
   const fileName = originalFileName && basename(originalFileName);
-  if (!fileName) return readFile(join(folder, "document.md"), "utf8");
-  return readFile(join(folder, `${fileName}.md`), "utf8").catch(cause => {
-    if (!(cause instanceof Error) || !("code" in cause) || cause.code !== "ENOENT") throw cause;
-    return readFile(join(folder, "document.md"), "utf8");
-  });
+  const legacy = join(folder, "document.md");
+  return fileName ? [join(folder, `${fileName}.md`), legacy] : [legacy];
+}
+
+function isMissing(cause: unknown): boolean {
+  return cause instanceof Error && "code" in cause && cause.code === "ENOENT";
+}
+
+export async function loadMarkdown(folder: string, originalFileName?: string): Promise<string> {
+  const [primary, fallback] = markdownPaths(folder, originalFileName);
+  try {
+    return await readFile(primary, "utf8");
+  } catch (cause) {
+    if (!fallback || !isMissing(cause)) throw cause;
+    return readFile(fallback, "utf8");
+  }
+}
+
+export async function findMarkdownFile(folder: string, originalFileName?: string) {
+  for (const path of markdownPaths(folder, originalFileName)) {
+    try {
+      return { path, stats: await lstat(path) };
+    } catch (cause) {
+      if (!isMissing(cause)) throw cause;
+    }
+  }
 }
 
 export async function loadMetadata(folder: string): Promise<Omit<ParsedDocument, "markdown">> {
@@ -59,13 +80,16 @@ export async function loadMetadata(folder: string): Promise<Omit<ParsedDocument,
   return readMetadata(path);
 }
 
-export async function loadMetadataFiles(folder: string): Promise<Omit<ParsedDocument, "markdown">[]> {
+export async function loadMetadataFiles(folder: string) {
   const files = await readdir(folder, { withFileTypes: true });
   const manifestFiles = files
     .filter(file => file.isFile() && file.name.endsWith(".json"))
     .sort((a, b) => a.name.localeCompare(b.name));
   const result = [];
-  for (const file of manifestFiles) result.push(await readMetadata(join(folder, file.name)));
+  for (const file of manifestFiles) {
+    const manifestPath = join(folder, file.name);
+    result.push({ ...await readMetadata(manifestPath), manifestPath });
+  }
   return result;
 }
 
