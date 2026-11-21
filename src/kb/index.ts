@@ -133,7 +133,7 @@ export class KbSmartManager {
   getAgentSearchTool(): StructuredToolInterface {
     return tool(({ question }) => this.searchWithReferences(question), {
       name: "kbAgentSearch",
-      description: "Search the knowledge base and return a structured result with a Markdown answer and references to retrieved evidence.",
+      description: "Search the knowledge base and return a Markdown answer with references to cited search hits and explicitly read passages.",
       schema: z.object({ question: z.string().trim().min(1) }),
     });
   }

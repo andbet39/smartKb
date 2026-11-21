@@ -15,12 +15,13 @@ async function tempFolder(t) {
 
 function saveDocument(folder, documentId, originalFileName, title, markdown) {
   const description = { summary: title, short_description: title, keywords: [] };
+  const lineCount = markdown.split("\n").length;
   return persist({
     markdown,
-    pages: [{ page: 1, range: [1, 1] }],
+    pages: [{ page: 1, range: [1, lineCount] }],
     map: {
-      documentId, originalFileName, lineCount: 1, ...description,
-      sections: [{ id: 5, order: 1, title, range: [1, 1], tokens: 6, totalTokens: 6, ...description }],
+      documentId, originalFileName, lineCount, ...description,
+      sections: [{ id: 5, order: 1, title, range: [1, lineCount], tokens: 6, totalTokens: 6, ...description }],
     },
   }, folder);
 }
@@ -121,14 +122,44 @@ test("agentic search uses the root model, sends every TOC, and bounds tool round
   const { answer: markdown, references } = await kb.getAgentSearchTool().invoke({ question });
   assert.equal(markdown, answer);
   assert.deepEqual(references.map(({ kind, source }) => [kind, source.documentId, source.originalFileName]), [
-    ["passage", 1, "router.pdf"], ["passage", 2, "avvio.pdf"], ["summary", 2, "avvio.pdf"],
+    ["passage", 1, "router.pdf"], ["passage", 2, "avvio.pdf"],
   ]);
-  for (const { source } of references.slice(0, 2)) {
+  for (const { source } of references) {
     assert.deepEqual([source.fromLine, source.toLine], [1, 1]);
     assert.deepEqual(source.pages, [{ pageNumber: 1, fromLine: 1, toLine: 1 }]);
   }
-  assert.ok(!("fromLine" in references[2].source));
   assert.equal(turns, 3);
   await assert.rejects(kb.kbAgenticSearch("Cerca"), /limite di 8 turni/);
   assert.equal(repeatedCalls, 9);
+});
+
+test("only cited keyword hits become references, while explicitly read ranges are retained", async t => {
+  const root = await tempFolder(t);
+  await saveDocument(root, 1, "router.pdf", "Power", "Standby: 5 V.\nOperating: 12 V.\nMaximum: 24 V.");
+  await saveDocument(root, 2, "startup.pdf", "Startup", "Press the power button.\nWait for the indicator.");
+  const answer = "Use 12 V (router.pdf, line 2, page 1).";
+  const llm = offlineAzureChat(({ messages }) => {
+    if (messages.at(-1).role === "user") {
+      const calls = [
+        toolCall("search", "kbFileSearchByKeywords", { query: { kind: "keywords", keywords: ["V."] } }),
+        toolCall("read", "kbFileReadSection", { documentId: 2, section: { sectionId: 5 } }),
+      ];
+      if (messages[1].content === "Read as well") {
+        calls.push(toolCall("read-hit", "kbFileReadSection", { documentId: 1, section: { fromLine: 2, toLine: 2 } }));
+      }
+      return { content: null, tool_calls: calls };
+    }
+    const search = messages.find(message => message.tool_call_id === "search");
+    assert.deepEqual(JSON.parse(search.content).matches.map(({ source }) => source.fromLine), [1, 2, 3]);
+    if (messages[1].content === "Not found") return { content: "Not found." };
+    return { content: "Use 12 V (router.pdf, line 2, page 1) [[kb:1:2]] [[kb:1:2]] [[kb:1:99]]." };
+  });
+  const kb = await KbSmartManager.open(root, llm);
+  const search = kb.getAgentSearchTool();
+  const read = await kb.kbFileReadSection(2, 5);
+  const { matches: [, cited] } = await kb.kbFileSearchByKeywords({ kind: "keywords", keywords: ["V."] });
+  const expected = [read.source, cited.source].map(source => ({ kind: "passage", source }));
+  assert.deepEqual(await search.invoke({ question: "What is the operating voltage?" }), { answer, references: expected });
+  assert.deepEqual(await search.invoke({ question: "Read as well" }), { answer, references: expected });
+  assert.deepEqual(await search.invoke({ question: "Not found" }), { answer: "Not found.", references: expected.slice(0, 1) });
 });

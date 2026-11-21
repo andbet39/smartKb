@@ -122,6 +122,8 @@ const risposta = await kb.kbAgenticSearch("Quali sono i requisiti di installazio
 
 Puoi passare anche una sola cartella. Gli ID dei documenti devono essere univoci tra tutte le cartelle. Ogni domanda avvia una ricerca indipendente e restituisce una stringa Markdown. Il modello riceve subito l'indice di tutti i documenti e delle relative sezioni, insieme alla domanda; il testo viene letto con i tool su richiesta. Se il modello continua a richiedere tool dopo otto turni di tool calling, il metodo segnala un errore.
 
+Il tool `kbAgentSearch` restituisce anche `references`: include i passaggi letti esplicitamente e le sole righe citate tra i risultati di ricerca. Indici, metadati e sintesi usati per orientare la ricerca non diventano riferimenti.
+
 ### Esportazione con marcatori
 
 Per salvare il documento completo come Markdown, senza richiamare il modello:
