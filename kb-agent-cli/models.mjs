@@ -1,5 +1,7 @@
 import { AzureChatOpenAI } from "@langchain/openai";
 
+export { createSystemOneSelection as createCliDocumentSelection } from "../systemone-model.mjs";
+
 export function createCliModel(prefix, env = process.env, overrides = {}) {
   const read = key => env[`${prefix}${key}`]?.trim() ?? "";
   const required = key => {
@@ -22,18 +24,4 @@ export function createCliModel(prefix, env = process.env, overrides = {}) {
     azureOpenAIBasePath: basePath,
     modelKwargs: model === "gpt-6-luna" ? { reasoning_effort: "none" } : {},
   });
-}
-
-export function createCliDocumentSelection(env = process.env) {
-  const deployment = env.KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME?.trim();
-  if (!deployment) return undefined;
-  const numberOption = key => {
-    const value = env[key]?.trim();
-    return value ? Number(value) : undefined;
-  };
-  return {
-    decisionModel: createCliModel("KB_SEARCH_AZURE_OPENAI_", env, { model: deployment, deployment }),
-    threshold: numberOption("KB_DECISION_THRESHOLD"),
-    maxDocuments: numberOption("KB_DECISION_MAX_DOCUMENTS"),
-  };
 }

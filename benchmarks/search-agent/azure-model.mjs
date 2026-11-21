@@ -1,5 +1,7 @@
 import { AzureChatOpenAI } from '@langchain/openai';
 
+export { getDecisionSelection } from './decision-model.mjs';
+
 const prefix = 'KB_SEARCH_AZURE_OPENAI_';
 
 function createModel(env, { model, deployment }) {
@@ -28,16 +30,4 @@ function createModel(env, { model, deployment }) {
 export function getSearchModel(env = process.env) {
   const model = env[`${prefix}MODEL`]?.trim();
   return model ? createModel(env, { model }) : undefined;
-}
-
-export function getDecisionSelection(env = process.env) {
-  const key = 'KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME';
-  const deployment = env[key]?.trim();
-  if (!deployment) throw new Error(`Variabile ${key} mancante nella configurazione del benchmark.`);
-  const numeric = name => env[name]?.trim() ? Number(env[name]) : undefined;
-  return {
-    decisionModel: createModel(env, { model: deployment, deployment }),
-    threshold: numeric('KB_DECISION_THRESHOLD'),
-    maxDocuments: numeric('KB_DECISION_MAX_DOCUMENTS'),
-  };
 }

@@ -1,0 +1,3975 @@
+{
+  "corpus": "kb2",
+  "method": "live",
+  "scenarios": [
+    {
+      "documentCount": 2,
+      "pages": 285,
+      "withoutDecision": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "prompt",
+        "decision": null,
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 8,
+            "input": {
+              "observed": 167517,
+              "turnsWithUsage": 8
+            },
+            "output": {
+              "observed": 316,
+              "turnsWithUsage": 8
+            },
+            "total": {
+              "observed": 167833,
+              "turnsWithUsage": 8
+            },
+            "search": {
+              "modelTurns": 8,
+              "input": {
+                "observed": 167517,
+                "turnsWithUsage": 8
+              },
+              "output": {
+                "observed": 316,
+                "turnsWithUsage": 8
+              },
+              "total": {
+                "observed": 167833,
+                "turnsWithUsage": 8
+              }
+            },
+            "decision": {
+              "modelTurns": 0,
+              "input": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "output": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "total": {
+                "observed": null,
+                "turnsWithUsage": 0
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Il valore esatto è **299 792 458 m/s**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 386,
+                  "toLine": 422,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 386,
+                      "toLine": 422
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4415,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 41465,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 55,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 41520,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 41465,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 55,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 41520,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 503,
+                  "toLine": 514,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 503,
+                      "toLine": 513
+                    },
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 514,
+                      "toLine": 514
+                    }
+                  ]
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3989,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 43394,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 97,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 43491,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 43394,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 97,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 43491,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole** e il suo simbolo è **mol**.【NIST.SP.330-2019.pdf, p. 22, righe 480–513】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3454,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 41311,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 88,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 41399,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 41311,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 88,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 41399,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La frequenza della radiazione monocromatica è **540 THz**. Il valore numerico fissato dell’efficacia luminosa è **683 lm/W**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3101,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 41347,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 76,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 41423,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 41347,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 76,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 41423,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      "withDecision": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "prompt",
+        "decision": {
+          "model": "Decision-1.1",
+          "deployment": "Decision-1.1",
+          "threshold": 0.5,
+          "maxDocuments": 3
+        },
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 13,
+            "input": {
+              "observed": 121134,
+              "turnsWithUsage": 13
+            },
+            "output": {
+              "observed": 477,
+              "turnsWithUsage": 13
+            },
+            "total": {
+              "observed": 121611,
+              "turnsWithUsage": 13
+            },
+            "search": {
+              "modelTurns": 9,
+              "input": {
+                "observed": 119658,
+                "turnsWithUsage": 9
+              },
+              "output": {
+                "observed": 469,
+                "turnsWithUsage": 9
+              },
+              "total": {
+                "observed": 120127,
+                "turnsWithUsage": 9
+              }
+            },
+            "decision": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 1476,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 8,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 1484,
+                "turnsWithUsage": 4
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto è **299 792 458 m/s**. citeturn0search0",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 518,
+                  "toLine": 522,
+                  "pages": [
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 518,
+                      "toLine": 522
+                    }
+                  ],
+                  "sectionId": 23,
+                  "sectionTitle": "Page 23"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3491,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 24597,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 116,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 24713,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 24236,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 114,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 24350,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 361,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 2,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 363,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**. Il SI definisce il secondo fissando a questo valore la frequenza della transizione iperfine dello stato fondamentale imperturbato dell’atomo di cesio-133.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 423,
+                  "toLine": 463,
+                  "pages": [
+                    {
+                      "pageNumber": 20,
+                      "fromLine": 423,
+                      "toLine": 463
+                    }
+                  ],
+                  "sectionId": 20,
+                  "sectionTitle": "Page 20"
+                }
+              },
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 505,
+                  "toLine": 510,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 505,
+                      "toLine": 510
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4648,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 33335,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 168,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 33503,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 3,
+                "input": {
+                  "observed": 32960,
+                  "turnsWithUsage": 3
+                },
+                "output": {
+                  "observed": 166,
+                  "turnsWithUsage": 3
+                },
+                "total": {
+                  "observed": 33126,
+                  "turnsWithUsage": 3
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 375,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 2,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 377,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole**; il suo simbolo è **mol**.【NIST.SP.330-2019.pdf, p. 22, righe 480–513】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3081,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 21366,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 90,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 21456,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 21005,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 88,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 21093,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 361,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 2,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 363,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La frequenza è **540 THz** (540 × 10¹² Hz) e il valore numerico fissato dell’efficacia luminosa è **683 lm/W**. 【NIST.SP.330-2019.pdf, p. 28, righe 659–683】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3764,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 41836,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 103,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 41939,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 41457,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 101,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 41558,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 379,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 2,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 381,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      "withoutDecisionTocViaTools": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "tools",
+        "decision": null,
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 17,
+            "input": {
+              "observed": 191829,
+              "turnsWithUsage": 17
+            },
+            "output": {
+              "observed": 619,
+              "turnsWithUsage": 17
+            },
+            "total": {
+              "observed": 192448,
+              "turnsWithUsage": 17
+            },
+            "search": {
+              "modelTurns": 17,
+              "input": {
+                "observed": 191829,
+                "turnsWithUsage": 17
+              },
+              "output": {
+                "observed": 619,
+                "turnsWithUsage": 17
+              },
+              "total": {
+                "observed": 192448,
+                "turnsWithUsage": 17
+              }
+            },
+            "decision": {
+              "modelTurns": 0,
+              "input": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "output": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "total": {
+                "observed": null,
+                "turnsWithUsage": 0
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, la velocità della luce nel vuoto vale **esattamente 299 792 458 m/s**. 【NIST.SP.330-2019.pdf, p. 19, righe 386–422】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 386,
+                  "toLine": 422,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 386,
+                      "toLine": 422
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 11443,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 42644,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 135,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 42779,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 42644,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 135,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 42779,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza è **esattamente 9 192 631 770 Hz**. È il valore fissato per la transizione iperfine dello stato fondamentale imperturbato dell’atomo di cesio-133 nella definizione del secondo. (NIST.SP.330-2019.pdf, p. 118, righe 3094–3132)",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 3094,
+                  "toLine": 3132,
+                  "pages": [
+                    {
+                      "pageNumber": 118,
+                      "fromLine": 3094,
+                      "toLine": 3132
+                    }
+                  ],
+                  "sectionId": 118,
+                  "sectionTitle": "Page 118"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 14611,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 42678,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 159,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 42837,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 42678,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 159,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 42837,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole**, con simbolo **mol**. citeNIST.SP.330-2019.pdf, p. 22, righe 480–513",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5202,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 42494,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 133,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 42627,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 42494,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 133,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 42627,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La frequenza è **540 × 10¹² Hz**, cioè **540 THz**. Il valore numerico fissato dell’efficacia luminosa è **683 lm/W**. 【NIST.SP.330-2019.pdf, p. 20, righe 423–463; p. 28, righe 659–683】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              },
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 423,
+                  "toLine": 463,
+                  "pages": [
+                    {
+                      "pageNumber": 20,
+                      "fromLine": 423,
+                      "toLine": 463
+                    }
+                  ],
+                  "sectionId": 20,
+                  "sectionTitle": "Page 20"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 8101,
+            "tokens": {
+              "modelTurns": 5,
+              "input": {
+                "observed": 64013,
+                "turnsWithUsage": 5
+              },
+              "output": {
+                "observed": 192,
+                "turnsWithUsage": 5
+              },
+              "total": {
+                "observed": 64205,
+                "turnsWithUsage": 5
+              },
+              "search": {
+                "modelTurns": 5,
+                "input": {
+                  "observed": 64013,
+                  "turnsWithUsage": 5
+                },
+                "output": {
+                  "observed": 192,
+                  "turnsWithUsage": 5
+                },
+                "total": {
+                  "observed": 64205,
+                  "turnsWithUsage": 5
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      "delta": {
+        "correct": 0,
+        "accuracy": 0,
+        "tokens": {
+          "input": -46383,
+          "output": 161,
+          "total": -46222
+        }
+      },
+      "tocViaToolsDelta": {
+        "correct": 0,
+        "accuracy": 0,
+        "tokens": {
+          "input": 24312,
+          "output": 303,
+          "total": 24615
+        }
+      }
+    },
+    {
+      "documentCount": 4,
+      "pages": 342,
+      "withoutDecision": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          },
+          {
+            "documentId": 3,
+            "originalFileName": "NIST.SP.250-96.pdf",
+            "title": "Dimensional Measurement of Nanostructures with Scanning Electron Microscopy"
+          },
+          {
+            "documentId": 4,
+            "originalFileName": "NIST.SP.250-97.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: Proton Spin Relaxation Times"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "prompt",
+        "decision": null,
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 8,
+            "input": {
+              "observed": 203438,
+              "turnsWithUsage": 8
+            },
+            "output": {
+              "observed": 442,
+              "turnsWithUsage": 8
+            },
+            "total": {
+              "observed": 203880,
+              "turnsWithUsage": 8
+            },
+            "search": {
+              "modelTurns": 8,
+              "input": {
+                "observed": 203438,
+                "turnsWithUsage": 8
+              },
+              "output": {
+                "observed": 442,
+                "turnsWithUsage": 8
+              },
+              "total": {
+                "observed": 203880,
+                "turnsWithUsage": 8
+              }
+            },
+            "decision": {
+              "modelTurns": 0,
+              "input": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "output": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "total": {
+                "observed": null,
+                "turnsWithUsage": 0
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto della velocità della luce nel vuoto è **299 792 458 m/s**. 【NIST.SP.330-2019.pdf, p. 23, righe 520–522】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 518,
+                  "toLine": 528,
+                  "pages": [
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 518,
+                      "toLine": 528
+                    }
+                  ],
+                  "sectionId": 23,
+                  "sectionTitle": "Page 23"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4992,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 52734,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 129,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 52863,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 52734,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 129,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 52863,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**.\n\nIl SI definisce il secondo fissando a questo valore la frequenza della transizione iperfine dello stato fondamentale imperturbato dell’atomo di cesio-133.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 503,
+                  "toLine": 514,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 503,
+                      "toLine": 513
+                    },
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 514,
+                      "toLine": 514
+                    }
+                  ]
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4701,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 51762,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 142,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 51904,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 51762,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 142,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 51904,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole** e il suo simbolo è **mol**.【NIST.SP.330-2019.pdf, p. 22, righe 480–513】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3873,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 49453,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 88,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 49541,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 49453,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 88,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 49541,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La radiazione monocromatica ha frequenza **540 THz**. Il valore fissato dell’efficacia luminosa è **683 lumen per watt (lm/W)**. fileciteturn1file0",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3236,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 49489,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 83,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 49572,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 49489,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 83,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 49572,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      "withDecision": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          },
+          {
+            "documentId": 3,
+            "originalFileName": "NIST.SP.250-96.pdf",
+            "title": "Dimensional Measurement of Nanostructures with Scanning Electron Microscopy"
+          },
+          {
+            "documentId": 4,
+            "originalFileName": "NIST.SP.250-97.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: Proton Spin Relaxation Times"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "prompt",
+        "decision": {
+          "model": "Decision-1.1",
+          "deployment": "Decision-1.1",
+          "threshold": 0.5,
+          "maxDocuments": 3
+        },
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 13,
+            "input": {
+              "observed": 121528,
+              "turnsWithUsage": 13
+            },
+            "output": {
+              "observed": 391,
+              "turnsWithUsage": 13
+            },
+            "total": {
+              "observed": 121919,
+              "turnsWithUsage": 13
+            },
+            "search": {
+              "modelTurns": 9,
+              "input": {
+                "observed": 118772,
+                "turnsWithUsage": 9
+              },
+              "output": {
+                "observed": 375,
+                "turnsWithUsage": 9
+              },
+              "total": {
+                "observed": 119147,
+                "turnsWithUsage": 9
+              }
+            },
+            "decision": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 2756,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 16,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 2772,
+                "turnsWithUsage": 4
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto della velocità della luce nel vuoto è **299 792 458 m/s** (metri al secondo).",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 386,
+                  "toLine": 422,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 386,
+                      "toLine": 422
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 2589,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 21840,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 81,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 21921,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 21159,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 77,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 21236,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 681,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 4,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 685,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 514,
+                  "toLine": 542,
+                  "pages": [
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 514,
+                      "toLine": 542
+                    }
+                  ],
+                  "sectionId": 23,
+                  "sectionTitle": "Page 23"
+                }
+              },
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 503,
+                  "toLine": 514,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 503,
+                      "toLine": 513
+                    },
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 514,
+                      "toLine": 514
+                    }
+                  ]
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5529,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 35846,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 134,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 35980,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 3,
+                "input": {
+                  "observed": 35151,
+                  "turnsWithUsage": 3
+                },
+                "output": {
+                  "observed": 130,
+                  "turnsWithUsage": 3
+                },
+                "total": {
+                  "observed": 35281,
+                  "turnsWithUsage": 3
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 695,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 4,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 699,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità SI della quantità di sostanza è la **mole**; il suo simbolo è **mol**.【NIST.SP.330-2019.pdf, p. 22, righe 480–513】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3991,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 21686,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 93,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 21779,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 21005,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 89,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 21094,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 681,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 4,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 685,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La radiazione monocromatica ha frequenza **540 THz**. Il valore numerico fissato dell’efficacia luminosa è **683 lumen per watt (lm/W)**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3286,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 42156,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 83,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 42239,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 41457,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 79,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 41536,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 699,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 4,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 703,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      "withoutDecisionTocViaTools": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          },
+          {
+            "documentId": 3,
+            "originalFileName": "NIST.SP.250-96.pdf",
+            "title": "Dimensional Measurement of Nanostructures with Scanning Electron Microscopy"
+          },
+          {
+            "documentId": 4,
+            "originalFileName": "NIST.SP.250-97.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: Proton Spin Relaxation Times"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "tools",
+        "decision": null,
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 16,
+            "input": {
+              "observed": 172008,
+              "turnsWithUsage": 16
+            },
+            "output": {
+              "observed": 509,
+              "turnsWithUsage": 16
+            },
+            "total": {
+              "observed": 172517,
+              "turnsWithUsage": 16
+            },
+            "search": {
+              "modelTurns": 16,
+              "input": {
+                "observed": 172008,
+                "turnsWithUsage": 16
+              },
+              "output": {
+                "observed": 509,
+                "turnsWithUsage": 16
+              },
+              "total": {
+                "observed": 172517,
+                "turnsWithUsage": 16
+              }
+            },
+            "decision": {
+              "modelTurns": 0,
+              "input": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "output": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "total": {
+                "observed": null,
+                "turnsWithUsage": 0
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto della velocità della luce nel vuoto è **299 792 458 m/s**. 【NIST.SP.330-2019.pdf, p. 19, righe 386–422】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 386,
+                  "toLine": 422,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 386,
+                      "toLine": 422
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5630,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43016,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 135,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43151,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43016,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 135,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43151,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 3094,
+                  "toLine": 3132,
+                  "pages": [
+                    {
+                      "pageNumber": 118,
+                      "fromLine": 3094,
+                      "toLine": 3132
+                    }
+                  ],
+                  "sectionId": 118,
+                  "sectionTitle": "Page 118"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5410,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43050,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 99,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43149,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43050,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 99,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43149,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole**, con simbolo **mol**.【NIST.SP.330-2019.pdf, p. 22, righe 480–513】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4850,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 42866,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 125,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 42991,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 42866,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 125,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 42991,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La definizione fissa la frequenza a **540 × 10¹² Hz**, cioè **540 THz**, e l’efficacia luminosa a **683 lm/W**. citeNIST.SP.330-2019.pdf, p. 20, righe 423–463",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 423,
+                  "toLine": 463,
+                  "pages": [
+                    {
+                      "pageNumber": 20,
+                      "fromLine": 423,
+                      "toLine": 463
+                    }
+                  ],
+                  "sectionId": 20,
+                  "sectionTitle": "Page 20"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 6019,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43076,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 150,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43226,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43076,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 150,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43226,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      "delta": {
+        "correct": 0,
+        "accuracy": 0,
+        "tokens": {
+          "input": -81910,
+          "output": -51,
+          "total": -81961
+        }
+      },
+      "tocViaToolsDelta": {
+        "correct": 0,
+        "accuracy": 0,
+        "tokens": {
+          "input": -31430,
+          "output": 67,
+          "total": -31363
+        }
+      }
+    },
+    {
+      "documentCount": 6,
+      "pages": 476,
+      "withoutDecision": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          },
+          {
+            "documentId": 3,
+            "originalFileName": "NIST.SP.250-96.pdf",
+            "title": "Dimensional Measurement of Nanostructures with Scanning Electron Microscopy"
+          },
+          {
+            "documentId": 4,
+            "originalFileName": "NIST.SP.250-97.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: Proton Spin Relaxation Times"
+          },
+          {
+            "documentId": 5,
+            "originalFileName": "NIST.SP.250-98.pdf",
+            "title": "LIQUID FLOW METER CALIBRATIONS WITH NIST’s 15 kg/s WATER FLOW STANDARD"
+          },
+          {
+            "documentId": 6,
+            "originalFileName": "NIST.SP.250-100.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: NMR Measurement of Isotropic Water Diffusion Coefficient"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "prompt",
+        "decision": null,
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 10,
+            "input": {
+              "observed": 356403,
+              "turnsWithUsage": 10
+            },
+            "output": {
+              "observed": 561,
+              "turnsWithUsage": 10
+            },
+            "total": {
+              "observed": 356964,
+              "turnsWithUsage": 10
+            },
+            "search": {
+              "modelTurns": 10,
+              "input": {
+                "observed": 356403,
+                "turnsWithUsage": 10
+              },
+              "output": {
+                "observed": 561,
+                "turnsWithUsage": 10
+              },
+              "total": {
+                "observed": 356964,
+                "turnsWithUsage": 10
+              }
+            },
+            "decision": {
+              "modelTurns": 0,
+              "input": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "output": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "total": {
+                "observed": null,
+                "turnsWithUsage": 0
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto della velocità della luce nel vuoto è **299 792 458 m/s**. La brochure lo indica come valore fissato esattamente nella definizione del metro (NIST.SP.330-2019.pdf, p. 23, righe 520–522).",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 518,
+                  "toLine": 528,
+                  "pages": [
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 518,
+                      "toLine": 528
+                    }
+                  ],
+                  "sectionId": 23,
+                  "sectionTitle": "Page 23"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 2805,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 72434,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 145,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 72579,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 72434,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 145,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 72579,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**. È il valore fissato per la transizione iperfine dello stato fondamentale imperturbato dell’atomo di cesio-133, usato nella definizione del secondo (NIST SP 330-2019, p. 22).",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 3166,
+                  "toLine": 3185,
+                  "pages": [
+                    {
+                      "pageNumber": 120,
+                      "fromLine": 3166,
+                      "toLine": 3185
+                    }
+                  ],
+                  "sectionId": 120,
+                  "sectionTitle": "Page 120"
+                }
+              },
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 503,
+                  "toLine": 514,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 503,
+                      "toLine": 513
+                    },
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 514,
+                      "toLine": 514
+                    }
+                  ]
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3973,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 107163,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 180,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 107343,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 3,
+                "input": {
+                  "observed": 107163,
+                  "turnsWithUsage": 3
+                },
+                "output": {
+                  "observed": 180,
+                  "turnsWithUsage": 3
+                },
+                "total": {
+                  "observed": 107343,
+                  "turnsWithUsage": 3
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole** e il suo simbolo è **mol**.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3191,
+            "tokens": {
+              "modelTurns": 2,
+              "input": {
+                "observed": 69153,
+                "turnsWithUsage": 2
+              },
+              "output": {
+                "observed": 65,
+                "turnsWithUsage": 2
+              },
+              "total": {
+                "observed": 69218,
+                "turnsWithUsage": 2
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 69153,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 65,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 69218,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La radiazione monocromatica ha frequenza **540 THz** (540 × 10¹² Hz). Il valore numerico fissato dell’efficacia luminosa è **683 lm/W**. citeNIST.SP.330-2019.pdf, p. 27, righe 654–658",
+            "references": [],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4762,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 107653,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 171,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 107824,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 3,
+                "input": {
+                  "observed": 107653,
+                  "turnsWithUsage": 3
+                },
+                "output": {
+                  "observed": 171,
+                  "turnsWithUsage": 3
+                },
+                "total": {
+                  "observed": 107824,
+                  "turnsWithUsage": 3
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      "withDecision": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          },
+          {
+            "documentId": 3,
+            "originalFileName": "NIST.SP.250-96.pdf",
+            "title": "Dimensional Measurement of Nanostructures with Scanning Electron Microscopy"
+          },
+          {
+            "documentId": 4,
+            "originalFileName": "NIST.SP.250-97.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: Proton Spin Relaxation Times"
+          },
+          {
+            "documentId": 5,
+            "originalFileName": "NIST.SP.250-98.pdf",
+            "title": "LIQUID FLOW METER CALIBRATIONS WITH NIST’s 15 kg/s WATER FLOW STANDARD"
+          },
+          {
+            "documentId": 6,
+            "originalFileName": "NIST.SP.250-100.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: NMR Measurement of Isotropic Water Diffusion Coefficient"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "prompt",
+        "decision": {
+          "model": "Decision-1.1",
+          "deployment": "Decision-1.1",
+          "threshold": 0.5,
+          "maxDocuments": 3
+        },
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 13,
+            "input": {
+              "observed": 125821,
+              "turnsWithUsage": 13
+            },
+            "output": {
+              "observed": 496,
+              "turnsWithUsage": 13
+            },
+            "total": {
+              "observed": 126317,
+              "turnsWithUsage": 13
+            },
+            "search": {
+              "modelTurns": 9,
+              "input": {
+                "observed": 121653,
+                "turnsWithUsage": 9
+              },
+              "output": {
+                "observed": 472,
+                "turnsWithUsage": 9
+              },
+              "total": {
+                "observed": 122125,
+                "turnsWithUsage": 9
+              }
+            },
+            "decision": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 4168,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 24,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 4192,
+                "turnsWithUsage": 4
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto della velocità della luce nel vuoto è **299 792 458 metri al secondo (m/s)**. citeNIST.SP.330-2019.pdf, p. 19, righe 406–410",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 406,
+                  "toLine": 410,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 406,
+                      "toLine": 410
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 3169,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 25265,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 144,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 25409,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 24231,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 138,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 24369,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 1034,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 6,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 1040,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza esatta è **9 192 631 770 Hz**.\n\nFonte: *NIST.SP.330-2019.pdf*, p. 22.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 386,
+                  "toLine": 422,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 386,
+                      "toLine": 422
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              },
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 503,
+                  "toLine": 514,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 503,
+                      "toLine": 513
+                    },
+                    {
+                      "pageNumber": 23,
+                      "fromLine": 514,
+                      "toLine": 514
+                    }
+                  ]
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4328,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 36008,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 149,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 36157,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 3,
+                "input": {
+                  "observed": 34960,
+                  "turnsWithUsage": 3
+                },
+                "output": {
+                  "observed": 143,
+                  "turnsWithUsage": 3
+                },
+                "total": {
+                  "observed": 35103,
+                  "turnsWithUsage": 3
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 1048,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 6,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 1054,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità della quantità di sostanza è la **mole** e il suo simbolo è **mol**.【NIST.SP.330-2019.pdf, p. 22】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 2406,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 22039,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 87,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 22126,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 21005,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 81,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 21086,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 1034,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 6,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 1040,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La definizione SI della candela fissa la frequenza della radiazione monocromatica a **540 THz** e l’efficacia luminosa a **683 lm/W**. citeNIST.SP.330-2019.pdf, p. 28, righe 659–683",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 4043,
+            "tokens": {
+              "modelTurns": 3,
+              "input": {
+                "observed": 42509,
+                "turnsWithUsage": 3
+              },
+              "output": {
+                "observed": 116,
+                "turnsWithUsage": 3
+              },
+              "total": {
+                "observed": 42625,
+                "turnsWithUsage": 3
+              },
+              "search": {
+                "modelTurns": 2,
+                "input": {
+                  "observed": 41457,
+                  "turnsWithUsage": 2
+                },
+                "output": {
+                  "observed": 110,
+                  "turnsWithUsage": 2
+                },
+                "total": {
+                  "observed": 41567,
+                  "turnsWithUsage": 2
+                }
+              },
+              "decision": {
+                "modelTurns": 1,
+                "input": {
+                  "observed": 1052,
+                  "turnsWithUsage": 1
+                },
+                "output": {
+                  "observed": 6,
+                  "turnsWithUsage": 1
+                },
+                "total": {
+                  "observed": 1058,
+                  "turnsWithUsage": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      "withoutDecisionTocViaTools": {
+        "corpus": "kb2",
+        "documents": [
+          {
+            "documentId": 1,
+            "originalFileName": "NIST.SP.330-2019.pdf",
+            "title": "The International System of Units (SI), 2019 Edition"
+          },
+          {
+            "documentId": 2,
+            "originalFileName": "NIST.SP.250-95.pdf",
+            "title": "NIST Measurement Services Photometric Calibrations"
+          },
+          {
+            "documentId": 3,
+            "originalFileName": "NIST.SP.250-96.pdf",
+            "title": "Dimensional Measurement of Nanostructures with Scanning Electron Microscopy"
+          },
+          {
+            "documentId": 4,
+            "originalFileName": "NIST.SP.250-97.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: Proton Spin Relaxation Times"
+          },
+          {
+            "documentId": 5,
+            "originalFileName": "NIST.SP.250-98.pdf",
+            "title": "LIQUID FLOW METER CALIBRATIONS WITH NIST’s 15 kg/s WATER FLOW STANDARD"
+          },
+          {
+            "documentId": 6,
+            "originalFileName": "NIST.SP.250-100.pdf",
+            "title": "Magnetic Resonance Imaging Biomarker Calibration Service: NMR Measurement of Isotropic Water Diffusion Coefficient"
+          }
+        ],
+        "model": "gpt-6-luna",
+        "deployment": "gpt-6-luna",
+        "tocMode": "tools",
+        "decision": null,
+        "summary": {
+          "questions": 4,
+          "correct": 4,
+          "incorrect": 0,
+          "errors": 0,
+          "accuracy": 1,
+          "decisionErrors": 0,
+          "tokens": {
+            "modelTurns": 16,
+            "input": {
+              "observed": 173397,
+              "turnsWithUsage": 16
+            },
+            "output": {
+              "observed": 532,
+              "turnsWithUsage": 16
+            },
+            "total": {
+              "observed": 173929,
+              "turnsWithUsage": 16
+            },
+            "search": {
+              "modelTurns": 16,
+              "input": {
+                "observed": 173397,
+                "turnsWithUsage": 16
+              },
+              "output": {
+                "observed": 532,
+                "turnsWithUsage": 16
+              },
+              "total": {
+                "observed": 173929,
+                "turnsWithUsage": 16
+              }
+            },
+            "decision": {
+              "modelTurns": 0,
+              "input": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "output": {
+                "observed": null,
+                "turnsWithUsage": 0
+              },
+              "total": {
+                "observed": null,
+                "turnsWithUsage": 0
+              }
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "si-light-speed",
+            "question": "Secondo la brochure SI del NIST, qual è il valore esatto della velocità della luce nel vuoto in metri al secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 386,
+              "toLine": 386
+            },
+            "expected": [
+              "299 792 458 m/s"
+            ],
+            "answer": "Secondo la brochure SI del NIST, il valore esatto della velocità della luce nel vuoto è **299 792 458 m/s**. 【NIST.SP.330-2019.pdf, p. 19, righe 386–387】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 386,
+                  "toLine": 403,
+                  "pages": [
+                    {
+                      "pageNumber": 19,
+                      "fromLine": 386,
+                      "toLine": 403
+                    }
+                  ],
+                  "sectionId": 19,
+                  "sectionTitle": "Page 19"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5592,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43195,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 140,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43335,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43195,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 140,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43335,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-cesium-frequency",
+            "question": "Qual è la frequenza esatta, in hertz, della transizione iperfine dello stato fondamentale imperturbato del cesio-133 usata per definire il secondo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 406,
+              "toLine": 406
+            },
+            "expected": [
+              "9 192 631 770 Hz"
+            ],
+            "answer": "La frequenza è **esattamente 9 192 631 770 Hz**.\n\nFonte: *NIST.SP.330-2019.pdf*, p. 118.",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 3094,
+                  "toLine": 3132,
+                  "pages": [
+                    {
+                      "pageNumber": 118,
+                      "fromLine": 3094,
+                      "toLine": 3132
+                    }
+                  ],
+                  "sectionId": 118,
+                  "sectionTitle": "Page 118"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5057,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43500,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 119,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43619,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43500,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 119,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43619,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-mole",
+            "question": "Nella tabella delle unità di base SI, qual è l’unità della quantità di sostanza e qual è il suo simbolo?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 496,
+              "toLine": 496
+            },
+            "expected": [
+              "mole",
+              "mol"
+            ],
+            "answer": "L’unità SI della quantità di sostanza è la **mole**, con simbolo **mol**. 【NIST.SP.330-2019.pdf, p. 22, righe 480–513】",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 480,
+                  "toLine": 513,
+                  "pages": [
+                    {
+                      "pageNumber": 22,
+                      "fromLine": 480,
+                      "toLine": 513
+                    }
+                  ],
+                  "sectionId": 22,
+                  "sectionTitle": "Page 22"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5343,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43316,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 126,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43442,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43316,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 126,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43442,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          },
+          {
+            "id": "si-candela",
+            "question": "Nella definizione SI della candela, qual è la frequenza della radiazione monocromatica, in terahertz? Qual è il valore numerico fissato dell’efficacia luminosa, in lumen per watt?",
+            "source": {
+              "file": "doc-1/NIST.SP.330-2019.pdf.md",
+              "fromLine": 654,
+              "toLine": 659
+            },
+            "expected": [
+              "540 THz",
+              "683 lm/W"
+            ],
+            "answer": "La frequenza della radiazione monocromatica è **540 THz**; il valore numerico fissato dell’efficacia luminosa è **683 lm/W**. citeNIST.SP.330-2019.pdf, p. 28, righe 659–683",
+            "references": [
+              {
+                "kind": "passage",
+                "source": {
+                  "documentId": 1,
+                  "originalFileName": "NIST.SP.330-2019.pdf",
+                  "title": "The International System of Units (SI), 2019 Edition",
+                  "fromLine": 659,
+                  "toLine": 683,
+                  "pages": [
+                    {
+                      "pageNumber": 28,
+                      "fromLine": 659,
+                      "toLine": 683
+                    }
+                  ],
+                  "sectionId": 28,
+                  "sectionTitle": "Page 28"
+                }
+              }
+            ],
+            "missing": [],
+            "status": "correct",
+            "error": null,
+            "decisionError": null,
+            "durationMs": 5396,
+            "tokens": {
+              "modelTurns": 4,
+              "input": {
+                "observed": 43386,
+                "turnsWithUsage": 4
+              },
+              "output": {
+                "observed": 147,
+                "turnsWithUsage": 4
+              },
+              "total": {
+                "observed": 43533,
+                "turnsWithUsage": 4
+              },
+              "search": {
+                "modelTurns": 4,
+                "input": {
+                  "observed": 43386,
+                  "turnsWithUsage": 4
+                },
+                "output": {
+                  "observed": 147,
+                  "turnsWithUsage": 4
+                },
+                "total": {
+                  "observed": 43533,
+                  "turnsWithUsage": 4
+                }
+              },
+              "decision": {
+                "modelTurns": 0,
+                "input": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "output": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                },
+                "total": {
+                  "observed": null,
+                  "turnsWithUsage": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      "delta": {
+        "correct": 0,
+        "accuracy": 0,
+        "tokens": {
+          "input": -230582,
+          "output": -65,
+          "total": -230647
+        }
+      },
+      "tocViaToolsDelta": {
+        "correct": 0,
+        "accuracy": 0,
+        "tokens": {
+          "input": -183006,
+          "output": -29,
+          "total": -183035
+        }
+      }
+    }
+  ]
+}

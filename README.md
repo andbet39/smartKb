@@ -175,7 +175,7 @@ Il comando compila la libreria, stampa il risultato JSON e scrive la KB in `kb1`
 
 ### Fare domande alla KB
 
-Per attivare il selettore della CLI, imposta `KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME` con l'ID esatto del gateway, ad esempio `Decision-1.1`. La CLI usa lo stesso ID per modello e deployment e riusa chiave, versione API e risorsa Azure di `KB_SEARCH_AZURE_OPENAI_*`. Il modello deve supportare l'output strutturato. `KB_DECISION_THRESHOLD` e `KB_DECISION_MAX_DOCUMENTS` sono facoltative. Quando il selettore è chiamato, le metriche mostrano separatamente i suoi turni e token.
+Per attivare il selettore della CLI, imposta `KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME` con l'ID esatto del gateway, ad esempio `Decision-1.1`. L'adapter LangChain invia richieste native a `POST /systemone`, riusando l'host HTTPS e la chiave di `KB_SEARCH_AZURE_OPENAI_*`, senza usare la versione API di Chat Completions. Normalizza i punteggi da 0–2 a 0–1 prima di applicare la soglia. `KB_DECISION_THRESHOLD` e `KB_DECISION_MAX_DOCUMENTS` sono facoltative. Quando il selettore è chiamato, le metriche mostrano separatamente i suoi turni e token.
 
 Per ciascuna istanza configurata con `gpt-6-luna` la CLI invia `reasoning_effort: "none"`: questo modello lo richiede per usare i tool su Chat Completions.
 

@@ -8,6 +8,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { HumanMessage } from "@langchain/core/messages";
+import { z } from "zod";
 import { persist } from "workspace-document-parser";
 import { KbSmartManager } from "workspace-document-parser/kb";
 import { createCliDocumentSelection, createCliModel } from "./models.mjs";
@@ -46,23 +48,59 @@ test("the CLI uses independent Azure configuration for each model", async t => {
 
   await createCliModel("AZURE_OPENAI_", env).invoke("Cerca");
   await createCliModel("KB_SEARCH_AZURE_OPENAI_", env).invoke("Cerca");
-  assert.equal(createCliDocumentSelection(env), undefined);
-  const selection = createCliDocumentSelection({ ...env,
-    KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME: "Decision-1.1",
-    KB_DECISION_THRESHOLD: "0.65",
-    KB_DECISION_MAX_DOCUMENTS: "3",
-  });
-  assert.equal(selection.threshold, 0.65);
-  assert.equal(selection.maxDocuments, 3);
-  await selection.decisionModel.invoke("Valuta");
   assert.deepEqual(requests, [
     ["https://deep.example.test/openai/deployments/deep-test/chat/completions?api-version=2024-10-21", "deep-test-key", "gpt-4o"],
     ["https://kb-instance.openai.azure.com/openai/deployments/kb-test/chat/completions?api-version=2025-04-01-preview", "kb-test-key", "gpt-4o-mini"],
-    ["https://kb-instance.openai.azure.com/openai/deployments/Decision-1.1/chat/completions?api-version=2025-04-01-preview", "kb-test-key", "Decision-1.1"],
   ]);
   assert.throws(() => createCliModel("KB_SEARCH_AZURE_OPENAI_", {
     ...env, KB_SEARCH_AZURE_OPENAI_API_KEY: "",
   }), /KB_SEARCH_AZURE_OPENAI_API_KEY/);
+});
+
+test("the selector uses SystemOne and reports normalized scores and token usage", async t => {
+  assert.equal(createCliDocumentSelection(env), undefined);
+  const selection = createCliDocumentSelection({
+    ...env, KB_SEARCH_AZURE_OPENAI_ENDPOINT: "https://gateway.example.test",
+    KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME: "Decision-1.1",
+    KB_DECISION_THRESHOLD: "0.65", KB_DECISION_MAX_DOCUMENTS: "3",
+  });
+  assert.equal(selection.threshold, 0.65);
+  assert.equal(selection.maxDocuments, 3);
+  const input = { question: "What voltage?", documents: [{ documentId: 7, title: "Hardware" }, { documentId: 8, title: "Cooking" }] };
+  const invokeInput = [new HumanMessage(JSON.stringify(input))];
+  let reply = { doc_7: { type: "score", score: 1.5 }, doc_8: { type: "score", score: 0.2 } };
+  let status = 200;
+  const request = t.mock.method(globalThis, "fetch", async (url, init) => {
+    assert.equal(String(url), "https://gateway.example.test/systemone");
+    assert.equal(init.method, "POST");
+    assert.equal(init.redirect, "error");
+    assert.equal(new Headers(init.headers).get("authorization"), "Bearer kb-test-key");
+    const body = JSON.parse(init.body);
+    assert.equal(body.model, "Decision-1.1");
+    assert.deepEqual(JSON.parse(body.state), input);
+    assert.deepEqual(Object.keys(body.questions), ["doc_7", "doc_8"]);
+    for (const id of [7, 8]) {
+      const { type, criteria } = body.questions[`doc_${id}`];
+      assert.equal(type, "score");
+      assert.equal(criteria.length, 3);
+      assert.ok(criteria.every(text => text.includes(`document ID ${id}`)));
+    }
+    return Response.json({ answers: reply, usage: { input_tokens: 40, output_tokens: 2 } }, { status });
+  });
+  const schema = z.object({ scores: z.array(z.object({ documentId: z.int(), score: z.number() })) });
+  let usage;
+  const model = selection.decisionModel.withStructuredOutput(schema, { name: "kb_document_relevance" });
+  assert.deepEqual(await model.invoke(invokeInput, { callbacks: [{
+    name: "usage", awaitHandlers: true,
+    handleLLMEnd({ generations }) { usage = generations[0][0].message.usage_metadata; },
+  }] }), { scores: [{ documentId: 7, score: 0.75 }, { documentId: 8, score: 0.1 }] });
+  assert.deepEqual(usage, { input_tokens: 40, output_tokens: 2, total_tokens: 42 });
+
+  reply = { doc_7: { type: "score", score: 1.5 } };
+  await assert.rejects(model.invoke(invokeInput), /Invalid SystemOne relevance score/);
+  status = 404;
+  await assert.rejects(model.invoke(invokeInput), /404 SystemOne/);
+  assert.equal(request.mock.callCount(), 3);
 });
 
 test("/delete rimuove per ID, aggiorna il pannello e segnala gli ID non validi", async t => {

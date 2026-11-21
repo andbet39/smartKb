@@ -4,9 +4,9 @@ import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import { getDocumentModel } from '../../dist/document-model.js';
 import { KbSmartManager } from '../../dist/kb/index.js';
 import { getDecisionSelection, getSearchModel } from './azure-model.mjs';
-import { grade, questions } from './questions.mjs';
+import { grade, questions as kb1Questions } from './questions.mjs';
 
-const kbPath = fileURLToPath(new URL('../../kb1/', import.meta.url));
+const kb1Path = fileURLToPath(new URL('../../kb1/', import.meta.url));
 
 function summarizeTokens(turns) {
   const fields = { input: 'input_tokens', output: 'output_tokens', total: 'total_tokens' };
@@ -45,7 +45,9 @@ function tokenBreakdown(search, decision) {
   };
 }
 
-export async function runBenchmark({ model = getDocumentModel(), selection, tocMode = 'prompt', onResult = () => {} } = {}) {
+export async function runBenchmark({ model = getDocumentModel(), selection, tocMode = 'prompt', onResult = () => {},
+  corpus = 'kb1', kbPath = kb1Path, questions = kb1Questions } = {}) {
+  if (!questions.length) throw new Error('Il benchmark richiede almeno una domanda.');
   const searchTracker = trackModel();
   const decisionTracker = trackModel();
   let decisionError;
@@ -106,14 +108,14 @@ export async function runBenchmark({ model = getDocumentModel(), selection, tocM
   const correct = results.filter(result => result.status === 'correct').length;
   const errors = results.filter(result => result.status === 'error').length;
   return {
-    corpus: 'kb1',
+    corpus,
     documents: documents.map(({ source }) => source),
     model: model.model ?? model.modelName ?? null,
     deployment: model.azureOpenAIApiDeploymentName ?? null,
     tocMode: selection ? 'prompt' : tocMode,
     decision: selection ? {
       model: selection.decisionModel.model ?? selection.decisionModel.modelName ?? null,
-      deployment: selection.decisionModel.azureOpenAIApiDeploymentName ?? null,
+      deployment: selection.decisionModel.deployment ?? selection.decisionModel.azureOpenAIApiDeploymentName ?? null,
       threshold: selection.threshold ?? 0.5,
       maxDocuments: selection.maxDocuments ?? 5,
     } : null,
@@ -141,10 +143,10 @@ function compareSummaries(baseline, variant) {
   };
 }
 
-export async function runComparison({ model = getDocumentModel(), selection, onResult = () => {} } = {}) {
+export async function runComparison({ model = getDocumentModel(), selection, onResult = () => {}, ...benchmark } = {}) {
   if (!selection?.decisionModel) throw new Error('Il confronto richiede un decision model configurato.');
   const run = (mode, options) => runBenchmark({
-    model, ...options, onResult: (...args) => onResult(mode, ...args),
+    ...benchmark, model, ...options, onResult: (...args) => onResult(mode, ...args),
   });
   const withoutDecision = await run('withoutDecision');
   const withDecision = await run('withDecision', { selection });
