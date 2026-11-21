@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { persist } from "workspace-document-parser";
 import { KbSmartManager } from "workspace-document-parser/kb";
 import { mockRootEnv, offlineAzureChat } from "../test/azure-model.mjs";
 import { makeAgent } from "./agent.mjs";
@@ -12,7 +13,11 @@ test("the CLI Deep Agent delegates to kbAgentSearch without exposing any other t
   const folder = await mkdtemp(join(tmpdir(), "kb-cli-agent-"));
   t.after(() => rm(folder, { recursive: true }));
   const question = "Quali documenti ci sono?";
-  const answer = "Non ci sono documenti caricati.";
+  const answer = "È caricato il manuale.";
+  await persist({ markdown: "Manuale", map: {
+    documentId: 1, originalFileName: "manuale.txt", lineCount: 1,
+    summary: "Manuale", short_description: "Manuale", keywords: [], sections: [],
+  } }, folder);
   let outerTurns = 0;
   let searchTurns = 0;
   mockRootEnv(t, "");
@@ -42,7 +47,14 @@ test("the CLI Deep Agent delegates to kbAgentSearch without exposing any other t
     assert.deepEqual(JSON.parse(messages.at(-1).content), { answer, references: [] });
     return { content: answer, usage: { prompt_tokens: 30, completion_tokens: 6, total_tokens: 36 } };
   });
-  const kb = await KbSmartManager.open(folder, searchLlm);
+  const decisionModel = offlineAzureChat(({ response_format }) => {
+    assert.equal(response_format.json_schema.name, "kb_document_relevance");
+    return {
+      content: JSON.stringify({ scores: [{ documentId: 1, score: 1 }] }),
+      usage: { prompt_tokens: 40, completion_tokens: 8, total_tokens: 48 },
+    };
+  });
+  const kb = await KbSmartManager.open(folder, searchLlm, { decisionModel });
   const getAgentSearchTool = t.mock.method(kb, "getAgentSearchTool");
   const agent = makeAgent(kb, llm);
   assert.equal(getAgentSearchTool.mock.callCount(), 1);
@@ -61,6 +73,7 @@ test("the CLI Deep Agent delegates to kbAgentSearch without exposing any other t
   const metrics = events.find(event => event.title === "Metriche elaborazione").detail;
   assert.ok(metrics.includes("Deep Agent (CLI) (2 turni): Token input: 50  ·  Token output: 10"));
   assert.ok(metrics.includes("Agente KbSmartManager (2 turni): Token input: 100 (1/2 turni)  ·  Token output: 12 (1/2 turni)"));
+  assert.ok(metrics.includes("Selettore documenti KB (1 turni): Token input: 40  ·  Token output: 8"));
 });
 
 test("the CLI Deep Agent refuses a built-in tool call", async t => {

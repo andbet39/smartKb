@@ -91,19 +91,22 @@ const info = await kb.kbFileGetInfo(42);
 const sintesi = await kb.kbFileReadSummary(42);
 const completo = await kb.kbFileRead(42);
 
-const { matches } = await kb.kbFileSearchByKeywords(
+const { matches, truncated } = await kb.kbFileSearchByKeywords(
   { kind: "keywords", keywords: ["installazione", "requisiti"] },
   { documentIds: [42] },
+  { beforeLines: 2, afterLines: 3 },
 );
-for (const { snippet, source } of matches) {
-  console.log(source.originalFileName, source.fromLine, source.pages, snippet);
-  const riga = await kb.kbFileReadSection(source.documentId, source.fromLine, source.toLine);
+for (const { snippet, source, matchLines } of matches) {
+  console.log(source.originalFileName, source.fromLine, source.toLine, matchLines, snippet);
   if (source.sectionId !== undefined) {
     const sezione = await kb.kbFileReadSection(source.documentId, source.sectionId);
     console.log(sezione.markdown);
   }
 }
+if (truncated) console.log("Risultati parziali: restringere la ricerca.");
 ```
+
+Con `beforeLines` e `afterLines` a zero (default) la ricerca restituisce ancora una voce per ogni riga trovata. Con il contesto attivo, le finestre sovrapposte si uniscono: `source` copre tutto lo snippet e `matchLines` contiene solo le righe che corrispondono alla query. L'agente può richiedere lo stesso contesto nel tool, passando i due campi al livello di `query` e `fileSpec`.
 
 Ogni voce citabile include `source.documentId` e `source.originalFileName`: il parser conserva in `map.originalFileName` il nome con estensione, senza percorso. Per le mappe precedenti o gli input senza nome la fonte riporta `null`. I passaggi aggiungono le righe assolute inclusive e `pages`, una lista di `{ pageNumber, fromLine, toLine }` limitata al testo citato (`null` senza paginazione). Sintesi, metadati e documenti vuoti non inventano riferimenti di riga o pagina.
 
@@ -120,9 +123,23 @@ const kb = await KbSmartManager.open(["./manuali", "./procedure"], llm);
 const risposta = await kb.kbAgenticSearch("Quali sono i requisiti di installazione?");
 ```
 
-Puoi passare anche una sola cartella. Gli ID dei documenti devono essere univoci tra tutte le cartelle. Ogni domanda avvia una ricerca indipendente e restituisce una stringa Markdown. Il modello riceve subito l'indice di tutti i documenti e delle relative sezioni, insieme alla domanda; il testo viene letto con i tool su richiesta. Se il modello continua a richiedere tool dopo otto turni di tool calling, il metodo segnala un errore.
+Puoi passare anche una sola cartella. Gli ID dei documenti devono essere univoci tra tutte le cartelle. Ogni domanda avvia una ricerca indipendente e restituisce una stringa Markdown. Senza selettore, il modello riceve subito l'indice di tutti i documenti e delle relative sezioni, insieme alla domanda; il testo viene letto con i tool su richiesta. Se il modello continua a richiedere tool dopo otto turni di tool calling, il metodo segnala un errore.
+
+Per omettere l'indice dal system prompt, passa `{ tocMode: "tools" }` come quarto argomento di `open` (con `undefined` come terzo). L'agente può elencare i documenti con `kbGetTableOfContents`, consultare le sezioni di un documento con `kbFileGetTableOfContents` e leggere i passaggi pertinenti. Il default è `"prompt"`; se è configurato un decision model, l'opzione viene ignorata.
 
 Il tool `kbAgentSearch` restituisce anche `references`: include i passaggi letti esplicitamente e le sole righe citate tra i risultati di ricerca. Indici, metadati e sintesi usati per orientare la ricerca non diventano riferimenti.
+
+Per ridurre l'indice iniziale, passa un modello LangChain già configurato con `withStructuredOutput` come terza opzione:
+
+```ts
+const kb = await KbSmartManager.open("./archivio", searchModel, {
+  decisionModel,
+  threshold: 0.5,
+  maxDocuments: 5,
+});
+```
+
+Per ogni domanda il selettore valuta schede compatte (nome, titolo, descrizione breve e keyword) in batch da massimo 20, senza leggere il Markdown o le sezioni. Il prompt di ricerca include solo le TOC meglio classificate sopra o alla soglia (da 0 a 1, predefinita `0.5`), fino a `maxDocuments` (intero positivo, predefinito `5`). I tool restano globali: se non ci sono candidati o la selezione fallisce, l'agente parte senza TOC e può consultare il catalogo o cercare per keyword in tutta la KB.
 
 ### Esportazione con marcatori
 
@@ -158,6 +175,8 @@ Il comando compila la libreria, stampa il risultato JSON e scrive la KB in `kb1`
 
 ### Fare domande alla KB
 
+Per attivare il selettore della CLI, imposta `KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME` con l'ID esatto del gateway, ad esempio `Decision-1.1`. La CLI usa lo stesso ID per modello e deployment e riusa chiave, versione API e risorsa Azure di `KB_SEARCH_AZURE_OPENAI_*`. Il modello deve supportare l'output strutturato. `KB_DECISION_THRESHOLD` e `KB_DECISION_MAX_DOCUMENTS` sono facoltative. Quando il selettore è chiamato, le metriche mostrano separatamente i suoi turni e token.
+
 Per ciascuna istanza configurata con `gpt-6-luna` la CLI invia `reasoning_effort: "none"`: questo modello lo richiede per usare i tool su Chat Completions.
 
 Con la libreria compilata (`npm ci` e `npm run build` dalla root), avvia la [CLI](./kb-agent-cli/cli.mjs):
@@ -168,7 +187,7 @@ npm ci
 npm start -- ..\kb1
 ```
 
-Il Deep Agent della CLI vede solo `kbAgentSearch`, fornito dal manager tramite `kb.getAgentSearchTool()`. Il tool restituisce un oggetto con `answer` (la risposta in Markdown) e `references` (i passaggi e le sintesi effettivamente recuperati, senza duplicati). I passaggi riportano documento, righe, sezione e pagine quando disponibili; le sintesi riportano solo il documento. I riferimenti descrivono le fonti recuperate, non necessariamente tutte citate nella risposta. Non viene aggiunto alcun motore di ricerca esterno. Entrambi i deployment Azure della CLI devono supportare il tool calling e ricevono le domande e i risultati dei rispettivi tool. Ogni domanda è indipendente; premi Invio a vuoto per uscire.
+Il Deep Agent della CLI vede solo `kbAgentSearch`, fornito dal manager tramite `kb.getAgentSearchTool()`. Il tool restituisce un oggetto con `answer` (la risposta in Markdown) e `references` (i passaggi e le sintesi effettivamente recuperati, senza duplicati). I passaggi riportano documento, righe, sezione e pagine quando disponibili; le sintesi riportano solo il documento. I riferimenti descrivono le fonti recuperate, non necessariamente tutte citate nella risposta. Non viene aggiunto alcun motore di ricerca esterno. I deployment del Deep Agent e dell'agente di ricerca devono supportare il tool calling e ricevono le domande e i risultati dei rispettivi tool. Ogni domanda è indipendente; premi Invio a vuoto per uscire.
 
 All'avvio interattivo **KB Studio** pulisce l'area visibile del terminale e mostra un benvenuto con un libro in ASCII sopra il pannello in basso. Puoi scrivere subito accanto a `›`: con Invio il campo si svuota e il benvenuto scorre insieme alla traccia. Se l'input o l'output è rediretto, non viene pulito lo schermo e non viene stampato il benvenuto. La traccia Ink mostra in tempo reale le chiamate ai tool con argomenti ed eventuali errori. Ogni evento indica i millisecondi trascorsi; il numero di chiamata collega gli eventuali risultati ai rispettivi tool anche in parallelo. La risposta finale appare in un riquadro separato.
 

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { persist } from "workspace-document-parser";
 import { KbSmartManager } from "workspace-document-parser/kb";
-import { mockDocumentAzure, mockRootEnv, offlineAzureChat } from "./azure-model.mjs";
+import { mockDocumentAzure, mockRootEnv, offlineAzure, offlineAzureChat } from "./azure-model.mjs";
 
 async function tempFolder(t) {
   const root = await mkdtemp(join(tmpdir(), "kb-agentic-"));
@@ -30,6 +30,10 @@ function toolCall(id, name, args) {
   return { id, type: "function", function: { name, arguments: JSON.stringify(args) } };
 }
 
+function candidateToc(messages) {
+  return JSON.parse(messages[0].content.split("Table of contents for candidate documents (JSON):\n")[1]);
+}
+
 test("opening the KB does not require Azure; agentic search validates the root configuration on demand", async t => {
   mockRootEnv(t, "");
   const kb = await KbSmartManager.open(await tempFolder(t));
@@ -52,6 +56,109 @@ test("the supplied LangChain model handles both search entry points without root
     answer: "Risposta: Ricerca via tool", references: [],
   });
   assert.deepEqual(questions, ["Ricerca diretta", "Ricerca via tool"]);
+});
+
+test("TOCs can be discovered through tools without putting document metadata in the system prompt", async t => {
+  const root = await tempFolder(t);
+  await saveDocument(root, 1, "router.pdf", "Power supply", "Operating: 12 V.");
+  const llm = offlineAzureChat(({ messages }) => {
+    assert.match(messages[0].content, /kbGetTableOfContents.*kbFileGetTableOfContents/);
+    assert.doesNotMatch(messages[0].content, /router\.pdf|Power supply|"documentId"|Operating: 12 V/);
+    const last = messages.at(-1);
+    const call = (id, name, args) => ({ content: null, tool_calls: [toolCall(id, name, args)] });
+    if (last.role === "user") return call("catalog", "kbGetTableOfContents", {});
+    const result = JSON.parse(last.content);
+    switch (last.tool_call_id) {
+      case "catalog": {
+        const [{ source, shortDescription, sectionCount }] = result.documents;
+        assert.deepEqual([source.originalFileName, shortDescription, sectionCount], ["router.pdf", "Power supply", 1]);
+        return call("toc", "kbFileGetTableOfContents", { documentId: source.documentId });
+      }
+      case "toc": {
+        const [{ source }] = result.sections;
+        assert.equal(source.sectionTitle, "Power supply");
+        return call("read", "kbFileReadSection", { documentId: source.documentId, section: { sectionId: source.sectionId } });
+      }
+      case "read":
+        assert.equal(result.markdown, "Operating: 12 V.");
+        return { content: "Use 12 V." };
+      default:
+        assert.fail("Unexpected tool response");
+    }
+  });
+  const kb = await KbSmartManager.open(root, llm, undefined, { tocMode: "tools" });
+  const { source } = await kb.kbFileReadSection(1, 5);
+  assert.deepEqual(await kb.getAgentSearchTool().invoke({ question: "What voltage?" }), {
+    answer: "Use 12 V.", references: [{ kind: "passage", source }],
+  });
+});
+
+test("the decision model scores compact metadata in batches and sends only the highest ranked TOCs", async t => {
+  const root = await tempFolder(t);
+  const ids = Array.from({ length: 22 }, (_, i) => i + 1);
+  for (const id of ids) await saveDocument(root, id, `${String(id).padStart(2, "0")}.txt`, `Title ${id}`, `Private text ${id}`);
+  const batches = [];
+  const observed = [];
+  const decisionModel = offlineAzure((schema, messages) => {
+    const { question, documents } = JSON.parse(messages[1].content);
+    assert.equal(schema, "kb_document_relevance");
+    assert.equal(question, "Compare sources");
+    assert.deepEqual(new Set(Object.keys(documents[0])), new Set(["documentId", "originalFileName", "shortDescription", "keywords"]));
+    batches.push(documents.map(doc => doc.documentId));
+    const scores = { 1: 0.75, 2: 0.74, 21: 0.75, 22: 0.9 };
+    return { scores: documents.map(({ documentId }) => ({ documentId, score: scores[documentId] ?? 0 })).reverse() };
+  });
+  const llm = offlineAzureChat(({ messages }) => {
+    observed.push(candidateToc(messages));
+    return { content: "Comparison" };
+  });
+  const kb = await KbSmartManager.open(root, llm, { decisionModel, threshold: 0.75, maxDocuments: 2 }, { tocMode: "tools" });
+  assert.equal(batches.length, 0);
+  await assert.rejects(kb.kbAgenticSearch("  "), /non può essere vuota/);
+  assert.equal(await kb.kbAgenticSearch("Compare sources"), "Comparison");
+  assert.equal((await kb.getAgentSearchTool().invoke({ question: "Compare sources" })).answer, "Comparison");
+  assert.deepEqual(batches, [ids.slice(0, 20), ids.slice(20), ids.slice(0, 20), ids.slice(20)]);
+  assert.deepEqual(observed.map(toc => toc.map(({ documentId, sections }) => [documentId, sections[0].title])), [
+    [[22, "Title 22"], [1, "Title 1"]], [[22, "Title 22"], [1, "Title 1"]],
+  ]);
+});
+
+test("selection with no candidates or bad decisions falls back to global keyword search", async t => {
+  const root = await tempFolder(t);
+  await saveDocument(root, 1, "router.pdf", "Hardware", "Operating: 12 V.");
+  const llm = offlineAzureChat(({ messages }) => {
+    assert.deepEqual(candidateToc(messages), []);
+    assert.match(messages[0].content, /without a document filter/);
+    if (messages.at(-1).role === "user") return { content: null, tool_calls: [
+      toolCall("fallback", "kbFileSearchByKeywords", { query: { kind: "keywords", keywords: ["12 V"] } }),
+    ] };
+    assert.equal(JSON.parse(messages.at(-1).content).matches[0].source.documentId, 1);
+    return { content: "Use 12 V. [[kb:1:1]]" };
+  });
+  for (const scores of [[{ documentId: 1, score: 0.4 }], [{ documentId: 1, score: 2 }], [{ documentId: 999, score: 1 }], [], null]) {
+    const decisionModel = offlineAzure(() => {
+      if (!scores) throw new Error("Offline deployment");
+      return { scores };
+    });
+    const kb = await KbSmartManager.open(root, llm, { decisionModel }, { tocMode: "tools" });
+    const result = await kb.getAgentSearchTool().invoke({ question: "What voltage?" });
+    assert.equal(result.answer, "Use 12 V.");
+    assert.deepEqual(result.references.map(ref => ref.source.documentId), [1]);
+  }
+});
+
+test("decision configuration validates bounds and does not call the model for an empty catalog", async t => {
+  const root = await tempFolder(t);
+  const decisionModel = { withStructuredOutput: t.mock.fn(() => assert.fail("Unexpected decision call")) };
+  await assert.rejects(KbSmartManager.open(root, undefined, { decisionModel, threshold: 1.1 }), /threshold/);
+  await assert.rejects(KbSmartManager.open(root, undefined, { decisionModel, maxDocuments: 0 }), /maxDocuments/);
+  const llm = offlineAzureChat(({ messages }) => {
+    assert.deepEqual(candidateToc(messages), []);
+    return { content: "Empty" };
+  });
+  const kb = await KbSmartManager.open(root, llm, { decisionModel });
+  assert.equal(await kb.kbAgenticSearch("What is in the KB?"), "Empty");
+  assert.equal(decisionModel.withStructuredOutput.mock.callCount(), 0);
 });
 
 test("agentic search uses the root model, sends every TOC, and bounds tool rounds", async t => {
@@ -162,4 +269,59 @@ test("only cited keyword hits become references, while explicitly read ranges ar
   assert.deepEqual(await search.invoke({ question: "What is the operating voltage?" }), { answer, references: expected });
   assert.deepEqual(await search.invoke({ question: "Read as well" }), { answer, references: expected });
   assert.deepEqual(await search.invoke({ question: "Not found" }), { answer: "Not found.", references: expected.slice(0, 1) });
+});
+
+test("contextual search merges overlapping windows and keeps actual match lines", async t => {
+  const root = await tempFolder(t);
+  await saveDocument(root, 1, "one.pdf", "One", "HIT\nneighbor\nhit\ncontext\ngap\nlast\nhit");
+  await saveDocument(root, 2, "two.pdf", "Two", "hit");
+  const kb = await KbSmartManager.open(root);
+  const query = { kind: "regex", pattern: "^hit$" };
+  const fileSpec = { documentIds: [1] };
+  const plain = await kb.kbFileSearchByKeywords(query, fileSpec);
+  assert.deepEqual(plain, await kb.kbFileSearchByKeywords(query, fileSpec, { beforeLines: 0, afterLines: 0 }));
+  assert.deepEqual(plain.matches.map(({ snippet }) => snippet), ["HIT", "hit", "hit"]);
+  const tool = kb.getTools().find(({ name }) => name === "kbFileSearchByKeywords");
+  const { matches } = await tool.invoke({ query, fileSpec, beforeLines: 1, afterLines: 1 });
+  assert.deepEqual(matches.map(({ snippet, source, matchLines }) => [snippet, source.fromLine, source.toLine, matchLines]), [
+    ["HIT\nneighbor\nhit\ncontext", 1, 4, [1, 3]],
+    ["last\nhit", 6, 7, [7]],
+  ]);
+  assert.deepEqual(matches[0].source.pages, [{ pageNumber: 1, fromLine: 1, toLine: 4 }]);
+  const asymmetric = await kb.kbFileSearchByKeywords(query, fileSpec, { afterLines: 1 });
+  assert.deepEqual(asymmetric.matches.map(({ source }) => [source.fromLine, source.toLine]), [[1, 2], [3, 4], [7, 7]]);
+  for (const beforeLines of [-1, 1.5, 21]) {
+    await assert.rejects(kb.kbFileSearchByKeywords(query, fileSpec, { beforeLines }));
+  }
+});
+
+test("contextual search reports when a window or text budget omits results", async t => {
+  const root = await tempFolder(t);
+  await saveDocument(root, 1, "many.pdf", "Many", Array(21).fill("hit\nneighbor").join("\n"));
+  await saveDocument(root, 2, "long.pdf", "Long", `hit\nshort\nhit\n${"a".repeat(12_000)}`);
+  const kb = await KbSmartManager.open(root);
+  const query = { kind: "keywords", keywords: ["hit"] };
+  const many = await kb.kbFileSearchByKeywords(query, { documentIds: [1] }, { afterLines: 1 });
+  assert.equal(many.matches.length, 20);
+  assert.equal(many.truncated, true);
+  const long = await kb.kbFileSearchByKeywords(query, { documentIds: [2] }, { afterLines: 1 });
+  assert.deepEqual(long.matches.map(({ snippet }) => snippet), ["hit\nshort"]);
+  assert.equal(long.truncated, true);
+});
+
+test("the agent cites only referenced contextual ranges, without leaking markers", async t => {
+  const root = await tempFolder(t);
+  await saveDocument(root, 1, "one.pdf", "One", "Heading\nKey\nValue: 12 V\nGap\nKey\nValue: 24 V");
+  const llm = offlineAzureChat(({ messages }) => {
+    if (messages.at(-1).role === "user") return { content: null, tool_calls: [
+      toolCall("context", "kbFileSearchByKeywords", { query: { kind: "keywords", keywords: ["Key"] }, beforeLines: 1, afterLines: 1 }),
+    ] };
+    assert.match(JSON.parse(messages.at(-1).content).matches[0].snippet, /Value: 12 V/);
+    return { content: "Use 12 V. [[kb:1:1:3]] [[kb:1:1:3]] [[kb:1:2:3]]" };
+  });
+  const kb = await KbSmartManager.open(root, llm);
+  const result = await kb.getAgentSearchTool().invoke({ question: "What is the first value?" });
+  assert.equal(result.answer, "Use 12 V.");
+  const { source } = await kb.kbFileReadSection(1, 1, 3);
+  assert.deepEqual(result.references, [{ kind: "passage", source }]);
 });

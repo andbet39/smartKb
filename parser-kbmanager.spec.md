@@ -42,7 +42,12 @@ export declare function load(folder: string): Promise<ParsedDocument>;
 ```ts
 export declare class KbSmartManager {
   private constructor();
-  static open(baseFolder: string | readonly string[], llm?: Pick<BaseChatModel, "bindTools">): Promise<KbSmartManager>;
+  static open(
+    baseFolder: string | readonly string[],
+    llm?: Pick<BaseChatModel, "bindTools">,
+    selection?: DocumentSelectionOptions,
+    options?: AgentSearchOptions,
+  ): Promise<KbSmartManager>;
   deleteDocument(documentId: number): Promise<void>;
   getAgentSearchTool(): StructuredToolInterface;
   getTools(): StructuredToolInterface[];
@@ -54,16 +59,19 @@ export declare class KbSmartManager {
   kbFileRead(documentId: number): Promise<FileContent>;
   kbFileReadSection(documentId: number, sectionId: number): Promise<SectionContent>;
   kbFileReadSection(documentId: number, fromLine: number, toLine: number): Promise<SectionContent>;
-  kbFileSearchByKeywords(query: SearchQuery, fileSpec?: FileSpec): Promise<SearchResult>;
+  kbFileSearchByKeywords(query: SearchQuery, fileSpec?: FileSpec, context?: SearchContextOptions): Promise<SearchResult>;
 }
 ```
 
 - `open` carica ricorsivamente i manifest, anche nelle cartelle radice, e rifiuta metadati non validi o ID duplicati. Può caricare più documenti dalla stessa cartella; non legge il Markdown all’apertura e non invoca il modello.
+- Senza selettore, `tocMode: "prompt"` (predefinito) inserisce nel system prompt l’indice compatto di tutti i documenti e delle relative sezioni. Con `tocMode: "tools"` il prompt non contiene metadati dei documenti: l’agente può ottenere il catalogo con `kbGetTableOfContents` e consultare le sezioni per ID documento con `kbFileGetTableOfContents`.
+- Con un decision model, `tocMode` è ignorato. Il selettore valuta i metadati dei documenti e il prompt include solo le TOC dei candidati meglio classificati con punteggio maggiore o uguale a `threshold`, fino a `maxDocuments`. I tool restano accessibili per tutta la KB. Se la selezione fallisce o non trova candidati, il prompt contiene un elenco candidati vuoto e la ricerca può proseguire con i tool globali.
 - `kbGetTableOfContents` e `kbFileGetTableOfContents` consultano rispettivamente l’indice dei documenti e quello delle sezioni. `kbFileGetInfo` e `kbFileReadSummary` usano i metadati e la sintesi già salvati.
 - `kbFileRead` legge il Markdown completo; `kbFileReadSection` legge una sezione per ID o un intervallo di righe incluso tra `1` e `lineCount`. ID sconosciuti, intervalli non validi e conteggi di righe incoerenti con i metadati producono un errore nelle operazioni che li usano.
 - `kbFileSearchByKeywords` restituisce una corrispondenza per riga che contiene almeno una delle stringhe richieste o che soddisfa la regex JavaScript. Ignora le maiuscole salvo `caseSensitive: true`; senza `fileSpec` cerca in tutta la KB. Richiede almeno una parola chiave non vuota, senza elementi vuoti, oppure una regex valida.
+- `beforeLines` e `afterLines` sono interi da 0 a 20, con default 0; il tool li accetta direttamente accanto a `query` e `fileSpec`. Con almeno un valore positivo, le finestre sono limitate alle righe del documento e quelle sovrapposte vengono unite. `matchLines` indica le righe assolute che hanno prodotto il match, mentre `source` copre tutto lo snippet. La ricerca con contesto restituisce al massimo 20 finestre e 12.000 unità UTF-16 complessive di snippet; si ferma prima della prima finestra che eccede i limiti e segnala `truncated: true`.
 - `kbAgenticSearch` richiede una domanda non vuota e produce una risposta Markdown basata sui documenti. Usa il modello passato a `open` o, in sua assenza, il modello Azure configurato nel progetto. Se il modello richiede altre chiamate dopo 8 turni di uso dei tool, segnala un errore.
-- `getAgentSearchTool` espone `kbAgentSearch`, che accetta `{ question: string }` e restituisce `AgentSearchResult`; i riferimenti senza duplicati indicano i passaggi e le sintesi recuperati, non necessariamente citati. `getTools` espone i sette metodi di consultazione e ricerca diretta come tool LangChain.
+- `getAgentSearchTool` espone `kbAgentSearch`, che usa la stessa modalità TOC di `kbAgenticSearch`, accetta `{ question: string }` e restituisce `AgentSearchResult`. I riferimenti sono deduplicati per documento e intervallo di righe: includono i passaggi non vuoti letti esplicitamente e i risultati di ricerca per parola chiave o regex citati dall’agente. I marcatori interni delle citazioni vengono rimossi dalla risposta. `getTools` espone i sette metodi di consultazione e ricerca diretta come tool LangChain.
 - `deleteDocument` rimuove il documento dall’indice e cancella il manifest; cancella anche il Markdown se non è condiviso. Il file originale non viene cancellato.
 
 ## Tipi
@@ -156,6 +164,16 @@ Il Markdown usa LF senza newline finale. Righe e pagine partono da 1 e gli inter
 ```ts
 import type { StructuredToolInterface } from "@langchain/core/tools";
 
+export interface DocumentSelectionOptions {
+  decisionModel: Pick<BaseChatModel, "withStructuredOutput">;
+  threshold?: number;
+  maxDocuments?: number;
+}
+
+export interface AgentSearchOptions {
+  tocMode?: "prompt" | "tools";
+}
+
 export interface DocumentSource {
   documentId: number;
   originalFileName: string | null;
@@ -222,8 +240,14 @@ export interface FileSpec {
   documentIds: number[];
 }
 
+export interface SearchContextOptions {
+  beforeLines?: number;
+  afterLines?: number;
+}
+
 export interface SearchResult {
-  matches: { snippet: string; source: PassageSource }[];
+  matches: { snippet: string; source: PassageSource; matchLines?: number[] }[];
+  truncated?: true;
 }
 
 export type AgentSearchReference =
@@ -235,6 +259,8 @@ export interface AgentSearchResult {
   references: AgentSearchReference[];
 }
 ```
+
+`threshold` è un numero tra 0 e 1 inclusi (predefinito: `0.5`); `maxDocuments` è un intero positivo (predefinito: `5`).
 
 Nelle fonti, `originalFileName` è `null` se il nome non è disponibile; altrimenti il parser conserva il nome con estensione, senza percorso. Un passaggio riporta solo le righe effettivamente coperte da ciascuna pagina; `pages` è `null` se manca la paginazione. I dati della sezione sono presenti se l’intero passaggio ricade in una sezione.
 

@@ -6,12 +6,19 @@ import { z } from "zod";
 import { findMarkdownFile, loadMarkdown, loadMetadataFiles } from "../parser/persistence.js";
 import type { DocumentLineRange, DocumentSection, ParsedDocument } from "../parser/types.js";
 import { runKbAgent } from "./agent.js";
+import { createDocumentSelector } from "./selection.js";
 import type {
-  AgentSearchResult, DocumentSource, FileContent, FileInfo, FileSpec, FileSummary, FileTableOfContents,
-  KbTableOfContents, PassageSource, SearchQuery, SearchResult, SectionContent, SectionSource,
+  AgentSearchOptions, AgentSearchResult, DocumentSelectionOptions, DocumentSource, FileContent, FileInfo, FileSpec, FileSummary, FileTableOfContents,
+  KbTableOfContents, PassageSource, SearchContextOptions, SearchQuery, SearchResult, SectionContent, SectionSource,
 } from "./types.js";
 
 export type * from "./types.js";
+
+const MAX_CONTEXT_LINES = 20;
+const MAX_CONTEXT_WINDOWS = 20;
+const MAX_CONTEXT_CHARACTERS = 12_000;
+const contextLines = z.int().min(0).max(MAX_CONTEXT_LINES).optional();
+const searchContext = z.object({ beforeLines: contextLines, afterLines: contextLines });
 
 interface Entry extends Omit<ParsedDocument, "markdown"> {
   folder: string;
@@ -85,12 +92,17 @@ export class KbSmartManager {
   private constructor(
     private readonly documents: Map<number, Entry>,
     private readonly llm?: Pick<BaseChatModel, "bindTools">,
+    private readonly selectDocuments?: ReturnType<typeof createDocumentSelector>,
+    private readonly tocMode: NonNullable<AgentSearchOptions["tocMode"]> = "prompt",
   ) {}
 
   static async open(
     baseFolder: string | readonly string[],
     llm?: Pick<BaseChatModel, "bindTools">,
+    selection?: DocumentSelectionOptions,
+    options?: AgentSearchOptions,
   ): Promise<KbSmartManager> {
+    const selectDocuments = selection && createDocumentSelector(selection);
     const documents = new Map<number, Entry>();
     for (const root of typeof baseFolder === "string" ? [baseFolder] : baseFolder) {
       for await (const folder of documentFolders(resolve(root))) {
@@ -102,7 +114,7 @@ export class KbSmartManager {
         }
       }
     }
-    return new KbSmartManager(documents, llm);
+    return new KbSmartManager(documents, llm, selectDocuments, options?.tocMode);
   }
 
   private document(id: number): Entry {
@@ -159,9 +171,9 @@ export class KbSmartManager {
         name: "kbFileReadSection", description: "Read a document section by ID or read an inclusive line range.",
         schema: document.extend({ section }),
       }),
-      tool(({ query, fileSpec }) => this.kbFileSearchByKeywords(query, fileSpec), {
-        name: "kbFileSearchByKeywords", description: "Search document text by keyword or regular expression, optionally filtering by document ID.",
-        schema: z.object({ query, fileSpec: z.object({ documentIds: z.array(z.int()) }).optional() }),
+      tool(({ query, fileSpec, beforeLines, afterLines }) => this.kbFileSearchByKeywords(query, fileSpec, { beforeLines, afterLines }), {
+        name: "kbFileSearchByKeywords", description: "Search document text by keyword or regular expression. Optionally filter by document ID and request surrounding lines via beforeLines and afterLines (0 by default). If truncated, narrow the query or filter by document ID.",
+        schema: searchContext.extend({ query, fileSpec: z.object({ documentIds: z.array(z.int()) }).optional() }),
       }),
     ];
   }
@@ -172,8 +184,24 @@ export class KbSmartManager {
   }
 
   private async searchWithReferences(question: string): Promise<AgentSearchResult> {
+    if (!question.trim()) throw new Error("La domanda non può essere vuota.");
+    const agent = { tools: this.getTools(), question, llm: this.llm };
+    if (!this.selectDocuments && this.tocMode === "tools") return runKbAgent(agent);
+
+    let entries: Iterable<Entry> = this.documents.values();
+    if (this.selectDocuments) {
+      const ids = await this.selectDocuments(question, Array.from(entries, entry => ({
+        ...documentSource(entry),
+        shortDescription: entry.map.short_description,
+        keywords: entry.map.keywords,
+      })));
+      entries = ids.flatMap(id => {
+        const entry = this.documents.get(id);
+        return entry ? [entry] : [];
+      });
+    }
     // Build the index from loaded metadata without reading the Markdown files.
-    const toc = Array.from(this.documents.values(), entry => ({
+    const toc = Array.from(entries, entry => ({
       ...documentSource(entry),
       shortDescription: entry.map.short_description,
       sections: entry.map.sections.map(section => ({
@@ -182,7 +210,7 @@ export class KbSmartManager {
         shortDescription: section.short_description,
       })),
     }));
-    return runKbAgent({ tools: this.getTools(), question, toc, llm: this.llm });
+    return runKbAgent({ ...agent, toc, hasSelection: !!this.selectDocuments });
   }
 
   async kbGetTableOfContents(): Promise<KbTableOfContents> {
@@ -244,8 +272,10 @@ export class KbSmartManager {
     return { markdown: lines.slice(source.fromLine - 1, source.toLine).join("\n"), source };
   }
 
-  async kbFileSearchByKeywords(query: SearchQuery, fileSpec?: FileSpec): Promise<SearchResult> {
+  async kbFileSearchByKeywords(query: SearchQuery, fileSpec?: FileSpec, context?: SearchContextOptions): Promise<SearchResult> {
     const matchesLine = lineMatcher(query);
+    const { beforeLines = 0, afterLines = 0 } = searchContext.parse(context === undefined ? {} : context);
+    const withContext = beforeLines > 0 || afterLines > 0;
     if (fileSpec !== undefined && !Array.isArray(fileSpec.documentIds)) {
       throw new Error("Expected fileSpec.documentIds to be an array");
     }
@@ -253,14 +283,41 @@ export class KbSmartManager {
       ? this.documents.values()
       : Array.from(new Set(fileSpec.documentIds), id => this.document(id));
     const result: SearchResult = { matches: [] };
+    let remainingCharacters = MAX_CONTEXT_CHARACTERS;
+    const truncate = (): SearchResult => ({ ...result, truncated: true });
     for (const entry of entries) {
       const { lines } = await readText(entry);
+      let window: { fromLine: number; toLine: number; matchLines: number[] } | undefined;
+      const appendWindow = ({ fromLine, toLine, matchLines }: NonNullable<typeof window>) => {
+        if (result.matches.length >= MAX_CONTEXT_WINDOWS) return false;
+        let length = toLine - fromLine; // Newlines between the selected lines.
+        for (let i = fromLine - 1; i < toLine; i++) {
+          length += lines[i].length;
+          if (length > remainingCharacters) return false;
+        }
+        remainingCharacters -= length;
+        const snippet = lines.slice(fromLine - 1, toLine).join("\n");
+        result.matches.push({ snippet, source: passageSource(entry, [fromLine, toLine]), matchLines });
+        return true;
+      };
       for (const [index, snippet] of lines.entries()) {
-        if (matchesLine(snippet)) {
-          const line = index + 1;
+        if (!matchesLine(snippet)) continue;
+        const line = index + 1;
+        if (!withContext) {
           result.matches.push({ snippet, source: passageSource(entry, [line, line]) });
+          continue;
+        }
+        const fromLine = Math.max(1, line - beforeLines);
+        const toLine = Math.min(lines.length, line + afterLines);
+        if (window && fromLine <= window.toLine) {
+          window.toLine = toLine;
+          window.matchLines.push(line);
+        } else {
+          if (window && !appendWindow(window)) return truncate();
+          window = { fromLine, toLine, matchLines: [line] };
         }
       }
+      if (window && !appendWindow(window)) return truncate();
     }
     return result;
   }

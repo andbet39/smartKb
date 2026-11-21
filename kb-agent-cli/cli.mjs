@@ -6,12 +6,13 @@ import { makeAgent } from "./agent.mjs";
 import { traceQuestion } from "./trace.mjs";
 import { openScreen } from "./screen.mjs";
 import { importFile } from "./import-file.mjs";
-import { createCliModel } from "./models.mjs";
+import { createCliDocumentSelection, createCliModel } from "./models.mjs";
 
 const folder = process.argv[2] ?? "../kb1";
 const deepAgentLlm = createCliModel("AZURE_OPENAI_");
 const kbSearchLlm = createCliModel("KB_SEARCH_AZURE_OPENAI_");
-const openKb = () => KbSmartManager.open(folder, kbSearchLlm);
+const selection = createCliDocumentSelection();
+const openKb = () => KbSmartManager.open(folder, kbSearchLlm, selection);
 let documentLlm;
 
 async function sidebarDocuments(kb) {

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { persist } from "workspace-document-parser";
 import { KbSmartManager } from "workspace-document-parser/kb";
-import { createCliModel } from "./models.mjs";
+import { createCliDocumentSelection, createCliModel } from "./models.mjs";
 
 const run = promisify(execFile);
 const cliPath = fileURLToPath(new URL("./cli.mjs", import.meta.url));
@@ -46,9 +46,19 @@ test("the CLI uses independent Azure configuration for each model", async t => {
 
   await createCliModel("AZURE_OPENAI_", env).invoke("Cerca");
   await createCliModel("KB_SEARCH_AZURE_OPENAI_", env).invoke("Cerca");
+  assert.equal(createCliDocumentSelection(env), undefined);
+  const selection = createCliDocumentSelection({ ...env,
+    KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME: "Decision-1.1",
+    KB_DECISION_THRESHOLD: "0.65",
+    KB_DECISION_MAX_DOCUMENTS: "3",
+  });
+  assert.equal(selection.threshold, 0.65);
+  assert.equal(selection.maxDocuments, 3);
+  await selection.decisionModel.invoke("Valuta");
   assert.deepEqual(requests, [
     ["https://deep.example.test/openai/deployments/deep-test/chat/completions?api-version=2024-10-21", "deep-test-key", "gpt-4o"],
     ["https://kb-instance.openai.azure.com/openai/deployments/kb-test/chat/completions?api-version=2025-04-01-preview", "kb-test-key", "gpt-4o-mini"],
+    ["https://kb-instance.openai.azure.com/openai/deployments/Decision-1.1/chat/completions?api-version=2025-04-01-preview", "kb-test-key", "Decision-1.1"],
   ]);
   assert.throws(() => createCliModel("KB_SEARCH_AZURE_OPENAI_", {
     ...env, KB_SEARCH_AZURE_OPENAI_API_KEY: "",

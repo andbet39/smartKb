@@ -1,0 +1,3355 @@
+{
+  "withoutDecision": {
+    "corpus": "kb1",
+    "documents": [
+      {
+        "documentId": 1,
+        "originalFileName": "and.pdf"
+      },
+      {
+        "documentId": 3,
+        "originalFileName": "DS_CD00237391.pdf"
+      },
+      {
+        "documentId": 2,
+        "originalFileName": "xor.pdf"
+      },
+      {
+        "documentId": 4,
+        "originalFileName": "STM8L050J3.pdf"
+      },
+      {
+        "documentId": 5,
+        "originalFileName": "NPW App.pptx"
+      },
+      {
+        "documentId": 6,
+        "originalFileName": "Handbook_Operativo_datakube-test.docx"
+      }
+    ],
+    "model": "gpt-6-luna",
+    "deployment": "gpt-6-luna",
+    "tocMode": "prompt",
+    "decision": null,
+    "summary": {
+      "questions": 11,
+      "correct": 10,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 0.9090909090909091,
+      "decisionErrors": 0,
+      "tokens": {
+        "modelTurns": 24,
+        "input": {
+          "observed": 250659,
+          "turnsWithUsage": 24
+        },
+        "output": {
+          "observed": 1078,
+          "turnsWithUsage": 24
+        },
+        "total": {
+          "observed": 251737,
+          "turnsWithUsage": 24
+        },
+        "search": {
+          "modelTurns": 24,
+          "input": {
+            "observed": 250659,
+            "turnsWithUsage": 24
+          },
+          "output": {
+            "observed": 1078,
+            "turnsWithUsage": 24
+          },
+          "total": {
+            "observed": 251737,
+            "turnsWithUsage": 24
+          }
+        },
+        "decision": {
+          "modelTurns": 0,
+          "input": {
+            "observed": null,
+            "turnsWithUsage": 0
+          },
+          "output": {
+            "observed": null,
+            "turnsWithUsage": 0
+          },
+          "total": {
+            "observed": null,
+            "turnsWithUsage": 0
+          }
+        }
+      }
+    },
+    "results": [
+      {
+        "id": "and-vcc",
+        "question": "Secondo le condizioni operative raccomandate del DM7408, qual è il valore nominale della tensione di alimentazione VCC?",
+        "source": {
+          "file": "and.pdf.md",
+          "fromLine": 41,
+          "toLine": 43
+        },
+        "expected": [
+          "5 V"
+        ],
+        "answer": "Il valore nominale raccomandato di **VCC è 5 V** (intervallo operativo: 4,75–5,25 V).【and.pdf, p. 2, righe 36–52】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 1,
+              "originalFileName": "and.pdf",
+              "fromLine": 36,
+              "toLine": 52,
+              "pages": [
+                {
+                  "pageNumber": 2,
+                  "fromLine": 36,
+                  "toLine": 52
+                }
+              ],
+              "sectionId": 3,
+              "sectionTitle": "Recommended Operating Conditions"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 3803,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 17597,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 89,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 17686,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 17597,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 89,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 17686,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "and-tphl",
+        "question": "Nel datasheet del DM7408, qual è il ritardo di propagazione massimo tPHL (uscita da HIGH a LOW) a VCC = 5 V e TA = 25 °C?",
+        "source": {
+          "file": "and.pdf.md",
+          "fromLine": 79,
+          "toLine": 85
+        },
+        "expected": [
+          "19 ns"
+        ],
+        "answer": "Il ritardo di propagazione massimo **tPHL** (HIGH-to-LOW) è **19 ns** a **VCC = 5 V** e **TA = 25 °C**.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 1,
+              "originalFileName": "and.pdf",
+              "fromLine": 76,
+              "toLine": 95,
+              "pages": [
+                {
+                  "pageNumber": 2,
+                  "fromLine": 76,
+                  "toLine": 89
+                },
+                {
+                  "pageNumber": 3,
+                  "fromLine": 90,
+                  "toLine": 95
+                }
+              ],
+              "sectionId": 5,
+              "sectionTitle": "Switching Characteristics and Package Dimensions"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 3791,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 17655,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 82,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 17737,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 17655,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 82,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 17737,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm32-clock",
+        "question": "Qual è la frequenza massima della CPU Cortex-M3 dello STM32F205xx indicata nel datasheet?",
+        "source": {
+          "file": "DS_CD00237391.pdf.md",
+          "fromLine": 15,
+          "toLine": 15
+        },
+        "expected": [
+          "120 MHz"
+        ],
+        "answer": "La frequenza massima della CPU Cortex‑M3 dello STM32F205xx è **120 MHz** (datasheet *DS_CD00237391.pdf*, pagina 1, righe 13–18).",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 13,
+              "toLine": 18,
+              "pages": [
+                {
+                  "pageNumber": 1,
+                  "fromLine": 13,
+                  "toLine": 18
+                }
+              ],
+              "sectionId": 1,
+              "sectionTitle": "STM32F205xx and STM32F207xx Overview"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2956,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 21884,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 117,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 22001,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 21884,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 117,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 22001,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm32-sram",
+        "question": "Nella tabella delle varianti STM32F205Rx, qual è la capacità minima della SRAM di sistema (SRAM1 + SRAM2), senza contare la SRAM di backup?",
+        "source": {
+          "file": "DS_CD00237391.pdf.md",
+          "fromLine": 489,
+          "toLine": 495
+        },
+        "expected": [
+          "64 Kbyte"
+        ],
+        "answer": "La capacità minima della **SRAM di sistema (SRAM1 + SRAM2)** per le varianti STM32F205Rx è **64 KB**, composta da **48 KB di SRAM1 + 16 KB di SRAM2**. La SRAM di backup da 4 KB è indicata separatamente e non è inclusa. 【DS_CD00237391.pdf, p. 14, righe 487–510】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 485,
+              "toLine": 550,
+              "pages": [
+                {
+                  "pageNumber": 13,
+                  "fromLine": 485,
+                  "toLine": 486
+                },
+                {
+                  "pageNumber": 14,
+                  "fromLine": 487,
+                  "toLine": 510
+                },
+                {
+                  "pageNumber": 15,
+                  "fromLine": 511,
+                  "toLine": 529
+                },
+                {
+                  "pageNumber": 16,
+                  "fromLine": 530,
+                  "toLine": 550
+                }
+              ],
+              "sectionId": 8,
+              "sectionTitle": "STM32F205xx and STM32F207xx feature tables"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 6140,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 60376,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 176,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 60552,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 60376,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 176,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 60552,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "xor-gates",
+        "question": "Quante porte XOR indipendenti a due ingressi contiene l’integrato SN74HC86?",
+        "source": {
+          "file": "xor.pdf.md",
+          "fromLine": 370,
+          "toLine": 370
+        },
+        "expected": [
+          "4 porte"
+        ],
+        "answer": "L’integrato SN74HC86 contiene **quattro porte XOR indipendenti a due ingressi**. citeturn?",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 1,
+              "toLine": 16,
+              "pages": [
+                {
+                  "pageNumber": 1,
+                  "fromLine": 1,
+                  "toLine": 16
+                }
+              ],
+              "sectionId": 1,
+              "sectionTitle": "Device Description and Package Information"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2465,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 17776,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 75,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 17851,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 17776,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 75,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 17851,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "xor-vcc",
+        "question": "Qual è l’intervallo della tensione di alimentazione operativa dichiarato per SN74HC86? Indica minimo e massimo.",
+        "source": {
+          "file": "xor.pdf.md",
+          "fromLine": 22,
+          "toLine": 22
+        },
+        "expected": [
+          "da 2 V a 6 V"
+        ],
+        "answer": "Per le **condizioni operative raccomandate** dello SN74HC86, la tensione di alimentazione \\(V_{CC}\\) va da **2 V minimo a 6 V massimo** (nominale: 4,5 V). Fonte: *xor.pdf*, p. 4, righe 138–145.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 111,
+              "toLine": 177,
+              "pages": [
+                {
+                  "pageNumber": 4,
+                  "fromLine": 111,
+                  "toLine": 161
+                },
+                {
+                  "pageNumber": 5,
+                  "fromLine": 162,
+                  "toLine": 177
+                }
+              ],
+              "sectionId": 4,
+              "sectionTitle": "Absolute Maximum, Recommended Operating, and Thermal Ratings"
+            }
+          }
+        ],
+        "missing": [
+          "da 2 V a 6 V"
+        ],
+        "status": "incorrect",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2687,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 18481,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 109,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 18590,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 18481,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 109,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 18590,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm8-flash",
+        "question": "Quanta memoria Flash integrata ha il microcontrollore STM8L050J3?",
+        "source": {
+          "file": "doc-3/STM8L050J3.pdf.md",
+          "fromLine": 244,
+          "toLine": 244
+        },
+        "expected": [
+          "8 Kbyte"
+        ],
+        "answer": "Lo STM8L050J3 ha **8 KB di memoria Flash integrata** (memoria programma).【STM8L050J3.pdf, p. 8, righe 240–252】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 234,
+              "toLine": 475,
+              "pages": [
+                {
+                  "pageNumber": 7,
+                  "fromLine": 234,
+                  "toLine": 239
+                },
+                {
+                  "pageNumber": 8,
+                  "fromLine": 240,
+                  "toLine": 252
+                },
+                {
+                  "pageNumber": 9,
+                  "fromLine": 253,
+                  "toLine": 269
+                },
+                {
+                  "pageNumber": 10,
+                  "fromLine": 270,
+                  "toLine": 289
+                },
+                {
+                  "pageNumber": 11,
+                  "fromLine": 290,
+                  "toLine": 321
+                },
+                {
+                  "pageNumber": 12,
+                  "fromLine": 322,
+                  "toLine": 376
+                },
+                {
+                  "pageNumber": 13,
+                  "fromLine": 377,
+                  "toLine": 388
+                },
+                {
+                  "pageNumber": 14,
+                  "fromLine": 389,
+                  "toLine": 431
+                },
+                {
+                  "pageNumber": 15,
+                  "fromLine": 432,
+                  "toLine": 458
+                },
+                {
+                  "pageNumber": 16,
+                  "fromLine": 459,
+                  "toLine": 475
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2330,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 21853,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 83,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 21936,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 21853,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 83,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 21936,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm8-clock-ram",
+        "question": "Quali sono la frequenza massima della CPU e la capacità della RAM dello STM8L050J3?",
+        "source": {
+          "file": "doc-3/STM8L050J3.pdf.md",
+          "fromLine": 277,
+          "toLine": 284
+        },
+        "expected": [
+          "16 MHz",
+          "1 Kbyte"
+        ],
+        "answer": "Lo STM8L050J3 ha una frequenza massima della CPU di **16 MHz** e **1 Kbyte di RAM** (1.024 byte).【STM8L050J3.pdf, p. 10, righe 270–289】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 234,
+              "toLine": 475,
+              "pages": [
+                {
+                  "pageNumber": 7,
+                  "fromLine": 234,
+                  "toLine": 239
+                },
+                {
+                  "pageNumber": 8,
+                  "fromLine": 240,
+                  "toLine": 252
+                },
+                {
+                  "pageNumber": 9,
+                  "fromLine": 253,
+                  "toLine": 269
+                },
+                {
+                  "pageNumber": 10,
+                  "fromLine": 270,
+                  "toLine": 289
+                },
+                {
+                  "pageNumber": 11,
+                  "fromLine": 290,
+                  "toLine": 321
+                },
+                {
+                  "pageNumber": 12,
+                  "fromLine": 322,
+                  "toLine": 376
+                },
+                {
+                  "pageNumber": 13,
+                  "fromLine": 377,
+                  "toLine": 388
+                },
+                {
+                  "pageNumber": 14,
+                  "fromLine": 389,
+                  "toLine": 431
+                },
+                {
+                  "pageNumber": 15,
+                  "fromLine": 432,
+                  "toLine": 458
+                },
+                {
+                  "pageNumber": 16,
+                  "fromLine": 459,
+                  "toLine": 475
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2901,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 21861,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 95,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 21956,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 21861,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 95,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 21956,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-ooe",
+        "question": "Nell’Analysis Page della NPW App, a quanto è fissata la soglia del tasso out of envelope (OOE%) usata nel Variable Chart?",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 137,
+          "toLine": 148
+        },
+        "expected": [
+          "20%"
+        ],
+        "answer": "La soglia del tasso out of envelope (OOE%) è fissata al **20%**.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 136,
+              "toLine": 150,
+              "pages": null,
+              "sectionId": 6,
+              "sectionTitle": "Variable chart on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2816,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 17639,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 62,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 17701,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 17639,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 62,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 17701,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-criticality",
+        "question": "Quali sono tutti gli stati ammessi nella colonna Criticality della Variable Table nell’Analysis Page della NPW App? Includi anche l’eventuale stato non definito.",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 129,
+          "toLine": 129
+        },
+        "expected": [
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "undefined"
+        ],
+        "answer": "Gli stati ammessi nella colonna **Criticality** sono **C1, C2, C3, C4** e **undefined** (non definito).【NPW App.pptx, righe 127–128】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 118,
+              "toLine": 135,
+              "pages": null,
+              "sectionId": 5,
+              "sectionTitle": "Variable table on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2776,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 17882,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 89,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 17971,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 17882,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 89,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 17971,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-ooe-context",
+        "question": "Nel Variable Chart della NPW App, parti da «Req *39»: qual è la soglia OOE e come si chiamano le due categorie sopra soglia, rispettivamente senza e con commenti?",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 146,
+          "toLine": 148
+        },
+        "expected": [
+          "20%",
+          "bad without justification",
+          "bad with justification"
+        ],
+        "answer": "La soglia OOE è **20%**. Sopra soglia, le due categorie sono **“bad without justification”** (senza commenti) e **“bad with justification”** (con commenti).【NPW App.pptx, righe 143–145】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 136,
+              "toLine": 150,
+              "pages": null,
+              "sectionId": 6,
+              "sectionTitle": "Variable chart on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 2860,
+        "tokens": {
+          "modelTurns": 2,
+          "input": {
+            "observed": 17655,
+            "turnsWithUsage": 2
+          },
+          "output": {
+            "observed": 101,
+            "turnsWithUsage": 2
+          },
+          "total": {
+            "observed": 17756,
+            "turnsWithUsage": 2
+          },
+          "search": {
+            "modelTurns": 2,
+            "input": {
+              "observed": 17655,
+              "turnsWithUsage": 2
+            },
+            "output": {
+              "observed": 101,
+              "turnsWithUsage": 2
+            },
+            "total": {
+              "observed": 17756,
+              "turnsWithUsage": 2
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "withDecision": {
+    "corpus": "kb1",
+    "documents": [
+      {
+        "documentId": 1,
+        "originalFileName": "and.pdf"
+      },
+      {
+        "documentId": 3,
+        "originalFileName": "DS_CD00237391.pdf"
+      },
+      {
+        "documentId": 2,
+        "originalFileName": "xor.pdf"
+      },
+      {
+        "documentId": 4,
+        "originalFileName": "STM8L050J3.pdf"
+      },
+      {
+        "documentId": 5,
+        "originalFileName": "NPW App.pptx"
+      },
+      {
+        "documentId": 6,
+        "originalFileName": "Handbook_Operativo_datakube-test.docx"
+      }
+    ],
+    "model": "gpt-6-luna",
+    "deployment": "gpt-6-luna",
+    "tocMode": "prompt",
+    "decision": {
+      "model": "Decision-1.1",
+      "deployment": "Decision-1.1",
+      "threshold": 0.5,
+      "maxDocuments": 3
+    },
+    "summary": {
+      "questions": 11,
+      "correct": 10,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 0.9090909090909091,
+      "decisionErrors": 11,
+      "tokens": {
+        "modelTurns": 60,
+        "input": {
+          "observed": 213091,
+          "turnsWithUsage": 49
+        },
+        "output": {
+          "observed": 1753,
+          "turnsWithUsage": 49
+        },
+        "total": {
+          "observed": 214844,
+          "turnsWithUsage": 49
+        },
+        "search": {
+          "modelTurns": 49,
+          "input": {
+            "observed": 213091,
+            "turnsWithUsage": 49
+          },
+          "output": {
+            "observed": 1753,
+            "turnsWithUsage": 49
+          },
+          "total": {
+            "observed": 214844,
+            "turnsWithUsage": 49
+          }
+        },
+        "decision": {
+          "modelTurns": 11,
+          "input": {
+            "observed": null,
+            "turnsWithUsage": 0
+          },
+          "output": {
+            "observed": null,
+            "turnsWithUsage": 0
+          },
+          "total": {
+            "observed": null,
+            "turnsWithUsage": 0
+          }
+        }
+      }
+    },
+    "results": [
+      {
+        "id": "and-vcc",
+        "question": "Secondo le condizioni operative raccomandate del DM7408, qual è il valore nominale della tensione di alimentazione VCC?",
+        "source": {
+          "file": "and.pdf.md",
+          "fromLine": 41,
+          "toLine": 43
+        },
+        "expected": [
+          "5 V"
+        ],
+        "answer": "Secondo le condizioni operative raccomandate del DM7408, la tensione di alimentazione nominale **VCC è 5 V** (intervallo raccomandato: 4,75–5,25 V).【and.pdf, p. 2, righe 36–52】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 1,
+              "originalFileName": "and.pdf",
+              "fromLine": 36,
+              "toLine": 52,
+              "pages": [
+                {
+                  "pageNumber": 2,
+                  "fromLine": 36,
+                  "toLine": 52
+                }
+              ],
+              "sectionId": 3,
+              "sectionTitle": "Recommended Operating Conditions"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 6084,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 6072,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 145,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6217,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6072,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 145,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6217,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "and-tphl",
+        "question": "Nel datasheet del DM7408, qual è il ritardo di propagazione massimo tPHL (uscita da HIGH a LOW) a VCC = 5 V e TA = 25 °C?",
+        "source": {
+          "file": "and.pdf.md",
+          "fromLine": 79,
+          "toLine": 85
+        },
+        "expected": [
+          "19 ns"
+        ],
+        "answer": "Il ritardo di propagazione massimo **tPHL** è **19 ns** a **VCC = 5 V** e **TA = 25 °C**.【and.pdf, p. 2, righe 76–88】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 1,
+              "originalFileName": "and.pdf",
+              "fromLine": 76,
+              "toLine": 88,
+              "pages": [
+                {
+                  "pageNumber": 2,
+                  "fromLine": 76,
+                  "toLine": 88
+                }
+              ],
+              "sectionId": 5,
+              "sectionTitle": "Switching Characteristics and Package Dimensions"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "429 No deployments available for selected model, Try again in 5 seconds. All deployments for selected model are in cooldown. Passed model=Decision-1.1. pre-call-checks=False, cooldown_list=['e1c27b55a0eb58b72d34cf3c21fe365fe11ba7601584d7637f14ee05938b0453']\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_RATE_LIMIT/\n",
+        "durationMs": 4965,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 6079,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 137,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6216,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6079,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 137,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6216,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm32-clock",
+        "question": "Qual è la frequenza massima della CPU Cortex-M3 dello STM32F205xx indicata nel datasheet?",
+        "source": {
+          "file": "DS_CD00237391.pdf.md",
+          "fromLine": 15,
+          "toLine": 15
+        },
+        "expected": [
+          "120 MHz"
+        ],
+        "answer": "La frequenza massima della CPU Cortex‑M3 dello STM32F205xx è **120 MHz**.\n\nFonte: *DS_CD00237391.pdf*, pagine 1 e 13.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 670,
+              "toLine": 700,
+              "pages": [
+                {
+                  "pageNumber": 20,
+                  "fromLine": 670,
+                  "toLine": 700
+                }
+              ],
+              "sectionId": 12,
+              "sectionTitle": "Cortex-M3 core, ART accelerator, and MPU"
+            }
+          },
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 2134,
+              "toLine": 2172,
+              "pages": [
+                {
+                  "pageNumber": 70,
+                  "fromLine": 2134,
+                  "toLine": 2148
+                },
+                {
+                  "pageNumber": 71,
+                  "fromLine": 2149,
+                  "toLine": 2171
+                },
+                {
+                  "pageNumber": 72,
+                  "fromLine": 2172,
+                  "toLine": 2172
+                }
+              ],
+              "sectionId": 53,
+              "sectionTitle": "Operating conditions"
+            }
+          },
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 466,
+              "toLine": 470,
+              "pages": [
+                {
+                  "pageNumber": 13,
+                  "fromLine": 466,
+                  "toLine": 470
+                }
+              ]
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 9521,
+        "tokens": {
+          "modelTurns": 7,
+          "input": {
+            "observed": 63210,
+            "turnsWithUsage": 6
+          },
+          "output": {
+            "observed": 217,
+            "turnsWithUsage": 6
+          },
+          "total": {
+            "observed": 63427,
+            "turnsWithUsage": 6
+          },
+          "search": {
+            "modelTurns": 6,
+            "input": {
+              "observed": 63210,
+              "turnsWithUsage": 6
+            },
+            "output": {
+              "observed": 217,
+              "turnsWithUsage": 6
+            },
+            "total": {
+              "observed": 63427,
+              "turnsWithUsage": 6
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm32-sram",
+        "question": "Nella tabella delle varianti STM32F205Rx, qual è la capacità minima della SRAM di sistema (SRAM1 + SRAM2), senza contare la SRAM di backup?",
+        "source": {
+          "file": "DS_CD00237391.pdf.md",
+          "fromLine": 489,
+          "toLine": 495
+        },
+        "expected": [
+          "64 Kbyte"
+        ],
+        "answer": "La capacità minima è **64 KB** di SRAM di sistema: **SRAM1 da 48 KB + SRAM2 da 16 KB**. La SRAM di backup (**4 KB**) è esclusa. 【DS_CD00237391.pdf, tabella 2, p. 14, righe 487–510】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 485,
+              "toLine": 550,
+              "pages": [
+                {
+                  "pageNumber": 13,
+                  "fromLine": 485,
+                  "toLine": 486
+                },
+                {
+                  "pageNumber": 14,
+                  "fromLine": 487,
+                  "toLine": 510
+                },
+                {
+                  "pageNumber": 15,
+                  "fromLine": 511,
+                  "toLine": 529
+                },
+                {
+                  "pageNumber": 16,
+                  "fromLine": 530,
+                  "toLine": 550
+                }
+              ],
+              "sectionId": 8,
+              "sectionTitle": "STM32F205xx and STM32F207xx feature tables"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 6082,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 30293,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 147,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 30440,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 30293,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 147,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 30440,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "xor-gates",
+        "question": "Quante porte XOR indipendenti a due ingressi contiene l’integrato SN74HC86?",
+        "source": {
+          "file": "xor.pdf.md",
+          "fromLine": 370,
+          "toLine": 370
+        },
+        "expected": [
+          "4 porte"
+        ],
+        "answer": "L’integrato **SN74HC86 contiene 4 porte XOR indipendenti a due ingressi**.【xor.pdf, p. 1, righe 1–16】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 1,
+              "toLine": 16,
+              "pages": [
+                {
+                  "pageNumber": 1,
+                  "fromLine": 1,
+                  "toLine": 16
+                }
+              ],
+              "sectionId": 1,
+              "sectionTitle": "Device Description and Package Information"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 5237,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 11631,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 119,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 11750,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 11631,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 119,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 11750,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "xor-vcc",
+        "question": "Qual è l’intervallo della tensione di alimentazione operativa dichiarato per SN74HC86? Indica minimo e massimo.",
+        "source": {
+          "file": "xor.pdf.md",
+          "fromLine": 22,
+          "toLine": 22
+        },
+        "expected": [
+          "da 2 V a 6 V"
+        ],
+        "answer": "Per lo **SN74HC86**, l’intervallo dichiarato della tensione di alimentazione operativa è **da 2 V (minimo) a 6 V (massimo)**.\n\nFonte: *xor.pdf*, sezione “Recommended Operating Conditions”, p. 4.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 111,
+              "toLine": 177,
+              "pages": [
+                {
+                  "pageNumber": 4,
+                  "fromLine": 111,
+                  "toLine": 161
+                },
+                {
+                  "pageNumber": 5,
+                  "fromLine": 162,
+                  "toLine": 177
+                }
+              ],
+              "sectionId": 4,
+              "sectionTitle": "Absolute Maximum, Recommended Operating, and Thermal Ratings"
+            }
+          },
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 494,
+              "toLine": 499,
+              "pages": [
+                {
+                  "pageNumber": 13,
+                  "fromLine": 494,
+                  "toLine": 499
+                }
+              ],
+              "sectionId": 11,
+              "sectionTitle": "Power Supply Recommendations"
+            }
+          },
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 139,
+              "toLine": 144,
+              "pages": [
+                {
+                  "pageNumber": 4,
+                  "fromLine": 139,
+                  "toLine": 144
+                }
+              ],
+              "sectionId": 4,
+              "sectionTitle": "Absolute Maximum, Recommended Operating, and Thermal Ratings"
+            }
+          }
+        ],
+        "missing": [
+          "da 2 V a 6 V"
+        ],
+        "status": "incorrect",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 7577,
+        "tokens": {
+          "modelTurns": 7,
+          "input": {
+            "observed": 26298,
+            "turnsWithUsage": 6
+          },
+          "output": {
+            "observed": 219,
+            "turnsWithUsage": 6
+          },
+          "total": {
+            "observed": 26517,
+            "turnsWithUsage": 6
+          },
+          "search": {
+            "modelTurns": 6,
+            "input": {
+              "observed": 26298,
+              "turnsWithUsage": 6
+            },
+            "output": {
+              "observed": 219,
+              "turnsWithUsage": 6
+            },
+            "total": {
+              "observed": 26517,
+              "turnsWithUsage": 6
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm8-flash",
+        "question": "Quanta memoria Flash integrata ha il microcontrollore STM8L050J3?",
+        "source": {
+          "file": "doc-3/STM8L050J3.pdf.md",
+          "fromLine": 244,
+          "toLine": 244
+        },
+        "expected": [
+          "8 Kbyte"
+        ],
+        "answer": "Lo STM8L050J3 ha **8 KB di memoria Flash integrata**.【STM8L050J3.pdf, p. 8, righe 242–248】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 242,
+              "toLine": 248,
+              "pages": [
+                {
+                  "pageNumber": 8,
+                  "fromLine": 242,
+                  "toLine": 248
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 4586,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 17753,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 151,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 17904,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 17753,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 151,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 17904,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm8-clock-ram",
+        "question": "Quali sono la frequenza massima della CPU e la capacità della RAM dello STM8L050J3?",
+        "source": {
+          "file": "doc-3/STM8L050J3.pdf.md",
+          "fromLine": 277,
+          "toLine": 284
+        },
+        "expected": [
+          "16 MHz",
+          "1 Kbyte"
+        ],
+        "answer": "Lo **STM8L050J3** ha una frequenza massima della CPU di **16 MHz** e **1 KB di RAM**.\n\n*Fonte: `STM8L050J3.pdf`, p. 8, righe 244–250.*",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 244,
+              "toLine": 250,
+              "pages": [
+                {
+                  "pageNumber": 8,
+                  "fromLine": 244,
+                  "toLine": 250
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "429 No deployments available for selected model, Try again in 5 seconds. All deployments for selected model are in cooldown. Passed model=Decision-1.1. pre-call-checks=False, cooldown_list=['e1c27b55a0eb58b72d34cf3c21fe365fe11ba7601584d7637f14ee05938b0453']\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_RATE_LIMIT/\n",
+        "durationMs": 6408,
+        "tokens": {
+          "modelTurns": 6,
+          "input": {
+            "observed": 32010,
+            "turnsWithUsage": 5
+          },
+          "output": {
+            "observed": 201,
+            "turnsWithUsage": 5
+          },
+          "total": {
+            "observed": 32211,
+            "turnsWithUsage": 5
+          },
+          "search": {
+            "modelTurns": 5,
+            "input": {
+              "observed": 32010,
+              "turnsWithUsage": 5
+            },
+            "output": {
+              "observed": 201,
+              "turnsWithUsage": 5
+            },
+            "total": {
+              "observed": 32211,
+              "turnsWithUsage": 5
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-ooe",
+        "question": "Nell’Analysis Page della NPW App, a quanto è fissata la soglia del tasso out of envelope (OOE%) usata nel Variable Chart?",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 137,
+          "toLine": 148
+        },
+        "expected": [
+          "20%"
+        ],
+        "answer": "La soglia del tasso out of envelope (OOE%) nel Variable Chart è fissata al **20%**. Una variabile è considerata “good” se il suo tasso è sotto questa soglia. 【NPW App.pptx, righe 140–143】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 136,
+              "toLine": 150,
+              "pages": null,
+              "sectionId": 6,
+              "sectionTitle": "Variable chart on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 5640,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 6484,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 140,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6624,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6484,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 140,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6624,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-criticality",
+        "question": "Quali sono tutti gli stati ammessi nella colonna Criticality della Variable Table nell’Analysis Page della NPW App? Includi anche l’eventuale stato non definito.",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 129,
+          "toLine": 129
+        },
+        "expected": [
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "undefined"
+        ],
+        "answer": "Nella colonna **Criticality** sono ammessi questi stati: **C1, C2, C3, C4** e **undefined** (non definito).【NPW App.pptx, righe 118–135】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 118,
+              "toLine": 135,
+              "pages": null,
+              "sectionId": 5,
+              "sectionTitle": "Variable table on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "404 litellm.NotFoundError: NotFoundError: Azure_aiException - {\"detail\":\"Not Found\"}\n\nLiteLLM: model group 'Decision-1.1' failed with the error above. No fallback was attempted.\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_NOT_FOUND/\n",
+        "durationMs": 4719,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 6740,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 136,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6876,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6740,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 136,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6876,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-ooe-context",
+        "question": "Nel Variable Chart della NPW App, parti da «Req *39»: qual è la soglia OOE e come si chiamano le due categorie sopra soglia, rispettivamente senza e con commenti?",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 146,
+          "toLine": 148
+        },
+        "expected": [
+          "20%",
+          "bad without justification",
+          "bad with justification"
+        ],
+        "answer": "La soglia OOE è **20%**. Sopra soglia, le categorie sono **bad without justification** (senza commenti) e **bad with justification** (con commenti).【NPW App.pptx, righe 142–145】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 136,
+              "toLine": 150,
+              "pages": null,
+              "sectionId": 6,
+              "sectionTitle": "Variable chart on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": "429 No deployments available for selected model, Try again in 5 seconds. All deployments for selected model are in cooldown. Passed model=Decision-1.1. pre-call-checks=False, cooldown_list=['e1c27b55a0eb58b72d34cf3c21fe365fe11ba7601584d7637f14ee05938b0453']\n\nTroubleshooting URL: https://docs.langchain.com/oss/javascript/langchain/errors/MODEL_RATE_LIMIT/\n",
+        "durationMs": 4793,
+        "tokens": {
+          "modelTurns": 5,
+          "input": {
+            "observed": 6521,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 141,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6662,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6521,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 141,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6662,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 1,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "withoutDecisionTocViaTools": {
+    "corpus": "kb1",
+    "documents": [
+      {
+        "documentId": 1,
+        "originalFileName": "and.pdf"
+      },
+      {
+        "documentId": 3,
+        "originalFileName": "DS_CD00237391.pdf"
+      },
+      {
+        "documentId": 2,
+        "originalFileName": "xor.pdf"
+      },
+      {
+        "documentId": 4,
+        "originalFileName": "STM8L050J3.pdf"
+      },
+      {
+        "documentId": 5,
+        "originalFileName": "NPW App.pptx"
+      },
+      {
+        "documentId": 6,
+        "originalFileName": "Handbook_Operativo_datakube-test.docx"
+      }
+    ],
+    "model": "gpt-6-luna",
+    "deployment": "gpt-6-luna",
+    "tocMode": "tools",
+    "decision": null,
+    "summary": {
+      "questions": 11,
+      "correct": 11,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 1,
+      "decisionErrors": 0,
+      "tokens": {
+        "modelTurns": 46,
+        "input": {
+          "observed": 175675,
+          "turnsWithUsage": 46
+        },
+        "output": {
+          "observed": 1470,
+          "turnsWithUsage": 46
+        },
+        "total": {
+          "observed": 177145,
+          "turnsWithUsage": 46
+        },
+        "search": {
+          "modelTurns": 46,
+          "input": {
+            "observed": 175675,
+            "turnsWithUsage": 46
+          },
+          "output": {
+            "observed": 1470,
+            "turnsWithUsage": 46
+          },
+          "total": {
+            "observed": 177145,
+            "turnsWithUsage": 46
+          }
+        },
+        "decision": {
+          "modelTurns": 0,
+          "input": {
+            "observed": null,
+            "turnsWithUsage": 0
+          },
+          "output": {
+            "observed": null,
+            "turnsWithUsage": 0
+          },
+          "total": {
+            "observed": null,
+            "turnsWithUsage": 0
+          }
+        }
+      }
+    },
+    "results": [
+      {
+        "id": "and-vcc",
+        "question": "Secondo le condizioni operative raccomandate del DM7408, qual è il valore nominale della tensione di alimentazione VCC?",
+        "source": {
+          "file": "and.pdf.md",
+          "fromLine": 41,
+          "toLine": 43
+        },
+        "expected": [
+          "5 V"
+        ],
+        "answer": "Il valore nominale raccomandato di **VCC è 5 V** (intervallo operativo: 4,75–5,25 V), secondo la tabella «Recommended Operating Conditions» del datasheet del DM7408 (and.pdf, p. 2, righe 36–52).",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 1,
+              "originalFileName": "and.pdf",
+              "fromLine": 36,
+              "toLine": 52,
+              "pages": [
+                {
+                  "pageNumber": 2,
+                  "fromLine": 36,
+                  "toLine": 52
+                }
+              ],
+              "sectionId": 3,
+              "sectionTitle": "Recommended Operating Conditions"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 4692,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 6080,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 145,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6225,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6080,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 145,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6225,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "and-tphl",
+        "question": "Nel datasheet del DM7408, qual è il ritardo di propagazione massimo tPHL (uscita da HIGH a LOW) a VCC = 5 V e TA = 25 °C?",
+        "source": {
+          "file": "and.pdf.md",
+          "fromLine": 79,
+          "toLine": 85
+        },
+        "expected": [
+          "19 ns"
+        ],
+        "answer": "Il ritardo massimo **tPHL** è **19 ns** a **VCC = 5 V** e **TA = 25 °C**.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 1,
+              "originalFileName": "and.pdf",
+              "fromLine": 76,
+              "toLine": 95,
+              "pages": [
+                {
+                  "pageNumber": 2,
+                  "fromLine": 76,
+                  "toLine": 89
+                },
+                {
+                  "pageNumber": 3,
+                  "fromLine": 90,
+                  "toLine": 95
+                }
+              ],
+              "sectionId": 5,
+              "sectionTitle": "Switching Characteristics and Package Dimensions"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 3727,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 6166,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 113,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6279,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6166,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 113,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6279,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm32-clock",
+        "question": "Qual è la frequenza massima della CPU Cortex-M3 dello STM32F205xx indicata nel datasheet?",
+        "source": {
+          "file": "DS_CD00237391.pdf.md",
+          "fromLine": 15,
+          "toLine": 15
+        },
+        "expected": [
+          "120 MHz"
+        ],
+        "answer": "La frequenza massima della CPU Cortex‑M3 dello **STM32F205xx è 120 MHz**.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 1,
+              "toLine": 50,
+              "pages": [
+                {
+                  "pageNumber": 1,
+                  "fromLine": 1,
+                  "toLine": 41
+                },
+                {
+                  "pageNumber": 2,
+                  "fromLine": 42,
+                  "toLine": 50
+                }
+              ],
+              "sectionId": 1,
+              "sectionTitle": "STM32F205xx and STM32F207xx Overview"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 6776,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 29816,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 104,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 29920,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 29816,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 104,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 29920,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm32-sram",
+        "question": "Nella tabella delle varianti STM32F205Rx, qual è la capacità minima della SRAM di sistema (SRAM1 + SRAM2), senza contare la SRAM di backup?",
+        "source": {
+          "file": "DS_CD00237391.pdf.md",
+          "fromLine": 489,
+          "toLine": 495
+        },
+        "expected": [
+          "64 Kbyte"
+        ],
+        "answer": "La capacità minima è **64 KB** di SRAM di sistema (**SRAM1 48 KB + SRAM2 16 KB**), senza includere i 4 KB di SRAM di backup. Fonte: *DS_CD00237391.pdf*, tabella 2, p. 14, righe 492–495.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 3,
+              "originalFileName": "DS_CD00237391.pdf",
+              "fromLine": 485,
+              "toLine": 550,
+              "pages": [
+                {
+                  "pageNumber": 13,
+                  "fromLine": 485,
+                  "toLine": 486
+                },
+                {
+                  "pageNumber": 14,
+                  "fromLine": 487,
+                  "toLine": 510
+                },
+                {
+                  "pageNumber": 15,
+                  "fromLine": 511,
+                  "toLine": 529
+                },
+                {
+                  "pageNumber": 16,
+                  "fromLine": 530,
+                  "toLine": 550
+                }
+              ],
+              "sectionId": 8,
+              "sectionTitle": "STM32F205xx and STM32F207xx feature tables"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 5033,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 30301,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 146,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 30447,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 30301,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 146,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 30447,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "xor-gates",
+        "question": "Quante porte XOR indipendenti a due ingressi contiene l’integrato SN74HC86?",
+        "source": {
+          "file": "xor.pdf.md",
+          "fromLine": 370,
+          "toLine": 370
+        },
+        "expected": [
+          "4 porte"
+        ],
+        "answer": "L’SN74HC86 contiene **4 porte XOR indipendenti a due ingressi**.【xor.pdf, p. 1, righe 1–16】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 1,
+              "toLine": 16,
+              "pages": [
+                {
+                  "pageNumber": 1,
+                  "fromLine": 1,
+                  "toLine": 16
+                }
+              ],
+              "sectionId": 1,
+              "sectionTitle": "Device Description and Package Information"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 4245,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 11639,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 116,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 11755,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 11639,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 116,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 11755,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "xor-vcc",
+        "question": "Qual è l’intervallo della tensione di alimentazione operativa dichiarato per SN74HC86? Indica minimo e massimo.",
+        "source": {
+          "file": "xor.pdf.md",
+          "fromLine": 22,
+          "toLine": 22
+        },
+        "expected": [
+          "da 2 V a 6 V"
+        ],
+        "answer": "L’intervallo della tensione di alimentazione operativa (**VCC**) dichiarato per SN74HC86 è **da 2 V a 6 V**: minimo **2 V**, massimo **6 V**. [*xor.pdf*, p. 4, righe 131–145]",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 2,
+              "originalFileName": "xor.pdf",
+              "fromLine": 111,
+              "toLine": 177,
+              "pages": [
+                {
+                  "pageNumber": 4,
+                  "fromLine": 111,
+                  "toLine": 161
+                },
+                {
+                  "pageNumber": 5,
+                  "fromLine": 162,
+                  "toLine": 177
+                }
+              ],
+              "sectionId": 4,
+              "sectionTitle": "Absolute Maximum, Recommended Operating, and Thermal Ratings"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 5122,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 12358,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 143,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 12501,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 12358,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 143,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 12501,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm8-flash",
+        "question": "Quanta memoria Flash integrata ha il microcontrollore STM8L050J3?",
+        "source": {
+          "file": "doc-3/STM8L050J3.pdf.md",
+          "fromLine": 244,
+          "toLine": 244
+        },
+        "expected": [
+          "8 Kbyte"
+        ],
+        "answer": "Il microcontrollore **STM8L050J3 integra 8 KB di memoria Flash**.【STM8L050J3.pdf, p. 9】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 234,
+              "toLine": 475,
+              "pages": [
+                {
+                  "pageNumber": 7,
+                  "fromLine": 234,
+                  "toLine": 239
+                },
+                {
+                  "pageNumber": 8,
+                  "fromLine": 240,
+                  "toLine": 252
+                },
+                {
+                  "pageNumber": 9,
+                  "fromLine": 253,
+                  "toLine": 269
+                },
+                {
+                  "pageNumber": 10,
+                  "fromLine": 270,
+                  "toLine": 289
+                },
+                {
+                  "pageNumber": 11,
+                  "fromLine": 290,
+                  "toLine": 321
+                },
+                {
+                  "pageNumber": 12,
+                  "fromLine": 322,
+                  "toLine": 376
+                },
+                {
+                  "pageNumber": 13,
+                  "fromLine": 377,
+                  "toLine": 388
+                },
+                {
+                  "pageNumber": 14,
+                  "fromLine": 389,
+                  "toLine": 431
+                },
+                {
+                  "pageNumber": 15,
+                  "fromLine": 432,
+                  "toLine": 458
+                },
+                {
+                  "pageNumber": 16,
+                  "fromLine": 459,
+                  "toLine": 475
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 4510,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 18630,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 115,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 18745,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 18630,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 115,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 18745,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "stm8-clock-ram",
+        "question": "Quali sono la frequenza massima della CPU e la capacità della RAM dello STM8L050J3?",
+        "source": {
+          "file": "doc-3/STM8L050J3.pdf.md",
+          "fromLine": 277,
+          "toLine": 284
+        },
+        "expected": [
+          "16 MHz",
+          "1 Kbyte"
+        ],
+        "answer": "Lo **STM8L050J3** ha una frequenza massima della CPU di **16 MHz** e **1 KB di RAM**. 【STM8L050J3.pdf, p. 8, righe 244–249】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 1,
+              "toLine": 233,
+              "pages": [
+                {
+                  "pageNumber": 1,
+                  "fromLine": 1,
+                  "toLine": 7
+                },
+                {
+                  "pageNumber": 2,
+                  "fromLine": 8,
+                  "toLine": 67
+                },
+                {
+                  "pageNumber": 3,
+                  "fromLine": 68,
+                  "toLine": 125
+                },
+                {
+                  "pageNumber": 4,
+                  "fromLine": 126,
+                  "toLine": 132
+                },
+                {
+                  "pageNumber": 5,
+                  "fromLine": 133,
+                  "toLine": 184
+                },
+                {
+                  "pageNumber": 6,
+                  "fromLine": 185,
+                  "toLine": 196
+                },
+                {
+                  "pageNumber": 7,
+                  "fromLine": 197,
+                  "toLine": 233
+                }
+              ],
+              "sectionId": 1,
+              "sectionTitle": "STM8L050J3 datasheet overview and contents"
+            }
+          },
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 240,
+              "toLine": 252,
+              "pages": [
+                {
+                  "pageNumber": 8,
+                  "fromLine": 240,
+                  "toLine": 252
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          },
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 4,
+              "originalFileName": "STM8L050J3.pdf",
+              "fromLine": 244,
+              "toLine": 249,
+              "pages": [
+                {
+                  "pageNumber": 8,
+                  "fromLine": 244,
+                  "toLine": 249
+                }
+              ],
+              "sectionId": 2,
+              "sectionTitle": "Overview of the STM8L050J3’s features, architecture, low-power operation, peripherals, and power management."
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 6993,
+        "tokens": {
+          "modelTurns": 6,
+          "input": {
+            "observed": 40926,
+            "turnsWithUsage": 6
+          },
+          "output": {
+            "observed": 218,
+            "turnsWithUsage": 6
+          },
+          "total": {
+            "observed": 41144,
+            "turnsWithUsage": 6
+          },
+          "search": {
+            "modelTurns": 6,
+            "input": {
+              "observed": 40926,
+              "turnsWithUsage": 6
+            },
+            "output": {
+              "observed": 218,
+              "turnsWithUsage": 6
+            },
+            "total": {
+              "observed": 41144,
+              "turnsWithUsage": 6
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-ooe",
+        "question": "Nell’Analysis Page della NPW App, a quanto è fissata la soglia del tasso out of envelope (OOE%) usata nel Variable Chart?",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 137,
+          "toLine": 148
+        },
+        "expected": [
+          "20%"
+        ],
+        "answer": "La soglia OOE% usata nel Variable Chart è fissata al **20%**.",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 136,
+              "toLine": 150,
+              "pages": null,
+              "sectionId": 6,
+              "sectionTitle": "Variable chart on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 4336,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 6492,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 100,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6592,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6492,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 100,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6592,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-criticality",
+        "question": "Quali sono tutti gli stati ammessi nella colonna Criticality della Variable Table nell’Analysis Page della NPW App? Includi anche l’eventuale stato non definito.",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 129,
+          "toLine": 129
+        },
+        "expected": [
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "undefined"
+        ],
+        "answer": "Gli stati ammessi nella colonna **Criticality** sono: **C1, C2, C3, C4** e **undefined** (non definito).【NPW App.pptx, righe 50–51】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 118,
+              "toLine": 135,
+              "pages": null,
+              "sectionId": 5,
+              "sectionTitle": "Variable table on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 4495,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 6743,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 130,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6873,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6743,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 130,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6873,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      },
+      {
+        "id": "npw-ooe-context",
+        "question": "Nel Variable Chart della NPW App, parti da «Req *39»: qual è la soglia OOE e come si chiamano le due categorie sopra soglia, rispettivamente senza e con commenti?",
+        "source": {
+          "file": "doc-5/NPW App.pptx.md",
+          "fromLine": 146,
+          "toLine": 148
+        },
+        "expected": [
+          "20%",
+          "bad without justification",
+          "bad with justification"
+        ],
+        "answer": "La soglia OOE è **20%**. Sopra soglia, le categorie sono **“bad without justification”** (senza commenti) e **“bad with justification”** (con commenti).【NPW App.pptx, righe 142–145】",
+        "references": [
+          {
+            "kind": "passage",
+            "source": {
+              "documentId": 5,
+              "originalFileName": "NPW App.pptx",
+              "fromLine": 136,
+              "toLine": 150,
+              "pages": null,
+              "sectionId": 6,
+              "sectionTitle": "Variable chart on the analysis page"
+            }
+          }
+        ],
+        "missing": [],
+        "status": "correct",
+        "error": null,
+        "decisionError": null,
+        "durationMs": 4751,
+        "tokens": {
+          "modelTurns": 4,
+          "input": {
+            "observed": 6524,
+            "turnsWithUsage": 4
+          },
+          "output": {
+            "observed": 140,
+            "turnsWithUsage": 4
+          },
+          "total": {
+            "observed": 6664,
+            "turnsWithUsage": 4
+          },
+          "search": {
+            "modelTurns": 4,
+            "input": {
+              "observed": 6524,
+              "turnsWithUsage": 4
+            },
+            "output": {
+              "observed": 140,
+              "turnsWithUsage": 4
+            },
+            "total": {
+              "observed": 6664,
+              "turnsWithUsage": 4
+            }
+          },
+          "decision": {
+            "modelTurns": 0,
+            "input": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "output": {
+              "observed": null,
+              "turnsWithUsage": 0
+            },
+            "total": {
+              "observed": null,
+              "turnsWithUsage": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "delta": {
+    "correct": null,
+    "accuracy": null,
+    "tokens": {
+      "input": null,
+      "output": null,
+      "total": null
+    }
+  },
+  "tocViaToolsDelta": {
+    "correct": 1,
+    "accuracy": 0.09090909090909094,
+    "tokens": {
+      "input": -74984,
+      "output": 392,
+      "total": -74592
+    }
+  }
+}
