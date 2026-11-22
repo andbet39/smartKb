@@ -1,20 +1,28 @@
 import anydoc from "@firecrawl/anydoc";
 import { PDFDocument } from "pdf-lib";
+import { normalizeMarkdown } from "../document/lines.ts";
+import type { DocumentPage } from "../document/types.ts";
 import type { OcrProgressEvent } from "./ocr.ts";
-import type { ConversionProgress, DocumentInput, DocumentPage } from "./types.ts";
+import type { ConversionProgress, DocumentInput } from "./types.ts";
 import { ParserUtils } from "./utils.ts";
 
-export type ConversionInput = Pick<DocumentInput, "bytes" | "fileName">;
+type ConversionInput = Pick<DocumentInput, "bytes" | "fileName">;
 export type LocalConversionProgress = Omit<ConversionProgress, "documentId" | "batch">;
 type ConversionLogger = (progress: LocalConversionProgress) => void;
 type PageRecognizer = (bytes: Uint8Array, page: number) => Promise<string>;
 
+/** Markdown plus the line range of each PDF page. Internal: the public API returns Markdown only. */
 export interface ConvertedDocument {
   markdown: string;
   pages?: DocumentPage[];
 }
 
-export async function convertDocument(input: ConversionInput, log?: ConversionLogger): Promise<ConvertedDocument> {
+/** Converts a file to clean Markdown locally (PDF text extraction or OCR), without any LLM. */
+export async function convertDocument(input: ConversionInput, log?: ConversionLogger): Promise<string> {
+  return (await convertToMarkdown(input, log)).markdown;
+}
+
+export async function convertToMarkdown(input: ConversionInput, log?: ConversionLogger): Promise<ConvertedDocument> {
   const format = anydoc.formatFromBytes(input.bytes) ?? anydoc.formatFromPath(input.fileName ?? "");
   if (!format) {
     throw new Error("Unsupported or unrecognized format");
@@ -40,7 +48,7 @@ export async function convertDocument(input: ConversionInput, log?: ConversionLo
       percent: 0,
       message: `Conversione locale ${label} (${input.bytes.length} byte).`,
     });
-    const markdown = ParserUtils.normalizeMarkdown(await anydoc.toMarkdownBytes(input.bytes, format));
+    const markdown = normalizeMarkdown(await anydoc.toMarkdownBytes(input.bytes, format));
     log?.({
       ...base,
       step: "done",
@@ -169,7 +177,7 @@ async function convertPdfPages(
     const label = `Pagina ${page}/${totalPages}`;
 
     if (isBlankPdfPage(pdf, index)) {
-      pages.push({ page, range: null });
+      pages.push({ pageNumber: page });
       emitPage(page, page, pagePercent(page, totalPages), {
         step: "page-done",
         pageSource: "blank",
@@ -180,7 +188,7 @@ async function convertPdfPages(
 
     const text = await convertSinglePdfPage(pdf, index, page, totalPages, label, recognize, emitPage);
     const lastLine = nextLine + text.split("\n").length - 1;
-    pages.push({ page, range: [nextLine, lastLine] });
+    pages.push({ pageNumber: page, fromLine: nextLine, toLine: lastLine });
     parts.push(text);
     nextLine = lastLine + 1;
   }
@@ -219,7 +227,7 @@ async function convertSinglePdfPage(
         message: `${label}: nessun testo nativo estraibile, avvio OCR locale.`,
       });
     }
-    const text = ParserUtils.normalizeMarkdown(hasNativeText ? nativeText : await recognize(bytes, page));
+    const text = normalizeMarkdown(hasNativeText ? nativeText : await recognize(bytes, page));
     if (!text.trim()) {
       throw new Error("Local OCR found no readable text");
     }

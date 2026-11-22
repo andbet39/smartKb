@@ -1,5 +1,7 @@
 # Parser e KB Manager
 
+> **Superata.** Conserva i nomi e le firme dell’API precedente a [KB Store](kbstore.technical.spec.md) (persistenza su cartelle, `tocMode`, selettore, nomi `kbFile*`, campi snake_case), con i tipi degli ID documento aggiornati al contratto attuale.
+
 ## Metodi di interfaccia
 
 ### Parser
@@ -19,6 +21,7 @@ export interface DocumentParser {
 - `createDocumentParser` richiede un modello con output strutturato e una funzione di conteggio dei token.
 - `parseDocument` converte i byte in Markdown e genera indice, sezioni e sintesi. Per i PDF estrae il testo per pagina e usa l’OCR locale in italiano se manca il testo nativo. Gli errori di parsing espongono ID e causa tramite `DocumentParseError`.
 - `parseDocuments` mantiene l’ordine degli input e si arresta al primo errore.
+- Oggi il parser conserva un `documentId` esplicito valido oppure genera un UUID v7 se omesso. Lo stesso ID compare in `map.documentId` e negli eventi di avanzamento. Per salvare il risultato, il chiamante lo passa a `KbStore.add`, che verifica l’unicità dell’ID senza prenotazioni preventive.
 - `convertDocument` converte localmente senza modello, ID o persistenza. `importDocument` salva un upload in memoria con le stesse garanzie di `importFile`.
 - `importFile` legge dal percorso e salva in `kbFolder/doc-<documentId>`. Non sovrascrive una sottocartella esistente; se l’analisi o il salvataggio falliscono, elimina la sottocartella appena creata.
 
@@ -54,18 +57,18 @@ export declare class KbSmartManager {
     selection?: DocumentSelectionOptions,
     options?: AgentSearchOptions,
   ): Promise<KbSmartManager>;
-  deleteDocument(documentId: number): Promise<void>;
+  deleteDocument(documentId: DocumentId): Promise<void>;
   refresh(): Promise<void>;
   getAgentSearchTool(): StructuredToolInterface;
   getTools(): StructuredToolInterface[];
   kbAgentSearch(question: string): Promise<AgentSearchResult>;
   kbGetTableOfContents(): Promise<KbTableOfContents>;
-  kbFileGetTableOfContents(documentId: number): Promise<FileTableOfContents>;
-  kbFileGetInfo(documentId: number): Promise<FileInfo>;
-  kbFileReadSummary(documentId: number): Promise<FileSummary>;
-  kbFileRead(documentId: number): Promise<FileContent>;
-  kbFileReadSection(documentId: number, sectionId: number): Promise<SectionContent>;
-  kbFileReadSection(documentId: number, fromLine: number, toLine: number): Promise<SectionContent>;
+  kbFileGetTableOfContents(documentId: DocumentId): Promise<FileTableOfContents>;
+  kbFileGetInfo(documentId: DocumentId): Promise<FileInfo>;
+  kbFileReadSummary(documentId: DocumentId): Promise<FileSummary>;
+  kbFileRead(documentId: DocumentId): Promise<FileContent>;
+  kbFileReadSection(documentId: DocumentId, sectionId: number): Promise<SectionContent>;
+  kbFileReadSection(documentId: DocumentId, fromLine: number, toLine: number): Promise<SectionContent>;
   kbFileSearchByKeywords(query: SearchQuery, fileSpec?: FileSpec, context?: SearchContextOptions): Promise<SearchResult>;
 }
 ```
@@ -88,8 +91,10 @@ export declare class KbSmartManager {
 ```ts
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
+export type DocumentId = string | number;
+
 export interface DocumentInput {
-  documentId: number;
+  documentId?: DocumentId;
   bytes: Uint8Array;
   fileName?: string;
   sectionSize?: { minChars: number; maxChars: number };
@@ -139,7 +144,7 @@ export interface DocumentBatchProgress {
 }
 
 export interface DocumentParseProgressBase {
-  documentId: number;
+  documentId: DocumentId;
   fileName?: string;
   batch?: DocumentBatchProgress;
   phase: DocumentParsePhase;
@@ -215,10 +220,12 @@ export type DocumentParseProgress =
   | CompletedParseProgress;
 
 export declare class DocumentParseError extends Error {
-  readonly documentId: number;
-  constructor(documentId: number, cause: unknown);
+  readonly documentId: DocumentId;
+  constructor(documentId: DocumentId, cause: unknown);
 }
 ```
+
+Un `DocumentId` stringa è un UUID v7 canonico in minuscolo; un ID numerico legacy è un intero sicuro non negativo. Gli ID di sezione restano numerici.
 
 `fileName` può aiutare a riconoscere il formato, ma non viene aperto come percorso. `onProgress` riceve eventi strutturati `DocumentParseProgress` con percentuale complessiva del documento (`percent` monotona 0–100), avanzamento della fase corrente (`phase`, `step`, `current`, `total`, `unit`, `phasePercent`), metadati specifici della fase, `batch` opzionale in `parseDocuments` e messaggio descrittivo senza testo del documento. `sectionSize` indica un intervallo orientativo in unità UTF-16: `minChars` e `maxChars` devono essere interi positivi, con `minChars ≤ maxChars`. Anche i valori di `targetChars` sono interi positivi e indicativi, senza troncamento. `windowTokens` è un intero positivo (predefinito: 4096 token): limita il contenuto per richiesta, esclusi istruzioni, schema e risposta. Una riga che da sola non rientra nel budget produce un errore.
 
@@ -245,7 +252,7 @@ export interface DocumentSection {
 }
 
 export interface DocumentMap {
-  documentId: number;
+  documentId: DocumentId;
   originalFileName?: string;
   title?: string;
   author?: string;
@@ -265,7 +272,7 @@ export interface ParsedDocument {
 }
 
 export interface DocumentTableOfContents {
-  documentId: number;
+  documentId: DocumentId;
   short_description: string;
   sections: Pick<DocumentSection, "id" | "title" | "short_description">[];
 }
@@ -294,7 +301,7 @@ export interface KbOpenOptions extends AgentSearchOptions {
 }
 
 export interface DocumentSource {
-  documentId: number;
+  documentId: DocumentId;
   originalFileName: string | null;
   title?: string;
 }
@@ -356,7 +363,7 @@ export type SearchQuery =
   | { kind: "regex"; pattern: string; caseSensitive?: boolean };
 
 export interface FileSpec {
-  documentIds: number[];
+  documentIds: DocumentId[];
 }
 
 export interface SearchContextOptions {

@@ -2,24 +2,22 @@
 
 **Integra nella tua applicazione la conversione dei documenti in Markdown e la ricerca nelle fonti.**
 
-Libreria **TypeScript** per **Node.js 20.12+** (ESM). Il nome del pacchetto negli import è `smartDocKb`.
+Libreria **TypeScript** per **Node.js 22.13+** (ESM). Il nome del pacchetto negli import è `smartDocKb`.
 
 [Quickstart](#quickstart) · [Parser](#parser) · [Knowledge base](#knowledge-base) · [Test e benchmark](#test-e-benchmark) · [CLI: KB Studio](#kb-studio)
 
 | Componente | A cosa serve | Modello remoto |
 | --- | --- | --- |
-| 📄 [Parser](./src/parser) | Converte i documenti in Markdown. Per i formati di cui supporta la paginazione (attualmente i PDF), estrae il testo pagina per pagina e restituisce in `pages` il numero di ogni pagina e il relativo intervallo di righe nel Markdown. Per le scansioni usa l’OCR locale. Può generare indice, sezioni e sintesi. | Solo per analisi, sezionamento e sintesi tramite il parser LangChain con output strutturato. |
-| 🔎 [KB manager](./src/kb) | Apre una KB su disco, consulta documenti e sezioni, cerca per parole chiave o regex. | Non serve per la consultazione diretta. Serve per la ricerca agentica. |
+| 📄 [Parser](./src/parser) | Converte file in memoria con AnyDoc. Per i PDF scansionati usa l’OCR locale. Può generare indice, sezioni e sintesi. | Solo per analisi, sezionamento e sintesi tramite il parser LangChain con output strutturato. |
+| 🔎 [KB manager](./src/kb) | Compone uno store e un motore di ricerca per consultare documenti e sezioni e cercare per parole chiave o regex. | Non serve per la consultazione diretta. Serve per la ricerca agentica. |
 
 Parser e manager sono disponibili entrambi dall’entry point principale. Il manager è accessibile anche dal sotto-percorso `smartDocKb/kb`.
-
-Nel repository: [specifiche tecniche](./docs), [esempi eseguibili](./examples) e [report dei benchmark](./benchmarks/reports).
 
 <a id="quickstart"></a>
 
 ## 🚀 Quickstart: integra la libreria
 
-Da un altro progetto Node.js, usa il **parser** per importare un documento e `KbSmartManager` per consultarlo. Una volta salvato, puoi riaprire e cercare il documento senza invocare il modello.
+Da un altro progetto Node.js, usa il **parser** per analizzare un documento e lo **store** per salvarlo. Passa lo store e il **motore di ricerca** a `KbSmartManager` per consultare la KB. La ricerca per parole chiave non richiede un modello.
 
 ### 1. Installa la dipendenza nel tuo progetto
 
@@ -43,9 +41,10 @@ Nella tua applicazione, configura `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_API_INST
 Salva questo codice come `importa.mjs` e sostituisci il percorso del PDF con quello del tuo documento:
 
 ```js
+import { readFile } from "node:fs/promises";
 import { AzureChatOpenAI } from "@langchain/openai";
 import { getEncoding } from "js-tiktoken";
-import { createDocumentParser } from "smartDocKb";
+import { createDocumentParser, createPosixStore } from "smartDocKb";
 
 const llm = new AzureChatOpenAI({ model: process.env.AZURE_OPENAI_MODEL || "gpt-4o" });
 const encoding = getEncoding("o200k_base");
@@ -54,32 +53,50 @@ const parser = createDocumentParser({
   countTokens: text => encoding.encode(text).length,
 });
 
-const doc = await parser.importFile("./manuale.pdf", {
-  documentId: 42, // Scegli un ID univoco all’interno della KB.
-  kbFolder: "./mia-kb",
+const doc = await parser.parseDocument({
+  bytes: await readFile("./manuale.pdf"),
+  fileName: "manuale.pdf",
 });
+const store = await createPosixStore({ root: "./mia-kb" });
+try {
+  await store.add(doc);
+  console.log(doc.map.documentId);
+} finally {
+  await store.close();
+}
 ```
 
-`importFile` crea la KB se manca e restituisce il `ParsedDocument` dopo aver salvato Markdown e manifest nella sottocartella `doc-42`. Se la sottocartella esiste già, non la sovrascrive. Per salvare un upload senza un file temporaneo, usa `await parser.importDocument({ bytes, fileName, documentId: 42, kbFolder: "./mia-kb" })`. Per analizzarlo senza salvarlo, usa `parseDocument`.
+Il parser genera un **UUID v7** se ometti `documentId`. Se fornisci un UUID v7 canonico in minuscolo o un ID numerico legacy (intero sicuro non negativo), lo conserva. `parseDocument` accetta anche direttamente i byte di un upload e non scrive su disco. `store.add` salva Markdown e manifest in `doc-<id>` e rende il documento visibile al commit dell’indice. Un ID duplicato produce `ALREADY_EXISTS` senza sovrascrivere il documento esistente. Non è necessaria una prenotazione prima del parsing.
 
 ### 3. Apri e consulta la KB anche senza modello
 
 Questo blocco può girare in un altro processo: servono solo la libreria e i file salvati, non il parser configurato né le credenziali Azure.
 
 ```js
-import { KbSmartManager } from "smartDocKb/kb";
+import { createPosixStore, KbSmartManager, POSIXSearchEngine } from "smartDocKb";
 
-const kb = await KbSmartManager.open("./mia-kb");
-console.log(await kb.kbGetTableOfContents());
+const root = "./mia-kb";
+const store = await createPosixStore({ root });
+try {
+  const searchEngine = await POSIXSearchEngine.open({ root });
+  try {
+    const kb = await KbSmartManager.open(store, searchEngine);
+    console.log(await kb.kbGetTableOfContents());
 
-const { matches } = await kb.kbFileSearchByKeywords(
-  { kind: "keywords", keywords: ["installazione"] },
-  { documentIds: [42] },
-  { beforeLines: 1, afterLines: 1 },
-);
+    const { matches } = await kb.kbDocumentSearchByKeywords(
+      { kind: "keywords", keywords: ["installazione"] },
+      undefined,
+      { beforeLines: 1, afterLines: 1 },
+    );
 
-for (const { snippet, source } of matches) {
-  console.log(source.originalFileName, source.fromLine, source.toLine, snippet);
+    for (const { snippet, source } of matches) {
+      console.log(source.originalFileName, source.fromLine, source.toLine, snippet);
+    }
+  } finally {
+    await searchEngine.close();
+  }
+} finally {
+  await store.close();
 }
 ```
 
@@ -94,10 +111,10 @@ Per fare domande in linguaggio naturale dalla tua app, vedi la [ricerca agentica
 ```ts
 import { convertDocument } from "smartDocKb";
 
-const { markdown, pages } = await convertDocument({ bytes, fileName: "manuale.pdf" });
+const markdown = await convertDocument({ bytes, fileName: "manuale.pdf" });
 ```
 
-`bytes` è un `Uint8Array` o `Buffer`. La conversione (OCR incluso quando necessario) è locale: non richiede ID, tokenizer o adapter LangChain e non scrive nella KB. `pages` è presente solo nei PDF. Per seguire l’avanzamento, passa una callback come secondo argomento.
+`bytes` è un `Uint8Array` o `Buffer`. La conversione (OCR incluso quando necessario) è locale: non richiede ID, tokenizer o adapter LangChain e non scrive nella KB. `parseDocument` restituisce anche `pages` per i PDF. Per seguire l’avanzamento della sola conversione, passa una callback come secondo argomento.
 
 ### Integrazione TypeScript con il proprio adapter LangChain
 
@@ -109,19 +126,18 @@ import { createDocumentParser, getSectionMarkdown, type ParserOptions } from "sm
 export async function processUpload(bytes: Buffer, options: ParserOptions) {
   const parser = createDocumentParser(options);
   const doc = await parser.parseDocument({
-    documentId: 42,
     bytes,
     fileName: "manuale.pdf",
     sectionSize: { minChars: 1500, maxChars: 3000 },
   });
   for (const section of doc.map.sections) {
-    console.log(getSectionMarkdown(doc, section.id, { pageTags: true }));
+    console.log(getSectionMarkdown(doc, section.sectionId, { pageTags: true }));
   }
   return doc;
 }
 ```
 
-`getDocumentModel()` è un helper facoltativo per usare la configurazione Azure del repository. Se passi il tuo adapter, non devi configurare la libreria con credenziali Azure. La conversione del file è locale; il parser invia al modello scelto il testo delle finestre e le sintesi.
+La conversione del file è locale; il parser invia al modello scelto il testo delle finestre e le sintesi.
 
 ### OCR locale e avanzamento
 
@@ -135,7 +151,7 @@ Motore e dati linguistici sono inclusi nelle dipendenze npm: dopo l’installazi
 
 ### Indice per un LLM
 
-La descrizione breve del documento è disponibile in `doc.map.short_description`.
+La descrizione breve del documento è disponibile in `doc.map.shortDescription`.
 Per ottenere l'indice come JSON compatto, senza ulteriori chiamate al modello:
 
 ```ts
@@ -146,29 +162,29 @@ const tocJson = JSON.stringify(getDocumentTableOfContents(doc));
 
 ```json
 {
-  "documentId": 42,
-  "short_description": "Manuale per installare e configurare il prodotto.",
+  "source": { "documentId": "0195f876-18a4-7ba3-b8c2-7ba84c28cb94" },
+  "shortDescription": "Manuale per installare e configurare il prodotto.",
   "sections": [
-    { "id": 1, "title": "Installazione", "short_description": "Requisiti e passaggi di installazione." },
-    { "id": 2, "title": "Configurazione", "short_description": "Impostazioni iniziali del prodotto." }
+    {
+      "source": {
+        "documentId": "0195f876-18a4-7ba3-b8c2-7ba84c28cb94",
+        "sectionId": 1,
+        "sectionTitle": "Installazione",
+        "fromLine": 1,
+        "toLine": 10,
+        "pages": null
+      },
+      "shortDescription": "Requisiti e passaggi di installazione."
+    }
   ]
 }
 ```
 
-`documentId` è l'ID passato al parser. Le sezioni sono nell'ordine del documento e i loro `id` si possono usare con `getSectionMarkdown`. Un documento senza testo ha `short_description: ""` e `sections: []`.
+`source.documentId` è l’ID presente in `doc.map.documentId`, generato dal parser o fornito dal chiamante. Le sezioni sono nell’ordine del documento e il loro `source.sectionId` si può usare con `getSectionMarkdown`.
 
 ### Salvataggio e ricaricamento
 
-Per salvare e ricaricare un `ParsedDocument` senza richiamare il modello:
-
-```ts
-import { persist, load } from "smartDocKb";
-
-await persist(doc, "./archivio/manuale");
-const documento = await load("./archivio/manuale");
-```
-
-Usa una cartella per documento. `persist` crea la cartella se manca e, quando disponibile, conserva il nome originale nei file salvati: `a.pdf` diventa `a.pdf.md` e `a.pdf.json` (mappa completa e pagine, se presenti). Senza nome originale usa `document.md` e `metadata.json`. Gli intervalli di righe restano validi dopo il caricamento.
+Usa `store.add(doc)` per salvare il documento. `store.get(id)` rilegge mappa e pagine, mentre `store.read(id)` restituisce il Markdown, senza ripetere il parsing.
 
 ### Esportazione con marcatori
 
@@ -188,12 +204,13 @@ L’export è in UTF-8 e sovrascrive la destinazione. Inserisce `<!-------------
 | Opzione | Comportamento |
 | --- | --- |
 | `bytes`, `fileName` | `bytes` accetta `Buffer` e `Uint8Array`. `fileName` non apre un percorso: aiuta a riconoscere formati senza firma, come CSV. Sono supportati i formati gestiti da AnyDoc. |
+| `documentId` | Facoltativo. Se assente, il parser genera un UUID v7, usato anche negli eventi di avanzamento. Un UUID esplicito o un ID numerico legacy viene conservato. |
 | `sectionSize` | Suggerisce una lunghezza in unità UTF-16 (come `String.length`), non un limite rigido. |
 | `windowTokens` | Limita il contenuto di una singola chiamata (default `4096`). Lascia spazio per schema, istruzioni e risposta. Se una riga non entra da sola, il parser restituisce un errore esplicito. |
 | `targetChars` | Suggerisce lunghezze in caratteri, ad esempio `{ documentSummary: 800, sectionSummary: 300, shortDescription: 80 }`. Non tronca il testo. `shortDescription` vale per documento e sezioni. Per un documento con una sola sezione, il parser ne riusa sintesi e descrizione breve, salvo richiesta di una sintesi dedicata con `documentSummary`. |
 
-- **Righe e intervalli.** `markdown` usa newline LF senza newline finale. Righe e pagine partono da 1 e gli estremi sono inclusi. `map.sections[].range` si riferisce sempre al Markdown originale, non al prompt o al testo con tag.
-- **Paginazione.** Nei PDF le pagine sono quelle fisiche, copertina inclusa. Una pagina senza contenuti o annotazioni ha `range: null`; una pagina non estraibile non viene dichiarata vuota. La conversione per pagina può interrompere la formattazione delle tabelle multipagina. Negli altri formati `pages` e `pageRange` sono omessi.
+- **Righe e intervalli.** `markdown` usa newline LF senza newline finale. Righe e pagine partono da 1 e gli estremi sono inclusi. `fromLine` e `toLine` si riferiscono sempre al Markdown originale, non al prompt o al testo con tag.
+- **Paginazione.** Nei PDF le pagine sono quelle fisiche, copertina inclusa. Una pagina vuota non ha `fromLine` e `toLine`; una pagina non estraibile non viene dichiarata vuota. La conversione per pagina può interrompere la formattazione delle tabelle multipagina. Negli altri formati `pages`, `fromPage` e `toPage` sono omessi.
 - **Token.** `tokens` conta il Markdown della sezione; `totalTokens` conta l’intero documento ed è ripetuto in ogni sezione. `getSectionMarkdown` funziona anche dopo un round trip JSON.
 - **Elaborazione in batch.** `parseDocuments(inputs)` mantiene l’ordine e si ferma al primo errore. `DocumentParseError` espone `documentId` e `cause`.
 
@@ -203,29 +220,35 @@ L’export è in UTF-8 e sovrascrive la destinazione. Inserisce `<!-------------
 
 ### Consultazione diretta
 
-`KbSmartManager` carica ricorsivamente i manifest JSON, inclusi quelli alla radice della KB. Può aprire più manifest nella stessa cartella senza invocare il parser o un LLM. Indicizza le mappe all’apertura e legge il Markdown solo per consultazione e ricerca.
+`KbSmartManager.open(store, searchEngine, options?)` riceve uno store e un motore già aperti. `createPosixStore` usa un indice SQLite e le sottocartelle `doc-<id>`; se l’indice manca, lo ricostruisce dai manifest. Gli indici SQLite POSIX precedenti con ID numerici vengono migrati all’apertura dello store: gli ID restano numeri e possono convivere con gli UUID senza rianalizzare i documenti.
 
-I file originali possono avere lo stesso nome, ma ciascun `documentId` deve essere univoco. Dopo aver concluso le modifiche su disco, chiama `await kb.refresh()` per aggiornare il catalogo di tutte le cartelle aperte, senza ricreare il manager o i suoi tool. Se un manifest non è valido o un ID è duplicato, `refresh()` segnala l’errore e mantiene il catalogo precedente. Il Markdown viene comunque letto dal disco: il catalogo non è una copia di sicurezza dei file.
+`POSIXSearchEngine.open({ root, semantic?, maxLimit? })` apre una connessione SQLite separata in sola lettura (`readOnly: true`). Usa una radice già inizializzata: il motore non crea né migra l’indice e si può aprire anche senza uno store attivo. `kb.close()` chiude solo lo store; chi ha aperto il motore deve chiamare `searchEngine.close()` separatamente.
+
+Il manager dipende da `KBSearchEngine`, che richiede solo `keywordSearch` e prevede `semanticSearch` come metodo facoltativo. Per un backend personalizzato puoi implementare l’interfaccia o estendere la classe astratta `SearchEngine`. `searchLimit` (default 100) è il limite di hit richiesto dal manager per le keyword; per la semantica il manager ne chiede al massimo 10. Se cambi `maxLimit` del motore POSIX (default 100), imposta `searchLimit` a un valore compatibile. Per attivare la ricerca semantica apri il motore con `semantic: { embeddings, modelId }`, usando il modello di embedding con cui è stato costruito l’indice.
+
+I file originali possono avere lo stesso nome, ma ciascun `documentId` deve essere univoco nello store. I documenti aggiunti tramite `store.add` sono consultabili dopo il commit, senza riaprire la KB.
+
+`kbGetTableOfContents` restituisce una pagina del catalogo dallo store. Passa `text` o `tags` per filtrarla e riusa `nextCursor` come `cursor` per leggere la pagina successiva.
 
 ```ts
-import { KbSmartManager } from "smartDocKb/kb";
-
-const kb = await KbSmartManager.open("./archivio");
+// Riusa store e searchEngine aperti sulla stessa radice come nel quickstart.
+const kb = await KbSmartManager.open(store, searchEngine);
 const indice = await kb.kbGetTableOfContents();
-const sezioni = await kb.kbFileGetTableOfContents(42);
-const info = await kb.kbFileGetInfo(42);
-const sintesi = await kb.kbFileReadSummary(42);
-const completo = await kb.kbFileRead(42);
+const id = indice.documents[0].documentId; // UUID o numero, per una KB non vuota.
+const sezioni = await kb.kbDocumentGetTableOfContents(id);
+const info = await kb.kbDocumentGetInfo(id);
+const sintesi = await kb.kbDocumentReadSummary(id);
+const completo = await kb.kbDocumentRead(id);
 
-const { matches, truncated } = await kb.kbFileSearchByKeywords(
+const { matches, truncated } = await kb.kbDocumentSearchByKeywords(
   { kind: "keywords", keywords: ["installazione", "requisiti"] },
-  { documentIds: [42] },
+  [id],
   { beforeLines: 2, afterLines: 3 },
 );
 for (const { snippet, source, matchLines } of matches) {
   console.log(source.originalFileName, source.fromLine, source.toLine, matchLines, snippet);
   if (source.sectionId !== undefined) {
-    const sezione = await kb.kbFileReadSection(source.documentId, source.sectionId);
+    const sezione = await kb.kbDocumentReadSection(source.documentId, source.sectionId);
     console.log(sezione.markdown);
   }
 }
@@ -234,36 +257,24 @@ if (truncated) console.log("Risultati parziali: restringere la ricerca.");
 
 **Regole della ricerca:**
 
-- **Query e ambito.** La modalità `keywords` trova le righe che contengono almeno una delle parole o stringhe richieste. In alternativa, usa `{ kind: "regex", pattern: "^art\\." }` (sintassi JavaScript). Entrambe ignorano maiuscole e minuscole salvo `caseSensitive: true`. Ometti `fileSpec` per cercare in tutta la KB.
-- **Contesto.** Con `beforeLines` e `afterLines` a zero (default), la ricerca restituisce una voce per riga trovata. Con il contesto attivo, le finestre sovrapposte si uniscono: `source` copre tutto lo snippet e `matchLines` indica solo le righe corrispondenti. Nel tool agentico, passa `beforeLines` e `afterLines` allo stesso livello di `query` e `fileSpec`.
-- **Fonti.** Una voce citabile include `source.documentId` e `source.originalFileName`. Il nome in `map.originalFileName` conserva l’estensione, non il percorso; nelle mappe precedenti o senza nome la fonte riporta `null`. I passaggi aggiungono le righe assolute inclusive e `pages`, una lista di `{ pageNumber, fromLine, toLine }` limitata al testo citato (`null` senza paginazione). Sintesi, metadati e documenti vuoti non riportano coordinate fittizie.
+- **Query e ambito.** La modalità `keywords` usa l’indice testuale e, se ometti `documentIds`, cerca in tutta la KB. La modalità `{ kind: "regex", pattern: "^art\\." }` usa la sintassi JavaScript e richiede un elenco di `documentIds`.
+- **Contesto.** `beforeLines` e `afterLines` ampliano gli snippet attorno alle righe trovate. Le finestre sovrapposte si uniscono: `source` copre tutto lo snippet e `matchLines` indica solo le righe corrispondenti. Nel tool agentico, passa `beforeLines` e `afterLines` allo stesso livello di `query` e `documentIds`.
+- **Fonti.** Una voce citabile include `source.documentId` e, se noto, `source.originalFileName` con l’estensione ma senza il percorso. I passaggi aggiungono le righe assolute inclusive e `pages`, una lista di `{ pageNumber, fromLine, toLine }` limitata al testo citato (`null` senza paginazione). Sintesi, metadati e documenti vuoti non riportano coordinate fittizie.
 - **Risultati ed errori.** Nessuna corrispondenza restituisce `{ matches: [] }`. Regex non valide, documenti o sezioni sconosciuti e intervalli fuori limite producono un errore.
 
-`await kb.deleteDocument(42)` rimuove il documento dalla KB e aggiorna subito l'indice. Cancella il manifest e il Markdown se non è condiviso con altri documenti; non tocca il file originale. Un ID sconosciuto produce un errore.
+`await kb.deleteDocument(id)` rimuove il documento dall’indice e cancella la sua copia nella KB, non il file originale. Un ID sconosciuto produce un errore.
 
 ### Ricerca agentica dalla libreria
 
-Passa il tuo chat model LangChain con supporto a `bindTools` nell’opzione `llm` di `open`: verrà usato da `kbAgentSearch` e da `kb.getAgentSearchTool()`. Se lo ometti, la ricerca agentica usa l’helper Azure del repository. L’apertura della KB e la consultazione diretta non richiedono un modello. Resta supportata la firma posizionale `open(cartelle, llm, selection, options)`.
+Passa il tuo chat model LangChain con supporto a `bindTools` nell’opzione `llm` di `open`: verrà usato da `kbAgentSearch` e da `kb.getAgentSearchTool()`. Senza `llm` puoi consultare direttamente la KB, ma non usare la ricerca agentica.
 
 ```ts
-const kb = await KbSmartManager.open(["./manuali", "./procedure"], { llm });
+// Riusa store e searchEngine aperti come nel quickstart.
+const kb = await KbSmartManager.open(store, searchEngine, { llm });
 const { answer, references } = await kb.kbAgentSearch("Quali sono i requisiti di installazione?");
 ```
 
-Puoi passare anche una sola cartella. Gli ID dei documenti devono essere univoci tra tutte le cartelle. Ogni domanda avvia una ricerca indipendente e restituisce `{ answer, references }`: `answer` è la risposta in Markdown, mentre `references` include i passaggi letti esplicitamente e le sole righe citate tra i risultati di ricerca (indici, metadati e sintesi usati per orientare la ricerca non diventano riferimenti). Senza selettore, il modello riceve subito l'indice di tutti i documenti e delle relative sezioni, insieme alla domanda; il testo viene letto con i tool su richiesta. Se il modello continua a richiedere tool dopo otto turni di tool calling, il metodo segnala un errore.
-
-Per omettere l’indice dal system prompt, usa `open(cartella, { llm, tocMode: "tools" })`. L’agente può consultare gli indici tramite i tool. Il default è `"prompt"`; se è configurato un decision model, l’opzione viene ignorata.
-
-Per ridurre l’indice iniziale, passa un modello LangChain con `withStructuredOutput` nell’opzione `selection`:
-
-```ts
-const kb = await KbSmartManager.open("./archivio", {
-  llm: searchModel,
-  selection: { decisionModel, threshold: 0.5, maxDocuments: 5 },
-});
-```
-
-Per ogni domanda il selettore valuta schede compatte (nome, titolo, descrizione breve e keyword) in batch da massimo 20, senza leggere il Markdown o le sezioni. Il prompt di ricerca include solo le TOC meglio classificate sopra o alla soglia (da 0 a 1, predefinita `0.5`), fino a `maxDocuments` (intero positivo, predefinito `5`). I tool restano globali: se non ci sono candidati o la selezione fallisce, l'agente parte senza TOC e può consultare il catalogo o cercare per keyword in tutta la KB.
+Ogni domanda avvia una ricerca indipendente. L’agente consulta il catalogo e legge il testo tramite i tool, senza ricevere l’indice completo nel prompt. Restituisce `{ answer, references }`: `answer` è la risposta in Markdown, mentre `references` include i passaggi letti esplicitamente e le righe citate tra i risultati di ricerca. Indici, metadati e sintesi non diventano riferimenti.
 
 <a id="test-e-benchmark"></a>
 
@@ -276,11 +287,12 @@ Dalla root del repository:
 | `npm run --silent prova:ocr -- "./scansione.pdf"` | Stampa il Markdown senza credenziali, senza chiamate al modello e senza modificare la KB. |
 | `npm run prova -- "./manuale.pdf"` | Compila, analizza il PDF usando la [configurazione Azure della root](.env.example) e salva il risultato in KB1 con ID `1`. |
 | `npm test` | Esegue i test con AnyDoc e `AzureChatOpenAI` reali e risposte HTTP locali predeterminate. Non serve un deployment. |
+| `node --test kb-agent-cli/*.test.mjs` | Dopo la build e l’installazione delle dipendenze della CLI, esegue i test della CLI senza un deployment. |
 | `npm run test:azure` | Esegue una prova live con un CSV sintetico. Consuma risorse sul deployment; risulta **skipped** se mancano le variabili Azure. |
 
-> **Attenzione:** `prova` può sovrascrivere un’esportazione omonima o creare un conflitto con il documento che ha già ID `1` in [KB1](./kb1). Per ottenere solo JSON su stdout e non toccare KB1, dopo la build esegui [lo script di prova](examples/prova-documento.mjs) con `node` da una cartella temporanea, passando percorsi assoluti allo script e al PDF. Lo script salva la propria KB nella cartella corrente.
+> **Attenzione:** `prova` usa l’ID esplicito `1` e fallisce con `ALREADY_EXISTS` se l’ID è già in [KB1](./kb1), senza sovrascriverlo. Per non toccare KB1, dopo la build esegui [lo script di prova](examples/prova-documento.mjs) con `node` da una cartella temporanea, passando percorsi assoluti allo script e al PDF. Lo script salva in `./kb1`, relativo alla cartella corrente.
 
-La [guida ai benchmark](benchmarks/search-agent/README.md) confronta tre strategie su KB1 e KB2: indice nel prompt, selettore e indice via tool. Distingue le esecuzioni live, che consumano token sul deployment, dalle simulazioni offline di costo.
+La [guida ai benchmark](benchmarks/search-agent/README.md) distingue le esecuzioni live, che consumano token sul deployment, dalle simulazioni offline di costo.
 
 <a id="kb-studio"></a>
 
@@ -290,7 +302,7 @@ La [guida ai benchmark](benchmarks/search-agent/README.md) confronta tre strateg
 
 ### Configurazione Azure
 
-I due file di configurazione sono indipendenti ed esclusi da Git. La libreria legge il file della root; nella CLI, le variabili già presenti nell’ambiente di processo hanno precedenza sul file locale. Per ogni gruppo configura chiave, istanza oppure endpoint, deployment, versione API e modello. Non inserire le chiavi nel sorgente.
+I file di configurazione locali sono indipendenti ed esclusi da Git. La configurazione della root è usata dagli script di esempio; nella CLI, le variabili già presenti nell’ambiente di processo hanno precedenza sul file locale. Per ogni gruppo configura chiave, istanza oppure endpoint, deployment, versione API e modello. Non inserire le chiavi nel sorgente.
 
 | Configurazione | Variabili | Uso |
 | --- | --- | --- |
@@ -299,8 +311,6 @@ I due file di configurazione sono indipendenti ed esclusi da Git. La libreria le
 | [Esempio della CLI](kb-agent-cli/.env.example) | `KB_IMPORT_AZURE_OPENAI_*` | Parser per `/add`; richiede output strutturato. Non usa la configurazione della root come fallback. |
 
 Per le istanze configurate con `gpt-6-luna`, la CLI invia `reasoning_effort: "none"` per poter usare i tool su Chat Completions.
-
-**Selettore facoltativo.** Imposta `KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME` con l’ID esatto del gateway (es. `Decision-1.1`). L’adapter LangChain chiama `POST /systemone` sullo stesso host HTTPS e con la stessa chiave di `KB_SEARCH_AZURE_OPENAI_*`, senza usare la versione API di Chat Completions. I punteggi da 0–2 vengono normalizzati a 0–1 prima di applicare la soglia. `KB_DECISION_THRESHOLD` e `KB_DECISION_MAX_DOCUMENTS` sono facoltative; turni e token del selettore hanno metriche separate.
 
 ### Avvio
 
@@ -322,11 +332,11 @@ Il comando apre la [KB1 di esempio](./kb1). Al prompt `›` puoi chiedere, per e
 | --- | --- |
 | Una domanda al prompt `›` | Avvia una ricerca indipendente e mostra la risposta in Markdown. |
 | `/tools`, `/tools on`, `/tools off` | Mostra lo stato oppure abilita o disabilita la visualizzazione dei risultati dei tool per le domande successive. I risultati sono nascosti all’avvio. |
-| `/add "./Manuale tecnico.pdf"` | Importa un file nella KB aperta. I percorsi relativi partono dalla cartella di avvio. |
-| `/delete 42` oppure `/delete #42` | Rimuove definitivamente il documento dalla KB e aggiorna il pannello, senza cancellare l’originale. Usa l’ID nel pannello **Documenti in KB**. |
+| `/add "./Manuale tecnico.pdf"` | Importa un file con un nuovo UUID v7. I percorsi relativi partono dalla cartella di avvio. |
+| `/delete <ID>` oppure `/delete #<ID>` | Rimuove il documento dalla KB e aggiorna il pannello, senza cancellare l’originale. Usa l’UUID esattamente come appare in **Documenti in KB** oppure un ID numerico legacy, per esempio `/delete #42`. |
 | Invio a vuoto | Esce dalla CLI. |
 
-Durante `/add` il pannello destro mostra le fasi reali del parser e, quando disponibili, le percentuali. Ogni file viene salvato in una sottocartella distinta ed è interrogabile quando compare **Pronto nella KB**, senza riavviare. La CLI elabora una richiesta alla volta. Importa solo file che puoi inviare al deployment di importazione.
+Durante `/add` il pannello destro mostra le fasi reali del parser e, quando disponibili, le percentuali. **Pronto nella KB** mostra l’ID salvato e compare solo dopo il salvataggio. Il documento è subito interrogabile. La CLI elabora una richiesta alla volta. Importa solo file che puoi inviare al deployment di importazione.
 
 ### Come avviene la ricerca
 

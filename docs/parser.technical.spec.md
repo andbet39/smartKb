@@ -1,10 +1,14 @@
 # Specifica tecnica — Parser documentale
 
-Questa specifica descrive l'implementazione corrente. Le voci **Enhancement** sono proposte, non requisiti già implementati. Firme e tipi pubblici sono nel [contratto del parser](parser-kbmanager.spec.md#parser); la consultazione dei documenti è descritta nella [specifica del KB Manager](kbmanager.technical.spec.md).
+> **Superata.** Descrive l’API precedente a [KB Store](kbstore.technical.spec.md) (persistenza su cartelle, `tocMode`, selettore, nomi `kbFile*`, campi snake_case). Va riscritta.
+
+Le voci **Enhancement** sono proposte. Il [contratto storico del parser](parser-kbmanager.spec.md#parser) conserva i precedenti nomi dell’API; per la persistenza attuale si veda [KB Store](kbstore.technical.spec.md).
 
 ## 1. Responsabilità, configurazione e ciclo di vita
 
-Il parser trasforma byte già in memoria in un `ParsedDocument`: Markdown normalizzato, mappa semantica e, per i PDF, mappa delle pagine fisiche. Non apre il percorso indicato da `fileName`, non assegna il `documentId` e non persiste automaticamente il risultato. Il flusso è: conversione locale → segmentazione e sintesi tramite modello → calcolo delle coordinate → eventuale esportazione o persistenza a cura del chiamante.
+Il parser trasforma byte già in memoria in un `ParsedDocument`: Markdown normalizzato, mappa semantica e, per i PDF, mappa delle pagine fisiche. Non apre il percorso indicato da `fileName` e non persiste automaticamente il risultato. Il flusso è: assegnazione dell’ID → conversione locale → segmentazione e sintesi tramite modello → calcolo delle coordinate → eventuale esportazione o persistenza a cura del chiamante.
+
+`DocumentInput.documentId` è facoltativo. Il parser conserva un ID esplicito valido oppure, se omesso, genera un UUID v7. Il tipo pubblico `DocumentId` è `string | number`: una stringa deve essere un UUID v7 canonico in minuscolo; un ID numerico legacy deve essere un intero sicuro non negativo. Lo stesso ID è usato in `map.documentId` e negli eventi di avanzamento.
 
 La factory richiede un modello con `withStructuredOutput` e un contatore `countTokens`. Configura tre operazioni strutturate per segmentazione, sintesi di sezione e sintesi del documento. `windowTokens` vale 4096 per default; se presente deve essere un intero positivo sicuro. Lo stesso vincolo vale per i singoli valori di `targetChars`. La configurazione è validata alla creazione; `sectionSize`, invece, è validato per input, con `minChars ≤ maxChars`. Gli errori durante il parsing sono incapsulati in `DocumentParseError` con ID e causa. `parseDocuments` procede in ordine, in sequenza, e rigetta al primo errore senza restituire risultati parziali. `onProgress` è un callback sincrono facoltativo che riceve un `DocumentParseProgress` strutturato (fase `conversion` → `segmentation` → `sections` → `overview` → `completed`, avanzamento `current`/`total`/`phasePercent`, percentuale complessiva `percent` monotona 0–100, posizione `batch` nei parse multipli e `message` descrittivo); non c'è un protocollo di cancellazione. Un documento con zero righe non invoca i runner del modello e ottiene una mappa con sintesi e descrizione vuote, senza keyword né sezioni.
 
@@ -53,6 +57,10 @@ Le coordinate canoniche sono inclusive e partono da 1. `id` e `order` delle sezi
 Riferimento: [mappatura ed esportazione](../src/parser/index.ts).
 
 ## 5. Persistenza e integrità
+
+Nel flusso attuale, il chiamante passa il `ParsedDocument` a `KbStore.add`, che usa `map.documentId` e rifiuta i duplicati. Non serve prenotare o rilasciare un ID prima o dopo il parsing.
+
+### Persistenza storica (prima di KB Store)
 
 `persist` crea la cartella e scrive prima il Markdown grezzo e poi il manifest `{ map, pages? }`. Con un nome noto aggiunge i suffissi `.md` e `.json` dopo il nome completo; senza nome usa `document.md` e `metadata.json`. `load` legge `metadata.json` se presente, altrimenti l'unico manifest regolare con suffisso `.json`; se ne trova più di uno senza quello legacy, fallisce. Il Markdown legacy `document.md` è il fallback se il percorso nominato manca (`ENOENT`), non se la lettura fallisce per un'altra causa.
 

@@ -52,7 +52,8 @@ type Result = {
 };
 
 type ExpectedSource = { file: string; fromLine: number; toLine: number };
-type DocumentSource = { documentId: number; originalFileName: string | null; title?: string };
+type DocumentId = string | number;
+type DocumentSource = { documentId: DocumentId; originalFileName: string | null; title?: string };
 type PageSpan = { pageNumber: number; fromLine: number; toLine: number };
 type PassageSource = DocumentSource & {
   fromLine: number;
@@ -77,6 +78,8 @@ type Delta = {
 ```
 
 ## Modello dati
+
+Nei campi `documentId`, il JSON mantiene il tipo dell’ID: UUID v7 canonico in minuscolo come stringa, intero sicuro non negativo come numero per gli ID legacy. Non convertire gli ID numerici in stringhe.
 
 ### Cosa viene testato
 

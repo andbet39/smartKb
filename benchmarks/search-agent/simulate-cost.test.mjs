@@ -6,13 +6,13 @@ import { test } from 'node:test';
 import { benchmarkCli, simulateCost } from './simulate-cost.mjs';
 
 function fixture(documentId, lines) {
-  const description = { short_description: 'Fixture', summary: 'Fixture', keywords: [] };
-  const pages = lines.map((_, index) => ({ page: index + 1, range: [index + 1, index + 1] }));
+  const description = { shortDescription: 'Fixture', summary: 'Fixture', keywords: [] };
+  const pages = lines.map((_, index) => ({ pageNumber: index + 1, fromLine: index + 1, toLine: index + 1 }));
   return { markdown: lines.join('\n'), pages, map: {
     ...description, documentId, originalFileName: `doc-${documentId}.pdf`, lineCount: lines.length,
-    sections: pages.map(({ page, range }, index) => ({
-      ...description, short_description: lines[index], id: page, order: page, title: `Page ${page}`,
-      range, pageRange: [page, page], tokens: 1, totalTokens: 1,
+    sections: pages.map(({ pageNumber, fromLine, toLine }, index) => ({
+      ...description, shortDescription: lines[index], sectionId: pageNumber, order: pageNumber, title: `Page ${pageNumber}`,
+      fromLine, toLine, fromPage: pageNumber, toPage: pageNumber, tokens: 1, totalTokens: 1,
     })),
   } };
 }
@@ -20,31 +20,28 @@ function fixture(documentId, lines) {
 const documents = [fixture(1, ['The International System of Units (SI)', 'Metrology. '.repeat(60)]),
   fixture(2, ['Second document', 'Another subject'])];
 
-test('varia indipendentemente pagine e documenti e computa le tariffe per modello', async () => {
-  const rates = { currency: 'EUR', search: { input: 2, output: 8 }, decision: { input: 0.5, output: 2 } };
+test('varia indipendentemente pagine e documenti e computa le tariffe', async () => {
+  const rates = { currency: 'EUR', input: 2, output: 8 };
   const { scenarios } = await simulateCost({ documents, counts: [1, 2], sizes: [1, 2], rates });
   const [base, morePages, moreDocs, both] = scenarios;
   assert.deepEqual(scenarios.map(s => [s.documentCount, s.pagesPerDocument]), [[1, 1], [1, 2], [2, 1], [2, 2]]);
   assert.ok(moreDocs.corpusTextTokens > base.corpusTextTokens);
   assert.ok(morePages.corpusTextTokens > base.corpusTextTokens);
-  const baseline = s => s.workloads.targeted.withoutDecision.search.input;
-  assert.ok(baseline(moreDocs) > baseline(base));
-  assert.ok(baseline(morePages) > baseline(base));
-  const { targeted, fullDocument } = both.workloads;
-  assert.equal(targeted.withoutDecision.search.turns, 2);
-  assert.equal(targeted.withDecision.decision.turns, 1);
-  assert.equal(targeted.withoutDecisionTocViaTools.search.turns, 4);
-  assert.equal(fullDocument.withoutDecisionTocViaTools.search.turns, 3);
-  assert.ok(fullDocument.withDecision.search.input > targeted.withDecision.search.input);
-  const { search, decision, totalTokens, costPerQuestion, costPer1000Questions } = targeted.withDecision;
-  assert.equal(totalTokens, search.input + search.output + decision.input + decision.output);
-  assert.equal(costPerQuestion, (search.input * 2 + search.output * 8) / 1e6 + (decision.input * 0.5 + decision.output * 2) / 1e6);
+  const targeted = s => s.workloads.targeted.search.input;
+  assert.ok(targeted(moreDocs) > targeted(base)); // a longer catalogue
+  assert.ok(targeted(morePages) > targeted(base)); // a longer table of contents
+  const { targeted: section, fullDocument } = both.workloads;
+  assert.equal(section.search.turns, 4);
+  assert.equal(fullDocument.search.turns, 3);
+  const { search, totalTokens, costPerQuestion, costPer1000Questions } = section;
+  assert.equal(totalTokens, search.input + search.output);
+  assert.equal(costPerQuestion, (search.input * 2 + search.output * 8) / 1e6);
   assert.equal(costPer1000Questions, costPerQuestion * 1000);
 });
 
 test('senza tariffe riporta solo token e rifiuta dimensioni impossibili', async () => {
   const { scenarios } = await simulateCost({ documents, counts: [1], sizes: [1] });
-  assert.equal(scenarios[0].workloads.targeted.withDecision.costPerQuestion, null);
+  assert.equal(scenarios[0].workloads.targeted.costPerQuestion, null);
   await assert.rejects(simulateCost({ documents, counts: [3], sizes: [1] }), /solo 2 documenti/);
   await assert.rejects(simulateCost({ documents, counts: [1], sizes: [3] }), /al massimo 2 pagine/);
   await assert.rejects(simulateCost({ documents, counts: [0], sizes: [1] }), /interi positivi/);
@@ -67,4 +64,5 @@ test('il comando mostra le opzioni e rifiuta scenari ambigui o malformati', asyn
   await benchmarkCli(['--help'], { print: value => assert.match(value, /--scenario/) });
   await assert.rejects(benchmarkCli(['--scenario', '1x2', '--counts', '1'], { documents }), /non entrambi/);
   await assert.rejects(benchmarkCli(['--scenario', '1,2'], { documents }), /Scenario non valido/);
+  await assert.rejects(benchmarkCli(['--search-input', '2'], { documents }), /entrambe le tariffe/);
 });

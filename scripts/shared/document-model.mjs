@@ -2,23 +2,14 @@ import fs from "node:fs";
 import { parseEnv } from "node:util";
 import { AzureChatOpenAI } from "@langchain/openai";
 
-// Resolve relative to the package, even when the CLI runs from its own directory.
-const ROOT_ENV_URL = new URL("../.env", import.meta.url);
+// Azure chat model configured from the repository .env. Used by examples and benchmarks, not by the library.
+// Resolve relative to the repository, even when a script runs from another directory.
+const ROOT_ENV_URL = new URL("../../.env", import.meta.url);
 const REQUEST_TIMEOUT_MS = 60_000;
 
-interface AzureDocumentModelConfig {
-  model: string;
-  apiKey: string;
-  deploymentName: string;
-  apiVersion: string;
-  instanceName: string;
-  endpoint: string;
-  basePath: string;
-}
+let documentModel;
 
-let documentModel: AzureChatOpenAI | undefined;
-
-export function getDocumentModel(): AzureChatOpenAI {
+export function getDocumentModel() {
   if (documentModel) return documentModel;
 
   const config = loadAzureModelConfig();
@@ -37,7 +28,7 @@ export function getDocumentModel(): AzureChatOpenAI {
   return documentModel;
 }
 
-function loadAzureModelConfig(): AzureDocumentModelConfig {
+function loadAzureModelConfig() {
   const contents = readRootEnvFile();
   // Read the root configuration without modifying the CLI's environment.
   const env = parseEnv(contents);
@@ -56,7 +47,7 @@ function loadAzureModelConfig(): AzureDocumentModelConfig {
   };
 }
 
-function readRootEnvFile(): string {
+function readRootEnvFile() {
   try {
     return fs.readFileSync(ROOT_ENV_URL, "utf8");
   } catch (cause) {
@@ -64,7 +55,7 @@ function readRootEnvFile(): string {
   }
 }
 
-function requireEnvVar(env: Record<string, string | undefined>, name: string): string {
+function requireEnvVar(env, name) {
   const value = env[name]?.trim();
   if (!value) {
     throw new Error(`Variabile ${name} mancante nel file .env della root.`);

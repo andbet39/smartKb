@@ -1,63 +1,32 @@
-import test from "node:test";
-import { convertDocument } from "smartDocKb";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import test from "node:test";
 import { PDFDocument } from "pdf-lib";
-import { createDocumentParser, getDocumentTableOfContents, getSectionMarkdown, load, persist, saveDocumentMarkdown } from "../dist/index.js";
+import { validate as validateUuid, version as uuidVersion } from "uuid";
+import {
+  convertDocument, createDocumentParser, createPosixStore, getDocumentTableOfContents, getSectionMarkdown,
+  KbSmartManager, KbStoreError, POSIXSearchEngine, saveDocumentMarkdown,
+} from "smartDocKb";
+import { convertToMarkdown } from "../dist/parser/convert.js";
 import { offlineAzure } from "./azure-model.mjs";
-import { KbSmartManager } from "smartDocKb/kb";
+import { makeDocument, openKb, tempFolder } from "./kb-fixtures.mjs";
 
 const countTokens = text => text.length;
 const csv = { documentId: 1, bytes: Buffer.from("name,price\nBook,10"), fileName: "prices.csv" };
+const noModel = () => offlineAzure(() => assert.fail("Unexpected model call"));
+const uuid = "019ab123-4567-7abc-8def-0123456789ab";
 
-test("persist and load preserve raw Markdown, full metadata and optional pages", async t => {
-  const dir = await mkdtemp(join(tmpdir(), "document-persist-"));
-  t.after(() => rm(dir, { recursive: true }));
-  const folder = join(dir, "archivio", "manuale");
-  const description = { summary: "Il manuale", short_description: "Guida", keywords: ["uso"] };
-  const doc = {
-    markdown: "# Manuale\n\nCittà",
-    pages: [{ page: 1, range: [1, 2] }, { page: 2, range: null }, { page: 3, range: [3, 3] }],
-    map: { documentId: 42, lineCount: 3, ...description, sections: [
-      { id: 1, order: 1, title: "Manuale", range: [1, 3], pageRange: [1, 3], tokens: 6, totalTokens: 6, ...description },
-    ] },
-  };
-  await persist(doc, folder);
-  assert.equal(await readFile(join(folder, "document.md"), "utf8"), doc.markdown);
-  assert.deepEqual(await load(folder), doc);
-
-  const empty = { markdown: "", map: { ...doc.map, lineCount: 0, sections: [] } };
-  await persist(empty, folder);
-  assert.deepEqual(await load(folder), empty);
-});
-
-test("persist uses the original filename for Markdown and metadata", async t => {
-  const dir = await mkdtemp(join(tmpdir(), "document-named-persist-"));
-  t.after(() => rm(dir, { recursive: true }));
-  const folder = join(dir, "manuale");
-  const doc = {
-    markdown: "# Manuale",
-    map: {
-      documentId: 7, originalFileName: "manuale.pdf", lineCount: 1,
-      summary: "Manuale", short_description: "Guida", keywords: [], sections: [],
-    },
-  };
-
-  await persist(doc, folder);
-
-  assert.equal(await readFile(join(folder, "manuale.pdf.md"), "utf8"), doc.markdown);
-  assert.deepEqual(JSON.parse(await readFile(join(folder, "manuale.pdf.json"), "utf8")), { map: doc.map });
-  assert.deepEqual(await load(folder), doc);
-});
+function assertUuidV7(id) {
+  assert.ok(validateUuid(id), `Expected a UUID, got ${id}`);
+  assert.equal(uuidVersion(id), 7);
+  assert.equal(id, id.toLowerCase());
+}
 
 test("Markdown export marks physical pages, including empty ones, but not unpaginated text", async t => {
-  const dir = await mkdtemp(join(tmpdir(), "document-export-"));
-  t.after(() => rm(dir, { recursive: true }));
-  const path = join(dir, "export.md");
+  const path = join(await tempFolder(t, "document-export-"), "export.md");
   const markdown = "# Titolo\n\nPrima riga\nCittà";
-  const doc = { markdown, pages: [{ page: 1, range: [1, 3] }, { page: 2, range: null }, { page: 3, range: [4, 4] }] };
+  const doc = { markdown, pages: [{ pageNumber: 1, fromLine: 1, toLine: 3 }, { pageNumber: 2 }, { pageNumber: 3, fromLine: 4, toLine: 4 }] };
   await saveDocumentMarkdown(doc, path);
   assert.equal(await readFile(path, "utf8"), [
     "<!--------------- PAGE 1 ---------------->", "# Titolo", "", "Prima riga",
@@ -69,30 +38,29 @@ test("Markdown export marks physical pages, including empty ones, but not unpagi
 });
 
 test("Markdown export inserts each optional section marker only at its original start line", async t => {
-  const dir = await mkdtemp(join(tmpdir(), "section-export-"));
-  t.after(() => rm(dir, { recursive: true }));
-  const path = join(dir, "export.md");
+  const path = join(await tempFolder(t, "section-export-"), "export.md");
   const doc = {
     markdown: "Intro\nTerms\nMore terms",
-    map: { sections: [{ id: 1, range: [1, 1] }, { id: 2, range: [2, 3] }] },
+    map: { sections: [{ sectionId: 1, fromLine: 1, toLine: 1 }, { sectionId: 2, fromLine: 2, toLine: 3 }] },
   };
   const first = "<!--------------- SECTION 1 --------------->\nIntro";
   const second = "<!--------------- SECTION 2 --------------->\nTerms";
   await saveDocumentMarkdown(doc, path, { sectionMarkers: true });
   assert.equal(await readFile(path, "utf8"), [first, second, "More terms"].join("\n"));
 
-  doc.pages = [{ page: 1, range: [1, 2] }, { page: 2, range: [3, 3] }];
+  doc.pages = [{ pageNumber: 1, fromLine: 1, toLine: 2 }, { pageNumber: 2, fromLine: 3, toLine: 3 }];
   await saveDocumentMarkdown(doc, path, { sectionMarkers: true });
   assert.equal(await readFile(path, "utf8"), [
     "<!--------------- PAGE 1 ---------------->", first, second,
     "<!--------------- PAGE 2 ---------------->", "More terms",
   ].join("\n"));
 });
-const section = (startLine, endLine, summary = "Returns") => ({
-  title: "Returns", startLine, endLine, summary, short_description: "Resi", keywords: ["returns"],
+
+const section = (fromLine, toLine, summary = "Returns") => ({
+  title: "Returns", fromLine, toLine, summary, shortDescription: "Resi", keywords: ["returns"],
 });
 
-test("physical pages survive a blank page, a cross-page section and JSON round trip", async t => {
+test("physical pages survive a blank page, a cross-page section and the store round trip", async t => {
   const pdf = await PDFDocument.create();
   pdf.addPage().drawText("Introduction\nFirst condition", { lineHeight: 55 });
   pdf.addPage();
@@ -100,216 +68,121 @@ test("physical pages survive a blank page, a cross-page section and JSON round t
   const parser = createDocumentParser({
     countTokens,
     llm: offlineAzure((name, messages) => {
-      if (name === "summarize_document") return { summary: "Overview", short_description: "Introduzione e condizioni", keywords: [] };
+      if (name === "summarize_document") return { summary: "Overview", shortDescription: "Introduzione e condizioni", keywords: [] };
       const end = Number(messages[0].content.match(/through (\d+)/)[1]);
       return { continuesPrevious: false, sections: [
-        { ...section(1, 1), title: "Introduction", short_description: "Contesto" },
+        { ...section(1, 1), title: "Introduction", shortDescription: "Contesto" },
         section(2, end),
       ] };
     }),
   });
-  const bytes = await pdf.save();
   const doc = JSON.parse(JSON.stringify(await parser.parseDocument({
-    bytes, documentId: 4, fileName: "uploads\\Manuale originale.pdf",
+    bytes: await pdf.save(), documentId: 4, fileName: "uploads\\Manuale originale.pdf",
   })));
-  assert.deepEqual(doc.pages[1], { page: 2, range: null });
+  assert.deepEqual(doc.pages[1], { pageNumber: 2 });
   const selected = doc.map.sections[1];
-  assert.deepEqual(selected.pageRange, [1, 3]);
+  assert.deepEqual([selected.fromPage, selected.toPage], [1, 3]);
   assert.equal(selected.totalTokens, countTokens(doc.markdown));
-  assert.equal(selected.tokens, countTokens(getSectionMarkdown(doc, selected.id)));
-  const tagged = getSectionMarkdown(doc, selected.id, { pageTags: true });
+  assert.equal(selected.tokens, countTokens(getSectionMarkdown(doc, selected.sectionId)));
+  const tagged = getSectionMarkdown(doc, selected.sectionId, { pageTags: true });
   assert.match(tagged, /^<!-- page: 1 -->[\s\S]*First condition[\s\S]*<!-- page: 3 -->\n[^\n]*Second condition/);
   assert.doesNotMatch(doc.markdown, /<!-- page:/);
-  assert.deepEqual(getDocumentTableOfContents(doc), {
-    documentId: 4, short_description: "Introduzione e condizioni",
-    sections: [
-      { id: 1, title: "Introduction", short_description: "Contesto" },
-      { id: 2, title: "Returns", short_description: "Resi" },
-    ],
-  });
-
-  const root = await mkdtemp(join(tmpdir(), "document-kb-"));
-  t.after(() => rm(root, { recursive: true }));
-  await persist(doc, join(root, "archivio", "manuale"));
-  const kb = await KbSmartManager.open(root);
   const fileSource = { documentId: 4, originalFileName: "Manuale originale.pdf" };
-  assert.deepEqual((await kb.kbGetTableOfContents()).documents[0].source, fileSource);
-  assert.deepEqual((await kb.kbFileGetInfo(4)).source, fileSource);
-  assert.deepEqual((await kb.kbFileReadSummary(4)).source, fileSource);
-  assert.equal((await kb.kbFileRead(4)).markdown, doc.markdown);
-
-  const passage = await kb.kbFileReadSection(4, selected.id);
-  const toc = await kb.kbFileGetTableOfContents(4);
-  assert.deepEqual(toc.sections[1].source, passage.source);
-  assert.equal(passage.markdown, getSectionMarkdown(doc, selected.id));
-  assert.deepEqual(passage.source.pages, [
-    { pageNumber: 1, fromLine: selected.range[0], toLine: doc.pages[0].range[1] },
-    { pageNumber: 3, fromLine: doc.pages[2].range[0], toLine: selected.range[1] },
+  const toc = getDocumentTableOfContents(doc);
+  assert.deepEqual([toc.source, toc.shortDescription], [fileSource, "Introduzione e condizioni"]);
+  assert.deepEqual(toc.sections.map(({ source, shortDescription }) => [source.sectionId, source.sectionTitle, shortDescription]), [
+    [1, "Introduction", "Contesto"], [2, "Returns", "Resi"],
   ]);
-  const { matches } = await kb.kbFileSearchByKeywords(
-    { kind: "keywords", keywords: ["SECOND", "Second condition"] }, { documentIds: [4] },
-  );
+
+  const kb = await openKb(t, [doc]);
+  assert.deepEqual(await kb.kbDocumentGetTableOfContents(4), toc);
+  const [card] = (await kb.kbGetTableOfContents()).documents;
+  assert.deepEqual([card.documentId, card.originalFileName], [4, fileSource.originalFileName]);
+  assert.equal((await kb.kbDocumentGetInfo(4)).originalFileName, fileSource.originalFileName);
+  assert.deepEqual((await kb.kbDocumentReadSummary(4)).source, fileSource);
+  assert.equal((await kb.kbDocumentRead(4)).markdown, doc.markdown);
+
+  const passage = await kb.kbDocumentReadSection(4, selected.sectionId);
+  assert.deepEqual(toc.sections[1].source, passage.source);
+  assert.equal(passage.markdown, getSectionMarkdown(doc, selected.sectionId));
+  assert.deepEqual(passage.source.pages, [
+    { pageNumber: 1, fromLine: selected.fromLine, toLine: doc.pages[0].toLine },
+    { pageNumber: 3, fromLine: doc.pages[2].fromLine, toLine: selected.toLine },
+  ]);
+  const { matches } = await kb.kbDocumentSearchByKeywords({ kind: "keywords", keywords: ["SECOND", "Second condition"] }, [4]);
   assert.equal(matches.length, 1);
   const { source, snippet } = matches[0];
   assert.equal(source.originalFileName, fileSource.originalFileName);
   assert.equal(source.pages[0].pageNumber, 3);
-  assert.deepEqual(await kb.kbFileReadSection(4, source.fromLine, source.toLine), { markdown: snippet, source });
+  assert.deepEqual(await kb.kbDocumentReadSection(4, source.fromLine, source.toLine), { markdown: snippet, source });
   const tools = Object.fromEntries(kb.getTools().map(tool => [tool.name, tool]));
   assert.equal(Object.keys(tools).length, 7);
-  const search = await tools.kbFileSearchByKeywords.invoke({
-    query: { kind: "regex", pattern: "second condition" }, fileSpec: { documentIds: [4] },
+  const search = await tools.kbDocumentSearchByKeywords.invoke({
+    query: { kind: "regex", pattern: "second condition" }, documentIds: [4],
   });
   assert.deepEqual(search.matches, matches);
-  for (const [section, expected] of [
-    [{ sectionId: selected.id }, passage],
+  for (const [target, expected] of [
+    [{ sectionId: selected.sectionId }, passage],
     [{ fromLine: source.fromLine, toLine: source.toLine }, { markdown: snippet, source }],
   ]) {
-    assert.deepEqual(await tools.kbFileReadSection.invoke({ documentId: 4, section }), expected);
+    assert.deepEqual(await tools.kbDocumentReadSection.invoke({ documentId: 4, section: target }), expected);
   }
-  await assert.rejects(kb.kbFileReadSection(4, 999), /Unknown section/);
-  await assert.rejects(kb.kbFileReadSection(4, 0, 2), /Invalid line range/);
+  await assert.rejects(kb.kbDocumentReadSection(4, 999), /Unknown section/);
+  await assert.rejects(kb.kbDocumentReadSection(4, 0, 2), /Invalid line range/);
 });
 
-test("KB supports legacy maps, lazy text loading, filtered searches and explicit discovery errors", async t => {
-  const root = await mkdtemp(join(tmpdir(), "kb-discovery-"));
-  t.after(() => rm(root, { recursive: true }));
-  const map = { documentId: 1, summary: "Overview", short_description: "Info", keywords: [], sections: [], lineCount: 0 };
-  const empty = { map, markdown: "" };
-  await persist(empty, root);
-  const kb = await KbSmartManager.open(root);
-  assert.deepEqual(await kb.kbFileRead(1), { markdown: "", source: { documentId: 1, originalFileName: null } });
-  await rm(join(root, "document.md"));
-  const other = join(root, "another");
-  const doc = { markdown: "Art. 3\nArtX 3", map: { ...map, originalFileName: "Terms.txt", documentId: 2, lineCount: 2 } };
-  await persist(doc, other);
-  const catalog = await KbSmartManager.open(root);
-  assert.equal((await catalog.kbGetTableOfContents()).documents.length, 2);
-  await assert.rejects(catalog.kbFileRead(1), { code: "ENOENT" });
-  const filter = { documentIds: [2] };
-  const literal = await catalog.kbFileSearchByKeywords({ kind: "keywords", keywords: ["art."] }, filter);
+test("the manager reads empty documents, filters searches and deletes through the store", async t => {
+  const empty = makeDocument(1, undefined, "Info", "");
+  const terms = makeDocument(2, "Terms.txt", "Terms", "Art. 3\nArtX 3");
+  delete terms.pages;
+  const kb = await openKb(t, [empty, terms]);
+  assert.deepEqual(await kb.kbDocumentRead(1), { markdown: "", source: { documentId: 1 } });
+  const literal = await kb.kbDocumentSearchByKeywords({ kind: "keywords", keywords: ["art."] }, [2]);
   assert.deepEqual(literal.matches.map(hit => hit.snippet), ["Art. 3"]);
   assert.equal(literal.matches[0].source.pages, null);
-  const regex = await catalog.kbFileSearchByKeywords({ kind: "regex", pattern: "^art. 3$" }, filter);
+  const regex = await kb.kbDocumentSearchByKeywords({ kind: "regex", pattern: "^art. 3$" }, [2]);
   assert.equal(regex.matches.length, 2);
-  assert.deepEqual(await catalog.kbFileSearchByKeywords({ kind: "regex", pattern: "zz" }, filter), { matches: [] });
-  await assert.rejects(catalog.kbFileSearchByKeywords({ kind: "regex", pattern: "[" }), SyntaxError);
+  assert.deepEqual(await kb.kbDocumentSearchByKeywords({ kind: "regex", pattern: "zz" }, [2]), { matches: [] });
+  await assert.rejects(kb.kbDocumentRead(9), error => error instanceof KbStoreError && error.code === "NOT_FOUND");
 
-  await persist({ ...doc, map: { ...doc.map, documentId: 3 } }, join(other, "homonym"));
-  assert.equal((await (await KbSmartManager.open(root)).kbGetTableOfContents()).documents.length, 3);
-  await persist(empty, other);
-  await assert.rejects(KbSmartManager.open(root), /Duplicate document 1/);
-  await persist({ ...empty, map: { ...map, lineCount: -1 } }, other);
-  await assert.rejects(KbSmartManager.open(root), /Invalid metadata in .*another/);
-});
-
-test("KB discovers multiple source-named manifests in one folder", async t => {
-  const root = await mkdtemp(join(tmpdir(), "kb-multiple-manifests-"));
-  t.after(() => rm(root, { recursive: true }));
-  const map = { summary: "Overview", short_description: "Info", keywords: [], sections: [], lineCount: 1 };
-  await persist({
-    markdown: "First document",
-    map: { ...map, documentId: 1, originalFileName: "first.pdf" },
-  }, root);
-  await persist({
-    markdown: "Second document",
-    map: { ...map, documentId: 2, originalFileName: "second.pdf" },
-  }, root);
-
-  const kb = await KbSmartManager.open(root);
-  assert.deepEqual((await kb.kbGetTableOfContents()).documents.map(doc => doc.source.documentId), [1, 2]);
-  assert.equal((await kb.kbFileRead(1)).markdown, "First document");
-  assert.equal((await kb.kbFileRead(2)).markdown, "Second document");
-
-  await writeFile(join(root, "first.pdf"), "Original document");
-  await kb.deleteDocument(1);
-  await assert.rejects(kb.kbFileRead(1), /Unknown document 1/);
-  await assert.rejects(kb.deleteDocument(1), /Unknown document 1/);
-  await assert.rejects(readFile(join(root, "first.pdf.md")), { code: "ENOENT" });
-  await assert.rejects(readFile(join(root, "first.pdf.json")), { code: "ENOENT" });
-  assert.equal(await readFile(join(root, "first.pdf"), "utf8"), "Original document");
-  assert.deepEqual((await kb.kbGetTableOfContents()).documents.map(doc => doc.source.documentId), [2]);
-  const { matches } = await kb.kbFileSearchByKeywords({ kind: "keywords", keywords: ["document"] });
-  assert.deepEqual(matches.map(hit => hit.source.documentId), [2]);
-  assert.equal((await (await KbSmartManager.open(root)).kbFileRead(2)).markdown, "Second document");
-});
-
-test("KB deletes the actual legacy manifest without removing Markdown still in use", async t => {
-  const root = await mkdtemp(join(tmpdir(), "kb-delete-legacy-"));
-  t.after(() => rm(root, { recursive: true }));
-  const map = { summary: "", short_description: "", keywords: [], sections: [], lineCount: 1 };
-  const doc = { markdown: "Legacy text", map: { ...map, documentId: 1, originalFileName: "legacy.txt" } };
-  await persist(doc, root);
-  await rename(join(root, "legacy.txt.json"), join(root, "metadata.json"));
-  await rename(join(root, "legacy.txt.md"), join(root, "document.md"));
-  await writeFile(join(root, "other.json"), JSON.stringify({ map: { ...map, documentId: 2 } }));
-  await writeFile(join(root, "no-text.json"), JSON.stringify({ map: { ...map, documentId: 3 } }));
-
-  const kb = await KbSmartManager.open(root);
-  await kb.deleteDocument(1);
-  await assert.rejects(readFile(join(root, "metadata.json")), { code: "ENOENT" });
-  assert.equal((await kb.kbFileRead(2)).markdown, doc.markdown);
   await kb.deleteDocument(2);
-  assert.equal((await kb.kbFileRead(3)).markdown, doc.markdown);
-  await kb.deleteDocument(3);
-  await assert.rejects(readFile(join(root, "document.md")), { code: "ENOENT" });
-
-  await writeFile(join(root, "no-text.json"), JSON.stringify({ map: { ...map, documentId: 4 } }));
-  await (await KbSmartManager.open(root)).deleteDocument(4);
-  assert.deepEqual(await (await KbSmartManager.open(root)).kbGetTableOfContents(), { documents: [] });
+  await assert.rejects(kb.kbDocumentRead(2), /Unknown document 2/);
+  await assert.rejects(kb.deleteDocument(2), /Unknown document 2/);
+  assert.deepEqual((await kb.kbGetTableOfContents()).documents.map(doc => doc.documentId), [1]);
 });
 
 test("a blank document has an empty TOC and does not call the model", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
-  const parser = createDocumentParser({ countTokens, llm: offlineAzure(() => assert.fail("Unexpected model call")) });
-  const doc = await parser.parseDocument({ documentId: 7, bytes: await pdf.save() });
-  assert.deepEqual(getDocumentTableOfContents(doc), { documentId: 7, short_description: "", sections: [] });
+  const doc = await createDocumentParser({ countTokens, llm: noModel() }).parseDocument({ documentId: 7, bytes: await pdf.save() });
+  assert.deepEqual(getDocumentTableOfContents(doc), { source: { documentId: 7 }, shortDescription: "", sections: [] });
 });
 
-test("refresh picks up uploads across roots and preserves the last valid catalog on error", async t => {
-  const first = await mkdtemp(join(tmpdir(), "first-kb-"));
-  const second = await mkdtemp(join(tmpdir(), "second-kb-"));
-  t.after(() => Promise.all([first, second].map(root => rm(root, { recursive: true }))));
-  const kb = await KbSmartManager.open([first, second]);
-  const parser = createDocumentParser({ countTokens, llm: offlineAzure(() => assert.fail("Unexpected model call")) });
+test("callers parse and add uploads directly with generated or explicit IDs", async t => {
+  const root = await tempFolder(t, "parser-import-");
+  const store = await createPosixStore({ root });
+  t.after(() => store.close());
+  const parser = createDocumentParser({ countTokens, llm: noModel() });
   const pdf = await PDFDocument.create();
   pdf.addPage();
-  const input = { bytes: await pdf.save(), fileName: "upload.pdf", documentId: 1, kbFolder: second };
-  const doc = await parser.importDocument(input);
-  assert.deepEqual(await load(join(second, "doc-1")), doc);
-  assert.deepEqual((await kb.kbGetTableOfContents()).documents, []);
-  await kb.refresh();
-  assert.equal((await kb.kbFileGetInfo(1)).source.originalFileName, "upload.pdf");
-  await assert.rejects(parser.importDocument(input), { code: "EEXIST" });
-  await parser.importDocument({ ...input, kbFolder: first });
-  await assert.rejects(kb.refresh(), /Duplicate document 1/);
-  assert.equal((await kb.kbGetTableOfContents()).documents.length, 1);
-  await rm(join(first, "doc-1"), { recursive: true });
-  await rm(join(second, "doc-1"), { recursive: true });
-  await kb.refresh();
-  assert.deepEqual((await kb.kbGetTableOfContents()).documents, []);
-});
+  const input = { bytes: await pdf.save(), fileName: "upload.pdf" };
+  const first = await parser.parseDocument(input);
+  const second = await parser.parseDocument(input);
+  assertUuidV7(first.map.documentId);
+  assertUuidV7(second.map.documentId);
+  assert.notEqual(first.map.documentId, second.map.documentId);
+  const explicit = await parser.parseDocument({ ...input, documentId: uuid });
+  assert.equal(explicit.map.documentId, uuid);
+  for (const doc of [first, second, explicit]) await store.add(doc);
 
-test("importFile creates the KB, rolls back failed imports and never replaces an existing folder", async t => {
-  const root = await mkdtemp(join(tmpdir(), "parser-import-"));
-  t.after(() => rm(root, { recursive: true }));
-  const options = { kbFolder: join(root, "kb"), documentId: 7 };
-  const phases = [];
-  const parser = createDocumentParser({ countTokens, llm: offlineAzure(() => assert.fail("Unexpected model call")),
-    onProgress: event => phases.push(event.phase) });
-  const file = join(root, "manual.pdf");
-  await writeFile(file, "invalid PDF");
-  await assert.rejects(parser.importFile(file, options), { name: "DocumentParseError" });
-  const pdf = await PDFDocument.create();
-  pdf.addPage();
-  await writeFile(file, await pdf.save());
-  phases.length = 0;
-  const doc = await parser.importFile(file, options);
-  assert.equal(phases[0], "reading");
-  assert.equal(phases.at(-1), "saving");
-  assert.equal(doc.map.originalFileName, "manual.pdf");
-  await assert.rejects(parser.importFile(file, options), { code: "EEXIST" });
-  assert.deepEqual(await load(join(options.kbFolder, "doc-7")), doc);
+  const engine = await POSIXSearchEngine.open({ root });
+  t.after(() => engine.close());
+  const kb = await KbSmartManager.open(store, engine);
+  assert.equal((await kb.kbDocumentGetInfo(first.map.documentId)).originalFileName, "upload.pdf");
+  assert.equal((await kb.kbDocumentGetInfo(uuid)).documentId, uuid);
+  for (const documentId of [uuid.toUpperCase(), "550e8400-e29b-41d4-a716-446655440000", "2"]) {
+    await assert.rejects(parser.parseDocument({ ...input, documentId }), { name: "DocumentParseError", documentId });
+  }
 });
 
 test("persistent gaps recover the whole window from its original text", async () => {
@@ -319,14 +192,14 @@ test("persistent gaps recover the whole window from its original text", async ()
     calls.push(name);
     if (name === "summarize_section") {
       recoveredText = messages[1].content;
-      return { summary: "Prezzi dei libri", short_description: "Prezzi", keywords: ["libri"] };
+      return { summary: "Prezzi dei libri", shortDescription: "Prezzi", keywords: ["libri"] };
     }
     return { continuesPrevious: false, sections: [section(2, 3)] };
   }) });
   const doc = await parser.parseDocument(csv);
   assert.deepEqual(calls, ["chunk_document", "chunk_document", "summarize_section"]);
   assert.equal(recoveredText, doc.markdown);
-  assert.deepEqual(doc.map.sections.map(s => s.range), [[1, 3]]);
+  assert.deepEqual(doc.map.sections.map(s => [s.fromLine, s.toLine]), [[1, 3]]);
   assert.equal(doc.map.sections[0].summary, "Prezzi dei libri");
 });
 
@@ -338,7 +211,7 @@ test("windows merge without losing lines; merged summary sees all fragments", as
       if (name === "summarize_section") {
         assert.match(messages[1].content, /part-1/);
         assert.match(messages[1].content, /part-2/);
-        return { summary: "Combined", short_description: "All terms", keywords: ["all"] };
+        return { summary: "Combined", shortDescription: "All terms", keywords: ["all"] };
       }
       const [, start, end] = messages[0].content.match(/assigned lines (\d+) through (\d+)/);
       windows++;
@@ -350,8 +223,8 @@ test("windows merge without losing lines; merged summary sees all fragments", as
   assert.ok(windows >= 2);
   assert.equal(doc.map.sections.length, 1);
   assert.equal(doc.map.sections[0].summary, "Combined");
-  assert.equal(doc.map.sections[0].short_description, "All terms");
-  assert.equal(doc.map.short_description, "All terms");
+  assert.equal(doc.map.sections[0].shortDescription, "All terms");
+  assert.equal(doc.map.shortDescription, "All terms");
   assert.equal(getSectionMarkdown(doc, 1, { pageTags: true }), doc.markdown);
   assert.equal(doc.pages, undefined);
 });
@@ -362,18 +235,18 @@ test("independent character targets guide but do not truncate a single-section d
     const prompt = messages[0].content;
     if (name === "chunk_document") {
       assert.match(prompt, /3 characters for the section summary/);
-      assert.match(prompt, /2 characters for short_description/);
+      assert.match(prompt, /2 characters for shortDescription/);
       return { continuesPrevious: false, sections: [section(1, 3)] };
     }
     assert.match(prompt, /12 characters for the document summary/);
-    assert.match(prompt, /2 characters for short_description/);
-    return { summary: "Document overview", short_description: "Catalogo prezzi", keywords: [] };
+    assert.match(prompt, /2 characters for shortDescription/);
+    return { summary: "Document overview", shortDescription: "Catalogo prezzi", keywords: [] };
   }) });
   const { map } = await parser.parseDocument(csv);
   assert.equal(map.summary, "Document overview");
-  assert.equal(map.short_description, "Catalogo prezzi");
+  assert.equal(map.shortDescription, "Catalogo prezzi");
   assert.equal(map.sections[0].summary, "Returns");
-  assert.equal(map.sections[0].short_description, "Resi");
+  assert.equal(map.sections[0].shortDescription, "Resi");
 });
 
 test("local OCR reads an Italian scan between a native page and a blank page", async () => {
@@ -392,7 +265,9 @@ test("local OCR reads an Italian scan between a native page and a blank page", a
   }
   pdf.addPage();
   const progress = [];
-  const { markdown, pages } = await convertDocument({ bytes: await pdf.save() }, event => progress.push(event));
+  const bytes = await pdf.save();
+  const { markdown, pages } = await convertToMarkdown({ bytes }, event => progress.push(event));
+  assert.equal(await convertDocument({ bytes }), markdown);
   assert.ok(progress.every(e => !("documentId" in e) && e.phase === "conversion" && e.format === "pdf" && e.totalPages === 3 && e.unit === "pages"));
   for (let i = 1; i < progress.length; i++) {
     assert.ok(progress[i].percent >= progress[i - 1].percent);
@@ -417,7 +292,7 @@ test("local OCR reads an Italian scan between a native page and a blank page", a
   assert.doesNotMatch(logs, /Introduzione|Fattura numero/);
   assert.match(markdown, /Introduzione\nFattura numero 1742/);
   assert.deepEqual(pages, [
-    { page: 1, range: [1, 1] }, { page: 2, range: [2, 2] }, { page: 3, range: null },
+    { pageNumber: 1, fromLine: 1, toLine: 1 }, { pageNumber: 2, fromLine: 2, toLine: 2 }, { pageNumber: 3 },
   ]);
 });
 
@@ -430,9 +305,9 @@ test("ImageBased rejection triggers local OCR and resumes extraction; other unsu
   const mock = t.mock.method(anydoc, "toMarkdownBytes");
   const reject = message => async () => { throw Object.assign(new Error(message), { code: "unsupported" }); };
   mock.mock.mockImplementationOnce(reject("unsupported input: PDF has no extractable text (ImageBased, 1pages)"));
-  const result = await convertDocument(input);
+  const result = await convertToMarkdown(input);
   assert.match(result.markdown, /Fattura numero 29\nConclusione/);
-  assert.deepEqual(result.pages.map(p => p.range), [[1, 1], [2, 2]]);
+  assert.deepEqual(result.pages.map(p => [p.fromLine, p.toLine]), [[1, 1], [2, 2]]);
   mock.mock.mockImplementation(reject("unsupported input: unknown PDF feature"));
   await assert.rejects(convertDocument(input), /PDF page 1: unsupported input: unknown PDF feature/);
 });
@@ -463,10 +338,10 @@ test("onProgress emits structured phase and batch progress with monotonic percen
     onProgress: event => events.push(event),
     llm: offlineAzure((name, messages) => {
       if (name === "summarize_section") {
-        return { summary: "Merged section", short_description: "Merged", keywords: ["k"] };
+        return { summary: "Merged section", shortDescription: "Merged", keywords: ["k"] };
       }
       if (name === "summarize_document") {
-        return { summary: "Doc overview", short_description: "Overview", keywords: ["doc"] };
+        return { summary: "Doc overview", shortDescription: "Overview", keywords: ["doc"] };
       }
       const [, start, end] = messages[0].content.match(/assigned lines (\d+) through (\d+)/);
       windowCalls++;
@@ -481,10 +356,13 @@ test("onProgress emits structured phase and batch progress with monotonic percen
   const blankPdf = await PDFDocument.create();
   blankPdf.addPage();
 
-  await parser.parseDocuments([
-    { documentId: 11, fileName: "dir\\multi.csv", bytes: multiWindowBytes, sectionSize: { minChars: 100, maxChars: 160 } },
-    { documentId: 12, fileName: "empty.pdf", bytes: await blankPdf.save() },
+  const [multi, blank] = await parser.parseDocuments([
+    { fileName: "dir\\multi.csv", bytes: multiWindowBytes, sectionSize: { minChars: 100, maxChars: 160 } },
+    { documentId: uuid, fileName: "empty.pdf", bytes: await blankPdf.save() },
   ]);
+  assertUuidV7(multi.map.documentId);
+  assert.equal(blank.map.documentId, uuid);
+  assert.deepEqual([...new Set(events.map(e => e.documentId))], [multi.map.documentId, uuid]);
 
   for (let i = 1; i < events.length; i++) {
     assert.ok(events[i].batch.percent >= events[i - 1].batch.percent);
@@ -492,7 +370,7 @@ test("onProgress emits structured phase and batch progress with monotonic percen
   assert.equal(events[0].batch.percent, 0);
   assert.equal(events.at(-1).batch.percent, 100);
 
-  const doc11 = events.filter(e => e.documentId === 11);
+  const doc11 = events.filter(e => e.documentId === multi.map.documentId);
   assert.ok(doc11.every(e => e.fileName === "multi.csv" && e.batch.current === 1 && e.batch.total === 2));
   for (let i = 1; i < doc11.length; i++) {
     assert.ok(doc11[i].percent >= doc11[i - 1].percent);
@@ -514,7 +392,8 @@ test("onProgress emits structured phase and batch progress with monotonic percen
   assert.ok(doc11.some(e => e.phase === "sections" && e.step === "llm-request" && e.sectionIndex === 1 && e.totalSections === 1));
   assert.ok(doc11.some(e => e.phase === "overview" && e.step === "llm-request" && e.attempt === 1));
 
-  const doc12 = events.filter(e => e.documentId === 12);
+  const doc12 = events.filter(e => e.documentId === uuid);
+  assert.ok(doc12.every(e => e.fileName === "empty.pdf" && e.batch.current === 2 && e.batch.total === 2));
   assert.deepEqual(
     doc12.map(e => e.phase).filter((phase, idx, arr) => phase !== arr[idx - 1]),
     ["conversion", "completed"],

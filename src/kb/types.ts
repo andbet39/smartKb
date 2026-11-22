@@ -1,96 +1,82 @@
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { DocumentMap, DocumentSource, PassageSource, SectionSource } from "../document/types.ts";
+import type { DocumentCard } from "../store/types.ts";
 
-export interface AgentSearchOptions {
-  /** How to provide TOCs without a decision model. Defaults to "prompt"; ignored with document selection. */
-  tocMode?: "prompt" | "tools";
-}
+// Options of the KB manager and results of its kb* methods (the same JSON the tools return).
 
-export interface DocumentSelectionOptions {
-  decisionModel: Pick<BaseChatModel, "withStructuredOutput">;
-  /** Minimum relevance score, inclusive, between 0 and 1. Defaults to 0.5. */
-  threshold?: number;
-  /** Maximum number of document TOCs in the initial prompt. Defaults to 5. */
-  maxDocuments?: number;
-}
-
-export interface KbOpenOptions extends AgentSearchOptions {
+export interface KbOpenOptions {
+  /** Result limit sent to the keyword engine. Default 100. */
+  searchLimit?: number;
+  /** Chat model with tool calling, required only by `kbAgentSearch`. */
   llm?: Pick<BaseChatModel, "bindTools">;
-  selection?: DocumentSelectionOptions;
 }
 
-export interface DocumentSource {
-  documentId: number;
-  originalFileName: string | null;
-  title?: string;
-}
-
-export interface PageSpan {
-  pageNumber: number;
-  fromLine: number;
-  toLine: number;
-}
-
-export interface PassageSource extends DocumentSource {
-  fromLine: number;
-  toLine: number;
-  pages: PageSpan[] | null;
-  sectionId?: number;
-  sectionTitle?: string;
-}
-
-export interface SectionSource extends PassageSource {
-  sectionId: number;
-  sectionTitle: string;
+export interface TableOfContentsQuery {
+  /** Full-text filter on title, file name, short description and keywords. */
+  text?: string;
+  tags?: string[];
+  /** `nextCursor` of the previous page. */
+  cursor?: string;
 }
 
 export interface KbTableOfContents {
-  documents: { source: DocumentSource; shortDescription: string; sectionCount: number }[];
+  documents: DocumentCard[];
+  /** Present when more documents follow. */
+  nextCursor?: string;
 }
 
-export interface FileTableOfContents {
-  source: DocumentSource;
-  sections: { source: SectionSource; shortDescription: string }[];
-}
+export type DocumentInfo = DocumentCard & Pick<DocumentMap, "author" | "fileType" | "lineCount">;
 
-export interface FileInfo {
-  source: DocumentSource;
-  author?: string;
-  fileType?: string;
-  tags?: string[];
-  shortDescription: string;
-  keywords: string[];
-  lineCount: number;
-  sectionCount: number;
-}
-
-export interface FileSummary {
+export interface DocumentSummary {
   source: DocumentSource;
   kind: "summary";
   summary: string;
 }
 
-export interface SectionContent {
+/** Text of a document or of a passage. An empty document has a document-level source. */
+export interface DocumentContent {
   markdown: string;
-  source: PassageSource;
+  source: PassageSource | DocumentSource;
 }
-
-export type FileContent = SectionContent | { markdown: ""; source: DocumentSource };
 
 export type SearchQuery =
   | { kind: "keywords"; keywords: string[]; caseSensitive?: boolean }
+  /** JavaScript regular expression (flags `u`/`iu`); requires `documentIds`. */
   | { kind: "regex"; pattern: string; caseSensitive?: boolean };
 
-export interface FileSpec {
-  documentIds: number[];
+export interface SearchOptions {
+  /** Lines of context before each match, 0–20. Default 0. */
+  beforeLines?: number;
+  /** Lines of context after each match, 0–20. Default 0. */
+  afterLines?: number;
+  /** Return the whole section that contains each match instead of a window of lines. */
+  fullSection?: boolean;
 }
 
-export interface SearchContextOptions {
-  beforeLines?: number;
-  afterLines?: number;
+export interface SearchMatch {
+  snippet: string;
+  source: PassageSource;
+  /** Lines of the snippet that matched. */
+  matchLines: number[];
 }
 
 export interface SearchResult {
-  matches: { snippet: string; source: PassageSource; matchLines?: number[] }[];
+  matches: SearchMatch[];
+  /** Some results were left out: narrow the query or filter by document. */
+  truncated?: true;
+}
+
+export interface SemanticMatch {
+  source: SectionSource;
+  shortDescription: string;
+  summary?: string;
+  score?: number;
+  /** Section text, with `fullSection: true` and within the text budget. */
+  markdown?: string;
+}
+
+export interface SemanticSearchResult {
+  matches: SemanticMatch[];
   truncated?: true;
 }
 

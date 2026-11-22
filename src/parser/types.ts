@@ -1,11 +1,10 @@
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { DocumentId } from "../document/types.ts";
 
-export type DocumentLineRange = [start: number, end: number];
-export type DocumentPageRange = [startPage: number, endPage: number];
+// Input, options and progress events of the document parser.
+// Document data types live in ../document/types.ts.
 
 export type DocumentParsePhase =
-  | "reading"
-  | "saving"
   | "conversion"
   | "segmentation"
   | "sections"
@@ -21,7 +20,7 @@ export interface DocumentBatchProgress {
 }
 
 export interface DocumentParseProgressBase {
-  documentId: number;
+  documentId: DocumentId;
   fileName?: string;
   batch?: DocumentBatchProgress;
   phase: DocumentParsePhase;
@@ -63,7 +62,8 @@ export interface SegmentationProgress extends DocumentParseProgressBase {
   totalTokens: number;
   totalWindows: number;
   window?: number;
-  lineRange?: DocumentLineRange;
+  fromLine?: number;
+  toLine?: number;
   attempt?: number;
   maxAttempts?: number;
 }
@@ -93,7 +93,6 @@ export interface CompletedParseProgress extends DocumentParseProgressBase {
 }
 
 export type DocumentParseProgress =
-  | (DocumentParseProgressBase & { phase: "reading" | "saving"; step: "start" })
   | ConversionProgress
   | SegmentationProgress
   | SectionSummaryProgress
@@ -101,18 +100,11 @@ export type DocumentParseProgress =
   | CompletedParseProgress;
 
 export interface DocumentInput {
-  documentId: number;
+  /** If omitted, the parser generates a UUID v7. */
+  documentId?: DocumentId;
   bytes: Uint8Array;
   fileName?: string;
   sectionSize?: { minChars: number; maxChars: number };
-}
-
-export interface ImportFileOptions extends Pick<DocumentInput, "documentId" | "sectionSize"> {
-  kbFolder: string;
-}
-
-export interface ImportDocumentInput extends DocumentInput {
-  kbFolder: string;
 }
 
 export interface ParserOptions {
@@ -127,62 +119,4 @@ export interface ParserOptions {
     sectionSummary?: number;
     shortDescription?: number;
   };
-}
-
-export interface DocumentSection {
-  id: number;
-  order: number;
-  title: string;
-  range: DocumentLineRange;
-  pageRange?: DocumentPageRange;
-  tokens: number;
-  totalTokens: number;
-  summary: string;
-  short_description: string;
-  keywords: string[];
-}
-
-export interface DocumentMap {
-  documentId: number;
-  originalFileName?: string;
-  title?: string;
-  author?: string;
-  fileType?: string;
-  tags?: string[];
-  lineCount: number;
-  summary: string;
-  short_description: string;
-  keywords: string[];
-  sections: DocumentSection[];
-}
-
-export interface DocumentTableOfContents {
-  documentId: number;
-  short_description: string;
-  sections: Pick<DocumentSection, "id" | "title" | "short_description">[];
-}
-
-export interface DocumentPage {
-  page: number;
-  range: DocumentLineRange | null;
-}
-
-export interface ParsedDocument {
-  markdown: string;
-  pages?: DocumentPage[];
-  map: DocumentMap;
-}
-
-export interface DocumentParser {
-  importFile(path: string, options: ImportFileOptions): Promise<ParsedDocument>;
-  importDocument(input: ImportDocumentInput): Promise<ParsedDocument>;
-  parseDocument(input: DocumentInput): Promise<ParsedDocument>;
-  parseDocuments(inputs: readonly DocumentInput[]): Promise<ParsedDocument[]>;
-}
-
-export class DocumentParseError extends Error {
-  constructor(readonly documentId: number, cause: unknown) {
-    super(`Document ${documentId}: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
-    this.name = "DocumentParseError";
-  }
 }

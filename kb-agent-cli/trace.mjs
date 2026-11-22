@@ -2,7 +2,6 @@ import { stripVTControlCharacters } from "node:util";
 
 const CLI_AGENT = "Deep Agent (CLI)";
 const KB_AGENT = "Agente KbSmartManager";
-const KB_SELECTOR = "Selettore documenti KB";
 
 function display(value) {
   if (typeof value === "string") {
@@ -12,7 +11,6 @@ function display(value) {
 }
 
 function agentLabel(tags) {
-  if (tags?.includes("kb-document-selection")) return KB_SELECTOR;
   return tags?.includes("kb-internal-search") ? KB_AGENT : CLI_AGENT;
 }
 
@@ -49,9 +47,8 @@ export async function traceQuestion(agent, question, append, showToolResults = f
       if (message.usage_metadata && modelRuns.has(id)) modelMetrics.get(label).usage.push(message.usage_metadata);
       modelRuns.delete(id);
       const calls = message.tool_calls ?? [];
-      const ready = label === KB_SELECTOR ? "valutazione ricevuta" :
-        label === KB_AGENT ? "risultato per kbAgentSearch pronto" : "risposta pronta";
-      log(`${label}: ` + (calls.length && label !== KB_SELECTOR ? `richiede ${calls.map(c => c.name).join(", ")}` : ready),
+      const ready = label === KB_AGENT ? "risultato per kbAgentSearch pronto" : "risposta pronta";
+      log(`${label}: ` + (calls.length ? `richiede ${calls.map(c => c.name).join(", ")}` : ready),
         calls.length ? message.text : "");
     },
     handleToolStart(tool, input, id, _parent, tags, _metadata, name) {

@@ -1,31 +1,17 @@
 import { win32 } from "node:path";
-import type {
-  DocumentInput,
-  DocumentLineRange,
-  DocumentPage,
-  DocumentSection,
-  ParsedDocument,
-  ParserOptions,
-} from "./types.ts";
+import { sliceLines } from "../document/lines.ts";
+import type { DocumentPage, DocumentSection, ParsedDocument } from "../document/types.ts";
+import type { DocumentInput, ParserOptions } from "./types.ts";
 
 type SectionSize = DocumentInput["sectionSize"];
 type TargetChars = ParserOptions["targetChars"];
 
 export class ParserUtils {
-  static normalizeMarkdown(text: string): string {
-    return text.replace(/\r\n?/g, "\n").replace(/\n+$/, "");
-  }
-
-  static splitLines(markdown: string): string[] {
-    return markdown ? markdown.split("\n") : [];
-  }
-
-  static sliceLines(lines: readonly string[], [start, end]: DocumentLineRange): string {
-    return lines.slice(start - 1, end).join("\n");
-  }
-
-  static matchingPages(pages: readonly DocumentPage[] | undefined, [start, end]: DocumentLineRange): DocumentPage[] {
-    return pages?.filter(page => page.range && page.range[0] <= end && page.range[1] >= start) ?? [];
+  /** Pages with at least one line in `fromLine..toLine`. */
+  static matchingPages(pages: readonly DocumentPage[] | undefined, fromLine: number, toLine: number): DocumentPage[] {
+    return pages?.filter(page =>
+      page.fromLine !== undefined && page.toLine !== undefined && page.fromLine <= toLine && page.toLine >= fromLine,
+    ) ?? [];
   }
 
   static extractOriginalFileName(fileName?: string): string | undefined {
@@ -58,6 +44,7 @@ export class ParserUtils {
     }
   }
 
+  /** Markdown with optional section markers and, when pages are known, a marker before each page. */
   static renderAnnotatedMarkdown(doc: ParsedDocument, sectionMarkers = false): string {
     const lines = doc.markdown.split("\n");
     if (sectionMarkers) {
@@ -69,46 +56,44 @@ export class ParserUtils {
   }
 
   static renderSectionMarkdown(doc: ParsedDocument, sectionId: number, pageTags = false): string {
-    const section = doc.map.sections.find(item => item.id === sectionId);
+    const section = doc.map.sections.find(item => item.sectionId === sectionId);
     if (!section) {
       throw new Error(`Unknown section ${sectionId} in document ${doc.map.documentId}`);
     }
-    const [start, end] = section.range;
-    const lines = doc.markdown.split("\n").slice(start - 1, end);
+    const lines = doc.markdown.split("\n").slice(section.fromLine - 1, section.toLine);
     if (pageTags) {
-      ParserUtils.applyPageTags(lines, doc.pages, section.range);
+      ParserUtils.applyPageTags(lines, doc.pages, section);
     }
     return lines.join("\n");
   }
 
   private static applySectionMarkers(lines: string[], sections: readonly DocumentSection[]): void {
     for (const section of sections) {
-      const index = section.range[0] - 1;
-      lines[index] = `<!--------------- SECTION ${section.id} --------------->\n${lines[index]}`;
+      const index = section.fromLine - 1;
+      lines[index] = `<!--------------- SECTION ${section.sectionId} --------------->\n${lines[index]}`;
     }
   }
 
   private static joinPaginatedLines(lines: readonly string[], pages: readonly DocumentPage[]): string {
     const parts: string[] = [];
-    for (const { page, range } of pages) {
-      parts.push(`<!--------------- PAGE ${page} ---------------->`);
-      if (range) {
-        parts.push(ParserUtils.sliceLines(lines, range));
+    for (const { pageNumber, fromLine, toLine } of pages) {
+      parts.push(`<!--------------- PAGE ${pageNumber} ---------------->`);
+      if (fromLine !== undefined && toLine !== undefined) {
+        parts.push(sliceLines(lines, fromLine, toLine));
       }
     }
     return parts.join("\n");
   }
 
+  /** Prefixes the first line of each page within the section with a page tag. */
   private static applyPageTags(
     sectionLines: string[],
     pages: readonly DocumentPage[] | undefined,
-    range: DocumentLineRange,
+    section: DocumentSection,
   ): void {
-    const [start] = range;
-    for (const page of ParserUtils.matchingPages(pages, range)) {
-      if (!page.range) continue;
-      const offset = Math.max(start, page.range[0]) - start;
-      sectionLines[offset] = `<!-- page: ${page.page} -->\n${sectionLines[offset]}`;
+    for (const page of ParserUtils.matchingPages(pages, section.fromLine, section.toLine)) {
+      const offset = Math.max(section.fromLine, page.fromLine!) - section.fromLine;
+      sectionLines[offset] = `<!-- page: ${page.pageNumber} -->\n${sectionLines[offset]}`;
     }
   }
 }

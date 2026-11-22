@@ -4,7 +4,7 @@ Dalla root del repository, con dipendenze installate:
 
 ```sh
 npm run build
-node --env-file=kb-agent-cli/.env benchmarks/search-agent/run.mjs > benchmarks/reports/benchmark-kb1.json
+node --env-file=kb-agent-cli/.env benchmarks/search-agent/run.mjs > benchmark-kb1.json
 ```
 
 Il comando usa il file della CLI solo come fonte di variabili: non importa né avvia la CLI applicativa. Si può usare un altro file di configurazione o esportare le variabili. Il selettore chiama `/systemone` sullo stesso gateway HTTPS della ricerca con `KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME` e le credenziali `KB_SEARCH_AZURE_OPENAI_*`; si possono impostare anche `KB_DECISION_THRESHOLD` e `KB_DECISION_MAX_DOCUMENTS` (vedi [configurazione di esempio](../../kb-agent-cli/.env.example)). Tutte le run usano lo stesso modello di ricerca: `KB_SEARCH_AZURE_OPENAI_MODEL` se configurato, altrimenti quello della [configurazione della root](../../.env.example).

@@ -2,17 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { HumanMessage } from "@langchain/core/messages";
-import { z } from "zod";
-import { persist } from "smartDocKb";
-import { KbSmartManager } from "smartDocKb/kb";
-import { createCliDocumentSelection, createCliModel } from "./models.mjs";
+import { createPosixStore } from "smartDocKb";
+import { makeDocument } from "../test/kb-fixtures.mjs";
+import { createCliModel } from "./models.mjs";
 
 const run = promisify(execFile);
 const cliPath = fileURLToPath(new URL("./cli.mjs", import.meta.url));
@@ -57,75 +55,30 @@ test("the CLI uses independent Azure configuration for each model", async t => {
   }), /KB_SEARCH_AZURE_OPENAI_API_KEY/);
 });
 
-test("the selector uses SystemOne and reports normalized scores and token usage", async t => {
-  assert.equal(createCliDocumentSelection(env), undefined);
-  const selection = createCliDocumentSelection({
-    ...env, KB_SEARCH_AZURE_OPENAI_ENDPOINT: "https://gateway.example.test",
-    KB_DECISION_AZURE_OPENAI_API_DEPLOYMENT_NAME: "Decision-1.1",
-    KB_DECISION_THRESHOLD: "0.65", KB_DECISION_MAX_DOCUMENTS: "3",
-  });
-  assert.equal(selection.threshold, 0.65);
-  assert.equal(selection.maxDocuments, 3);
-  const input = { question: "What voltage?", documents: [{ documentId: 7, title: "Hardware" }, { documentId: 8, title: "Cooking" }] };
-  const invokeInput = [new HumanMessage(JSON.stringify(input))];
-  let reply = { doc_7: { type: "score", score: 1.5 }, doc_8: { type: "score", score: 0.2 } };
-  let status = 200;
-  const request = t.mock.method(globalThis, "fetch", async (url, init) => {
-    assert.equal(String(url), "https://gateway.example.test/systemone");
-    assert.equal(init.method, "POST");
-    assert.equal(init.redirect, "error");
-    assert.equal(new Headers(init.headers).get("authorization"), "Bearer kb-test-key");
-    const body = JSON.parse(init.body);
-    assert.equal(body.model, "Decision-1.1");
-    assert.deepEqual(JSON.parse(body.state), input);
-    assert.deepEqual(Object.keys(body.questions), ["doc_7", "doc_8"]);
-    for (const id of [7, 8]) {
-      const { type, criteria } = body.questions[`doc_${id}`];
-      assert.equal(type, "score");
-      assert.equal(criteria.length, 3);
-      assert.ok(criteria.every(text => text.includes(`document ID ${id}`)));
-    }
-    return Response.json({ answers: reply, usage: { input_tokens: 40, output_tokens: 2 } }, { status });
-  });
-  const schema = z.object({ scores: z.array(z.object({ documentId: z.int(), score: z.number() })) });
-  let usage;
-  const model = selection.decisionModel.withStructuredOutput(schema, { name: "kb_document_relevance" });
-  assert.deepEqual(await model.invoke(invokeInput, { callbacks: [{
-    name: "usage", awaitHandlers: true,
-    handleLLMEnd({ generations }) { usage = generations[0][0].message.usage_metadata; },
-  }] }), { scores: [{ documentId: 7, score: 0.75 }, { documentId: 8, score: 0.1 }] });
-  assert.deepEqual(usage, { input_tokens: 40, output_tokens: 2, total_tokens: 42 });
-
-  reply = { doc_7: { type: "score", score: 1.5 } };
-  await assert.rejects(model.invoke(invokeInput), /Invalid SystemOne relevance score/);
-  status = 404;
-  await assert.rejects(model.invoke(invokeInput), /404 SystemOne/);
-  assert.equal(request.mock.callCount(), 3);
-});
-
 test("/delete rimuove per ID, aggiorna il pannello e segnala gli ID non validi", async t => {
   const root = await mkdtemp(join(tmpdir(), "cli-delete-"));
   t.after(() => rm(root, { recursive: true }));
-  for (const documentId of [1, 2, 3]) {
-    await persist({ markdown: "Test", map: {
-      documentId, originalFileName: `${documentId}.txt`, lineCount: 1,
-      summary: "", short_description: "", keywords: [], sections: [],
-    } }, join(root, `doc-${documentId}`));
-  }
+  const store = await createPosixStore({ root });
+  const uuid = "0195f876-18a4-7ba3-b8c2-7ba84c28cb94";
+  for (const documentId of [1, 2, 3]) await store.add(makeDocument(documentId, `${documentId}.txt`, "", "Test"));
+  await store.add(makeDocument(uuid, "uuid.txt", "", "Test"));
+  await store.close();
 
   const cli = run(process.execPath, [cliPath, root], {
     env,
     timeout: 15_000,
   });
-  cli.child.stdin.end("/delete nope\n/delete 99\n/delete #2\n/delete 3\n");
+  cli.child.stdin.end(`/delete nope\n/delete 9007199254740992\n/delete 99\n/delete #2\n/delete 3\n/delete #${uuid}\n`);
   const { stdout } = await cli;
-  assert.match(stdout, /Uso: \/delete <ID documento>/);
+  assert.equal([...stdout.matchAll(/Uso: \/delete <ID documento>/g)].length, 2);
   assert.match(stdout, /Unknown document 99/);
   assert.match(stdout, /Rimosso dalla KB: #2 2\.txt/);
   assert.match(stdout, /Rimosso dalla KB: #3 3\.txt/);
+  assert.ok(stdout.includes(`Rimosso dalla KB: #${uuid} uuid.txt`));
   assert.match(stdout, /Documenti in KB \(1\)/);
-  const kb = await KbSmartManager.open(root);
-  assert.deepEqual((await kb.kbGetTableOfContents()).documents.map(doc => doc.source.documentId), [1]);
+  const reopened = await createPosixStore({ root });
+  t.after(() => reopened.close());
+  assert.deepEqual((await reopened.list({ limit: 10 })).cards.map(card => card.documentId), [1]);
 });
 
 test("/add usa il deployment di importazione dal file di ambiente della CLI", async t => {
@@ -136,15 +89,28 @@ test("/add usa il deployment di importazione dal file di ambiente della CLI", as
   await writeFile(join(root, "listino.csv"), "prodotto,prezzo\nlibro,100");
 
   const requests = [];
+  const embeddingUrls = [];
   const server = createServer(async (req, res) => {
     let raw = "";
     for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw);
+    if (req.url.includes("/embeddings")) {
+      embeddingUrls.push(req.url);
+      const inputs = [body.input].flat();
+      const vector = [1, 0, 0];
+      const embedding = body.encoding_format === "base64"
+        ? Buffer.from(new Float32Array(vector).buffer).toString("base64") : vector;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({
+        object: "list", model: body.model,
+        data: inputs.map((_, index) => ({ object: "embedding", index, embedding })),
+      }));
+    }
     requests.push([req.url, req.headers["api-key"], body.model, body.response_format?.type]);
     const content = JSON.stringify({
       continuesPrevious: false, sections: [{
-        startLine: 1, endLine: Number(/through (\d+)/.exec(body.messages[0].content)?.[1]),
-        title: "Listino", summary: "Prezzi", keywords: ["prezzi"], short_description: "Prezzi",
+        fromLine: 1, toLine: Number(/through (\d+)/.exec(body.messages[0].content)?.[1]),
+        title: "Listino", summary: "Prezzi", keywords: ["prezzi"], shortDescription: "Prezzi",
       }],
     });
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -173,9 +139,15 @@ test("/add usa il deployment di importazione dal file di ambiente della CLI", as
   });
   cli.child.stdin.end("/add listino.csv\n");
   const { stdout } = await cli;
-  assert.match(stdout, /Pronto nella KB: #1 listino\.csv/);
+  const added = /Pronto nella KB: #([\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}) listino\.csv/i.exec(stdout);
+  assert.ok(added, stdout);
+  const [, id] = added;
+  const manifest = JSON.parse(await readFile(join(folder, `doc-${id}`, "manifest.json"), "utf8"));
+  assert.equal(manifest.map.documentId, id);
   assert.deepEqual(requests, [[
     "/openai/deployments/import-test/chat/completions?api-version=2025-04-01-preview",
     "import-test-key", "gpt-4o-mini", "json_schema",
   ]]);
+  assert.ok(embeddingUrls.length > 0);
+  assert.ok(embeddingUrls.every(url => url.startsWith("/openai/deployments/text-embedding-3-large/embeddings")));
 });

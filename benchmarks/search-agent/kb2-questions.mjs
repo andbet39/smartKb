@@ -1,4 +1,4 @@
-const source = (fromLine, toLine = fromLine) => ({ file: 'doc-1/NIST.SP.330-2019.pdf.md', fromLine, toLine });
+const source = (fromLine, toLine = fromLine) => ({ documentId: 1, fromLine, toLine });
 
 export const kb2Questions = [
   {

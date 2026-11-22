@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { sliceLines } from "../document/lines.ts";
 import type {
   DocumentInput,
-  DocumentLineRange,
   OverviewSummaryProgress,
   ParserOptions,
   SectionSummaryProgress,
@@ -29,12 +29,12 @@ export interface AnalysisContext {
 const summarySchema = z.strictObject({
   summary: z.string().min(1),
   keywords: z.array(z.string().min(1)),
-  short_description: z.string().trim().min(1),
+  shortDescription: z.string().trim().min(1),
 });
 
 const sectionSchema = summarySchema.extend({
-  startLine: z.int().positive(),
-  endLine: z.int().positive(),
+  fromLine: z.int().positive(),
+  toLine: z.int().positive(),
   title: z.string().min(1),
 });
 
@@ -49,13 +49,15 @@ type StructuredRunner = ReturnType<typeof createStructuredRunner>;
 
 interface SectionGroup {
   title: string;
-  range: DocumentLineRange;
+  fromLine: number;
+  toLine: number;
   fragments: Summary[];
 }
 
 export interface AnalyzedSection extends Summary {
   title: string;
-  range: DocumentLineRange;
+  fromLine: number;
+  toLine: number;
 }
 
 export interface AnalysisResult {
@@ -77,13 +79,13 @@ class DocumentAnalyzer {
     this.budget = options.windowTokens ?? DEFAULT_WINDOW_TOKENS;
     this.targets = options.targetChars ?? {};
     this.sectionGuidance = buildSummaryGuidance(
-      "Write a brief short_description explaining what the section covers.",
+      "Write a brief shortDescription explaining what the section covers.",
       this.targets.sectionSummary,
       "section summary",
       this.targets.shortDescription,
     );
     this.documentGuidance = buildSummaryGuidance(
-      "Write a brief short_description explaining what the document covers.",
+      "Write a brief shortDescription explaining what the document covers.",
       this.targets.documentSummary,
       "document summary",
       this.targets.shortDescription,
@@ -99,7 +101,7 @@ class DocumentAnalyzer {
     context: AnalysisContext,
   ): Promise<AnalysisResult> {
     if (!lines.length) {
-      return { sections: [], overview: { summary: "", keywords: [], short_description: "" } };
+      return { sections: [], overview: { summary: "", keywords: [], shortDescription: "" } };
     }
     const groups = await this.collectSectionGroups(lines, size, context);
     const sections = await this.buildSections(groups, context.report);
@@ -141,7 +143,8 @@ class DocumentAnalyzer {
         totalTokens,
         totalWindows,
         window: windowNumber,
-        lineRange: [window.start, window.end],
+        fromLine: window.start,
+        toLine: window.end,
         current: window.end,
         total: lineCount,
         unit: "lines",
@@ -195,7 +198,7 @@ class DocumentAnalyzer {
           }),
         ),
       );
-      sections.push({ title: group.title, range: group.range, ...merged });
+      sections.push({ title: group.title, fromLine: group.fromLine, toLine: group.toLine, ...merged });
       report?.({
         phase: "sections",
         step: "section-done",
@@ -216,12 +219,12 @@ class DocumentAnalyzer {
     report?: AnalysisContext["report"],
   ): Promise<Summary> {
     if (!sections.length) {
-      return { summary: "", keywords: [], short_description: "" };
+      return { summary: "", keywords: [], shortDescription: "" };
     }
-    const summaries = sections.map(({ summary, keywords, short_description }) => ({
+    const summaries = sections.map(({ summary, keywords, shortDescription }) => ({
       summary,
       keywords,
-      short_description,
+      shortDescription,
     }));
     const rewriteSingle = this.targets.documentSummary !== undefined;
     const overview = await this.reduceSummaries(
@@ -280,7 +283,8 @@ class DocumentAnalyzer {
         totalTokens,
         totalWindows,
         window: windowNumber,
-        lineRange: [start, end],
+        fromLine: start,
+        toLine: end,
         attempt: attempt + 1,
         maxAttempts: MAX_ATTEMPTS,
         current: completedLines,
@@ -306,7 +310,8 @@ class DocumentAnalyzer {
       totalTokens,
       totalWindows,
       window: windowNumber,
-      lineRange: [start, end],
+      fromLine: start,
+        toLine: end,
       current: completedLines,
       total: lineCount,
       unit: "lines",
@@ -324,7 +329,8 @@ class DocumentAnalyzer {
         totalTokens,
         totalWindows,
         window: windowNumber,
-        lineRange: [start, end],
+        fromLine: start,
+        toLine: end,
         attempt,
         maxAttempts: MAX_ATTEMPTS,
         current: completedLines,
@@ -346,12 +352,12 @@ class DocumentAnalyzer {
       this.sectionSummarizer,
       `Summarize the supplied source text as one section. ${this.sectionGuidance}`,
       `righe ${start}-${end}`,
-      ParserUtils.sliceLines(lines, [start, end]),
+      sliceLines(lines, start, end),
       onAttempt,
     );
     return {
       continuesPrevious: false,
-      sections: [{ ...metadata, title: metadata.short_description, startLine: start, endLine: end }],
+      sections: [{ ...metadata, title: metadata.shortDescription, fromLine: start, toLine: end }],
     };
   }
 
@@ -454,7 +460,7 @@ function buildSummaryGuidance(
   return [
     intro,
     summaryTarget ? `Aim for about ${summaryTarget} characters for the ${summaryLabel}.` : "",
-    shortDescriptionTarget ? `Aim for about ${shortDescriptionTarget} characters for short_description.` : "",
+    shortDescriptionTarget ? `Aim for about ${shortDescriptionTarget} characters for shortDescription.` : "",
   ].join(" ");
 }
 
@@ -479,16 +485,17 @@ function appendWindowSections(groups: SectionGroup[], result: ChunkResult): void
     const fragment: Summary = {
       summary: part.summary,
       keywords: part.keywords,
-      short_description: part.short_description,
+      shortDescription: part.shortDescription,
     };
     if (index === 0 && result.continuesPrevious) {
       const previous = groups[groups.length - 1];
-      previous.range[1] = part.endLine;
+      previous.toLine = part.toLine;
       previous.fragments.push(fragment);
     } else {
       groups.push({
         title: part.title,
-        range: [part.startLine, part.endLine],
+        fromLine: part.fromLine,
+        toLine: part.toLine,
         fragments: [fragment],
       });
     }
@@ -501,10 +508,10 @@ function validateChunkCoverage(result: ChunkResult, start: number, end: number):
   }
   let next = start;
   for (const part of result.sections) {
-    if (part.startLine !== next || part.endLine < next || part.endLine > end) {
+    if (part.fromLine !== next || part.toLine < next || part.toLine > end) {
       return `Expected a section starting at ${next} and ending at or before ${end}`;
     }
-    next = part.endLine + 1;
+    next = part.toLine + 1;
   }
   if (next !== end + 1) {
     return `Missing lines ${next} to ${end}`;

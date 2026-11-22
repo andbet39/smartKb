@@ -7,3 +7,6 @@ dist/
 /kb2/
 kb1/doc-6/Handbook_Operativo_datakube-test.docx.md
 kb1/doc-6/Handbook_Operativo_datakube-test.docx.json
+
+# Derived SQLite index of each KB: rebuilt from the doc-<id> folders when missing.
+.kb/

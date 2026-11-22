@@ -19,9 +19,9 @@ test("live Azure OpenAI: structured sections cover a synthetic CSV", {
   assert.ok(doc.map.summary.trim());
   let next = 1;
   for (const section of doc.map.sections) {
-    assert.equal(section.range[0], next);
+    assert.equal(section.fromLine, next);
     assert.equal(section.totalTokens, tokenizer.encode(doc.markdown).length);
-    next = section.range[1] + 1;
+    next = section.toLine + 1;
   }
   assert.equal(next, doc.map.lineCount + 1);
 });

@@ -1,7 +1,5 @@
 import { AzureChatOpenAI } from '@langchain/openai';
 
-export { getDecisionSelection } from './decision-model.mjs';
-
 const prefix = 'KB_SEARCH_AZURE_OPENAI_';
 
 function createModel(env, { model, deployment }) {

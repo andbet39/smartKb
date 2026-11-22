@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { getEncoding } from "js-tiktoken";
-import { createDocumentParser, getDocumentModel, persist } from "smartDocKb";
+import { createDocumentParser, createPosixStore } from "smartDocKb";
+import { getDocumentModel } from "../scripts/shared/document-model.mjs";
 import { createProgressLogger } from "./cli-progress.mjs";
 
 async function main(args, log) {
@@ -32,7 +33,12 @@ async function main(args, log) {
   log("Scrittura JSON su stdout.");
   console.log(JSON.stringify(result, null, 2));
   log("Salvataggio knowledge base in kb1.");
-  await persist(result, "./kb1");
+  const store = await createPosixStore({ root: "./kb1" });
+  try {
+    await store.add(result);
+  } finally {
+    await store.close();
+  }
   log("Salvataggio completato.");
 }
 

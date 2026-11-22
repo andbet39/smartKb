@@ -7,8 +7,12 @@
     "./kb": "./dist/kb/index.js"
   },
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
-  "engines": { "node": ">=20.12" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "build": "tsc",
     "preprova": "npm run build",
@@ -18,7 +22,7 @@
     "benchmark:kb2:prepare": "npm run build && node benchmarks/search-agent/kb2-corpus.mjs",
     "benchmark:kb2": "node benchmarks/search-agent/simulate-cost.mjs",
     "benchmark:kb2:live": "node benchmarks/search-agent/run-kb2.mjs",
-    "test": "npm run build && node --test test/parser.test.mjs test/kb-agentic.test.mjs",
+    "test": "npm run build && node --test test/parser.test.mjs test/store.test.mjs test/kb-agentic.test.mjs",
     "test:azure": "npm run build && node --test test/azure.test.mjs"
   },
   "dependencies": {
@@ -28,10 +32,14 @@
     "@tesseract.js-data/ita": "1.0.0",
     "pdf-lib": "^1.17.1",
     "pngjs": "^7.0.0",
+    "sqlite-vec": "0.1.9",
     "tesseract.js": "^7.0.0",
+    "uuid": "^14.0.3",
     "zod": "^4.1.0"
   },
-  "peerDependencies": { "@langchain/core": "^1.0.0" },
+  "peerDependencies": {
+    "@langchain/core": "^1.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/pngjs": "^6.0.0",

@@ -42,7 +42,7 @@ export function openScreen(folder, model, submit, interactive) {
         busy ? h(Text, { dimColor: true }, "Elaborazione in corso…") : interactive && h(Input, { onSubmit: submit })),
       h(Box, { width: "45%", flexDirection: "column" },
         h(Text, { bold: true }, `Documenti in KB (${documents.length})`),
-        ...documents.map(({ source: s, characters }) => h(Text, { key: s.documentId },
+        ...documents.map(({ characters, ...s }) => h(Text, { key: s.documentId },
           `#${s.documentId} ${clean(s.originalFileName ?? s.title ?? "Senza nome")}`,
           h(Text, { dimColor: true }, ` · ${characters.toLocaleString("it-IT")} car.`))),
         progress && h(Text, { color: "yellow" }, clean(progress)))));
