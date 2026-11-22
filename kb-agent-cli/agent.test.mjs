@@ -3,8 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { persist } from "workspace-document-parser";
-import { KbSmartManager } from "workspace-document-parser/kb";
+import { persist } from "smartDocKb";
+import { KbSmartManager } from "smartDocKb/kb";
 import { mockRootEnv, offlineAzureChat } from "../test/azure-model.mjs";
 import { makeAgent } from "./agent.mjs";
 import { traceQuestion } from "./trace.mjs";
@@ -84,7 +84,7 @@ test("the CLI Deep Agent refuses a built-in tool call", async t => {
   const folder = await mkdtemp(join(tmpdir(), "kb-cli-agent-"));
   t.after(() => rm(folder, { recursive: true }));
   const kb = await KbSmartManager.open(folder);
-  t.mock.method(kb, "kbAgenticSearch", () => assert.fail("Unexpected search"));
+  t.mock.method(kb, "kbAgentSearch", () => assert.fail("Unexpected search"));
   const agent = makeAgent(kb, llm);
   await assert.rejects(
     agent.invoke({ messages: [{ role: "user", content: "Quali documenti ci sono?" }] }),

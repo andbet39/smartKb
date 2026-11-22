@@ -6,8 +6,11 @@
 
 ```ts
 export declare function createDocumentParser(options: ParserOptions): DocumentParser;
+export declare function convertDocument(input: ConversionInput, log?: (event: LocalConversionProgress) => void): Promise<ConvertedDocument>;
 
 export interface DocumentParser {
+  importFile(path: string, options: ImportFileOptions): Promise<ParsedDocument>;
+  importDocument(input: ImportDocumentInput): Promise<ParsedDocument>;
   parseDocument(input: DocumentInput): Promise<ParsedDocument>;
   parseDocuments(inputs: readonly DocumentInput[]): Promise<ParsedDocument[]>;
 }
@@ -16,6 +19,8 @@ export interface DocumentParser {
 - `createDocumentParser` richiede un modello con output strutturato e una funzione di conteggio dei token.
 - `parseDocument` converte i byte in Markdown e genera indice, sezioni e sintesi. Per i PDF estrae il testo per pagina e usa l’OCR locale in italiano se manca il testo nativo. Gli errori di parsing espongono ID e causa tramite `DocumentParseError`.
 - `parseDocuments` mantiene l’ordine degli input e si arresta al primo errore.
+- `convertDocument` converte localmente senza modello, ID o persistenza. `importDocument` salva un upload in memoria con le stesse garanzie di `importFile`.
+- `importFile` legge dal percorso e salva in `kbFolder/doc-<documentId>`. Non sovrascrive una sottocartella esistente; se l’analisi o il salvataggio falliscono, elimina la sottocartella appena creata.
 
 ```ts
 export declare function getDocumentTableOfContents(doc: ParsedDocument): DocumentTableOfContents;
@@ -42,6 +47,7 @@ export declare function load(folder: string): Promise<ParsedDocument>;
 ```ts
 export declare class KbSmartManager {
   private constructor();
+  static open(baseFolder: string | readonly string[], options?: KbOpenOptions): Promise<KbSmartManager>;
   static open(
     baseFolder: string | readonly string[],
     llm?: Pick<BaseChatModel, "bindTools">,
@@ -49,9 +55,10 @@ export declare class KbSmartManager {
     options?: AgentSearchOptions,
   ): Promise<KbSmartManager>;
   deleteDocument(documentId: number): Promise<void>;
+  refresh(): Promise<void>;
   getAgentSearchTool(): StructuredToolInterface;
   getTools(): StructuredToolInterface[];
-  kbAgenticSearch(question: string): Promise<string>;
+  kbAgentSearch(question: string): Promise<AgentSearchResult>;
   kbGetTableOfContents(): Promise<KbTableOfContents>;
   kbFileGetTableOfContents(documentId: number): Promise<FileTableOfContents>;
   kbFileGetInfo(documentId: number): Promise<FileInfo>;
@@ -70,8 +77,8 @@ export declare class KbSmartManager {
 - `kbFileRead` legge il Markdown completo; `kbFileReadSection` legge una sezione per ID o un intervallo di righe incluso tra `1` e `lineCount`. ID sconosciuti, intervalli non validi e conteggi di righe incoerenti con i metadati producono un errore nelle operazioni che li usano.
 - `kbFileSearchByKeywords` restituisce una corrispondenza per riga che contiene almeno una delle stringhe richieste o che soddisfa la regex JavaScript. Ignora le maiuscole salvo `caseSensitive: true`; senza `fileSpec` cerca in tutta la KB. Richiede almeno una parola chiave non vuota, senza elementi vuoti, oppure una regex valida.
 - `beforeLines` e `afterLines` sono interi da 0 a 20, con default 0; il tool li accetta direttamente accanto a `query` e `fileSpec`. Con almeno un valore positivo, le finestre sono limitate alle righe del documento e quelle sovrapposte vengono unite. `matchLines` indica le righe assolute che hanno prodotto il match, mentre `source` copre tutto lo snippet. La ricerca con contesto restituisce al massimo 20 finestre e 12.000 unità UTF-16 complessive di snippet; si ferma prima della prima finestra che eccede i limiti e segnala `truncated: true`.
-- `kbAgenticSearch` richiede una domanda non vuota e produce una risposta Markdown basata sui documenti. Usa il modello passato a `open` o, in sua assenza, il modello Azure configurato nel progetto. Se il modello richiede altre chiamate dopo 8 turni di uso dei tool, segnala un errore.
-- `getAgentSearchTool` espone `kbAgentSearch`, che usa la stessa modalità TOC di `kbAgenticSearch`, accetta `{ question: string }` e restituisce `AgentSearchResult`. I riferimenti sono deduplicati per documento e intervallo di righe: includono i passaggi non vuoti letti esplicitamente e i risultati di ricerca per parola chiave o regex citati dall’agente. I marcatori interni delle citazioni vengono rimossi dalla risposta. `getTools` espone i sette metodi di consultazione e ricerca diretta come tool LangChain.
+- `kbAgentSearch` richiede una domanda non vuota e restituisce `AgentSearchResult` (`answer` Markdown e `references`). Usa il modello passato a `open` o, in sua assenza, il modello Azure configurato nel progetto. Se il modello richiede altre chiamate dopo 8 turni di uso dei tool, segnala un errore. I riferimenti sono deduplicati per documento e intervallo di righe: includono i passaggi non vuoti letti esplicitamente e i risultati di ricerca per parola chiave o regex citati dall’agente. I marcatori interni delle citazioni vengono rimossi dalla risposta.
+- `getAgentSearchTool` espone `kbAgentSearch` come tool LangChain con input `{ question: string }` e stesso risultato `AgentSearchResult`. `getTools` espone i sette metodi di consultazione e ricerca diretta come tool LangChain.
 - `deleteDocument` rimuove il documento dall’indice e cancella il manifest; cancella anche il Markdown se non è condiviso. Il file originale non viene cancellato.
 
 ## Tipi
@@ -88,8 +95,22 @@ export interface DocumentInput {
   sectionSize?: { minChars: number; maxChars: number };
 }
 
+export type ConversionInput = Pick<DocumentInput, "bytes" | "fileName">;
+export type LocalConversionProgress = Omit<ConversionProgress, "documentId" | "batch">;
+export interface ConvertedDocument {
+  markdown: string;
+  pages?: DocumentPage[];
+}
+export interface ImportDocumentInput extends DocumentInput {
+  kbFolder: string;
+}
+
+export interface ImportFileOptions extends Pick<DocumentInput, "documentId" | "sectionSize"> {
+  kbFolder: string;
+}
+
 export interface ParserOptions {
-  onProgress?: (message: string) => void;
+  onProgress?: (progress: DocumentParseProgress) => void;
   llm: Pick<BaseChatModel, "withStructuredOutput">;
   countTokens(text: string): number;
   windowTokens?: number;
@@ -100,13 +121,106 @@ export interface ParserOptions {
   };
 }
 
+export type DocumentParsePhase =
+  | "reading"
+  | "saving"
+  | "conversion"
+  | "segmentation"
+  | "sections"
+  | "overview"
+  | "completed";
+
+export type DocumentParseProgressUnit = "documents" | "pages" | "lines" | "sections";
+
+export interface DocumentBatchProgress {
+  current: number;
+  total: number;
+  percent: number;
+}
+
+export interface DocumentParseProgressBase {
+  documentId: number;
+  fileName?: string;
+  batch?: DocumentBatchProgress;
+  phase: DocumentParsePhase;
+  percent: number;
+  current: number;
+  total: number;
+  unit: DocumentParseProgressUnit;
+  phasePercent: number;
+  message: string;
+}
+
+export interface ConversionProgress extends DocumentParseProgressBase {
+  phase: "conversion";
+  step:
+    | "start"
+    | "page-extract"
+    | "page-ocr-fallback"
+    | "ocr-init"
+    | "ocr-render"
+    | "ocr-progress"
+    | "page-done"
+    | "done";
+  format: string;
+  bytes: number;
+  page?: number;
+  totalPages?: number;
+  pageSource?: "native" | "ocr" | "blank";
+  ocrPercent?: number;
+}
+
+export interface SegmentationProgress extends DocumentParseProgressBase {
+  phase: "segmentation";
+  step: "start" | "window-request" | "window-fallback" | "window-recovery" | "window-done";
+  lineCount: number;
+  totalTokens: number;
+  totalWindows: number;
+  window?: number;
+  lineRange?: DocumentLineRange;
+  attempt?: number;
+  maxAttempts?: number;
+}
+
+export interface SectionSummaryProgress extends DocumentParseProgressBase {
+  phase: "sections";
+  step: "section-start" | "llm-request" | "section-done";
+  sectionIndex: number;
+  totalSections: number;
+  attempt?: number;
+  maxAttempts?: number;
+}
+
+export interface OverviewSummaryProgress extends DocumentParseProgressBase {
+  phase: "overview";
+  step: "llm-request" | "done";
+  attempt?: number;
+  maxAttempts?: number;
+}
+
+export interface CompletedParseProgress extends DocumentParseProgressBase {
+  phase: "completed";
+  step: "done";
+  lineCount: number;
+  totalTokens: number;
+  sectionCount: number;
+}
+
+export type DocumentParseProgress =
+  | (DocumentParseProgressBase & { phase: "reading" | "saving"; step: "start" })
+  | ConversionProgress
+  | SegmentationProgress
+  | SectionSummaryProgress
+  | OverviewSummaryProgress
+  | CompletedParseProgress;
+
 export declare class DocumentParseError extends Error {
   readonly documentId: number;
   constructor(documentId: number, cause: unknown);
 }
 ```
 
-`fileName` può aiutare a riconoscere il formato, ma non viene aperto come percorso. `sectionSize` indica un intervallo orientativo in unità UTF-16: `minChars` e `maxChars` devono essere interi positivi, con `minChars ≤ maxChars`. Anche i valori di `targetChars` sono interi positivi e indicativi, senza troncamento. `windowTokens` è un intero positivo (predefinito: 4096 token): limita il contenuto per richiesta, esclusi istruzioni, schema e risposta. Una riga che da sola non rientra nel budget produce un errore.
+`fileName` può aiutare a riconoscere il formato, ma non viene aperto come percorso. `onProgress` riceve eventi strutturati `DocumentParseProgress` con percentuale complessiva del documento (`percent` monotona 0–100), avanzamento della fase corrente (`phase`, `step`, `current`, `total`, `unit`, `phasePercent`), metadati specifici della fase, `batch` opzionale in `parseDocuments` e messaggio descrittivo senza testo del documento. `sectionSize` indica un intervallo orientativo in unità UTF-16: `minChars` e `maxChars` devono essere interi positivi, con `minChars ≤ maxChars`. Anche i valori di `targetChars` sono interi positivi e indicativi, senza troncamento. `windowTokens` è un intero positivo (predefinito: 4096 token): limita il contenuto per richiesta, esclusi istruzioni, schema e risposta. Una riga che da sola non rientra nel budget produce un errore.
 
 ```ts
 export type DocumentLineRange = [start: number, end: number];
@@ -172,6 +286,11 @@ export interface DocumentSelectionOptions {
 
 export interface AgentSearchOptions {
   tocMode?: "prompt" | "tools";
+}
+
+export interface KbOpenOptions extends AgentSearchOptions {
+  llm?: Pick<BaseChatModel, "bindTools">;
+  selection?: DocumentSelectionOptions;
 }
 
 export interface DocumentSource {

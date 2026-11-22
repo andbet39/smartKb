@@ -1,3 +1,8 @@
+function formatProgress(entry) {
+  if (typeof entry === "string") return entry;
+  return `[${entry.percent}% · ${entry.phase}] ${entry.message}`;
+}
+
 export function createProgressLogger() {
   const start = Date.now();
   let lastUpdate = start;
@@ -8,10 +13,10 @@ export function createProgressLogger() {
   }, 15000);
   timer.unref();
   return {
-    log(message) {
-      phase = message;
+    log(entry) {
+      phase = formatProgress(entry);
       lastUpdate = Date.now();
-      write(message);
+      write(phase);
     },
     close: () => clearInterval(timer),
   };

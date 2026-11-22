@@ -63,7 +63,7 @@ async function runScenario(folder, target, mode, workload, rates) {
   const kb = await KbSmartManager.open(folder, model, selection, {
     tocMode: mode === 'withoutDecisionTocViaTools' ? 'tools' : 'prompt',
   });
-  const { answer, references } = await kb.getAgentSearchTool().invoke({ question });
+  const { answer, references } = await kb.kbAgentSearch(question);
   if (!titlePattern.test(answer) || !references.some(({ source }) => source.documentId === documentId) ||
       (selection && !decision.turns)) throw new Error('Lo scenario simulato non ha completato il percorso atteso.');
 

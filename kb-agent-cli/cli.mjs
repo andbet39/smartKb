@@ -1,7 +1,7 @@
 import { createInterface } from "node:readline";
 import { readdir } from "node:fs/promises";
 import { basename } from "node:path";
-import { KbSmartManager } from "workspace-document-parser/kb";
+import { KbSmartManager } from "smartDocKb/kb";
 import { makeAgent } from "./agent.mjs";
 import { traceQuestion } from "./trace.mjs";
 import { openScreen } from "./screen.mjs";
@@ -12,7 +12,6 @@ const folder = process.argv[2] ?? "../kb1";
 const deepAgentLlm = createCliModel("AZURE_OPENAI_");
 const kbSearchLlm = createCliModel("KB_SEARCH_AZURE_OPENAI_");
 const selection = createCliDocumentSelection();
-const openKb = () => KbSmartManager.open(folder, kbSearchLlm, selection);
 let documentLlm;
 
 async function sidebarDocuments(kb) {
@@ -24,9 +23,9 @@ async function sidebarDocuments(kb) {
   return documents;
 }
 
-let kb = await openKb();
+const kb = await KbSmartManager.open(folder, { llm: kbSearchLlm, selection });
 let documents = await sidebarDocuments(kb);
-let agent = makeAgent(kb, deepAgentLlm);
+const agent = makeAgent(kb, deepAgentLlm);
 const interactive = process.stdin.isTTY && process.stdout.isTTY;
 const screen = openScreen(folder, deepAgentLlm.model, submit, interactive);
 screen.documents(documents);
@@ -51,10 +50,9 @@ async function submit(line) {
       while (Number.isSafeInteger(id) && occupied.has(`doc-${id}`)) id++;
       if (!Number.isSafeInteger(id)) throw new Error("Impossibile assegnare un nuovo ID documento");
       documentLlm ??= createCliModel("KB_IMPORT_AZURE_OPENAI_");
-      await importFile(file, folder, id, documentLlm, step => screen.progress(`${name}\n${step}`));
-      kb = await openKb();
+      await importFile(file, folder, id, documentLlm, step => screen.progress(`${name} (${step.percent}%)\n${step.message}`));
+      await kb.refresh();
       documents = await sidebarDocuments(kb);
-      agent = makeAgent(kb, deepAgentLlm);
       screen.documents(documents);
       screen.append({ title: `Pronto nella KB: #${id} ${name}`, color: "green" });
     } else if (/^\/delete(?:\s|$)/.test(line)) {

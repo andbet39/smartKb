@@ -1,3 +1,3 @@
-export * from "./parser/index.js";
-export * from "./kb/index.js";
-export { getDocumentModel } from "./document-model.js";
+export * from "./parser/index.ts";
+export * from "./kb/index.ts";
+export { getDocumentModel } from "./document-model.ts";

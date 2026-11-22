@@ -1,221 +1,109 @@
-import { readdir, unlink } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { unlink } from "node:fs/promises";
+import { resolve } from "node:path";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import { tool, type StructuredToolInterface } from "@langchain/core/tools";
-import { z } from "zod";
-import { findMarkdownFile, loadMarkdown, loadMetadataFiles } from "../parser/persistence.js";
-import type { DocumentLineRange, DocumentSection, ParsedDocument } from "../parser/types.js";
-import { runKbAgent } from "./agent.js";
-import { createDocumentSelector } from "./selection.js";
+import type { StructuredToolInterface } from "@langchain/core/tools";
+import { findMarkdownFile } from "../parser/persistence.ts";
+import { runKbAgent } from "./agent.ts";
+import { executeKeywordSearch, parseSearchRequest } from "./search.ts";
+import { createDocumentSelector, type DocumentSelector } from "./selection.ts";
+import { createAgentSearchTool, createKbTools } from "./tools.ts";
 import type {
-  AgentSearchOptions, AgentSearchResult, DocumentSelectionOptions, DocumentSource, FileContent, FileInfo, FileSpec, FileSummary, FileTableOfContents,
-  KbTableOfContents, PassageSource, SearchContextOptions, SearchQuery, SearchResult, SectionContent, SectionSource,
-} from "./types.js";
+  AgentSearchOptions,
+  AgentSearchResult,
+  DocumentSelectionOptions,
+  FileContent,
+  FileInfo,
+  FileSpec,
+  FileSummary,
+  FileTableOfContents,
+  KbOpenOptions,
+  KbTableOfContents,
+  PassageSource,
+  SearchContextOptions,
+  SearchQuery,
+  SearchResult,
+  SectionContent,
+} from "./types.ts";
+import { KbUtils, type KbDocumentEntry } from "./utils.ts";
 
-export type * from "./types.js";
+export type * from "./types.ts";
 
-const MAX_CONTEXT_LINES = 20;
-const MAX_CONTEXT_WINDOWS = 20;
-const MAX_CONTEXT_CHARACTERS = 12_000;
-const contextLines = z.int().min(0).max(MAX_CONTEXT_LINES).optional();
-const searchContext = z.object({ beforeLines: contextLines, afterLines: contextLines });
-
-interface Entry extends Omit<ParsedDocument, "markdown"> {
-  folder: string;
-  manifestPath: string;
-}
-
-async function* documentFolders(folder: string): AsyncGenerator<string> {
-  const children = await readdir(folder, { withFileTypes: true });
-  if (children.some(child => child.isFile() && child.name.endsWith(".json"))) yield folder;
-  for (const child of children) {
-    if (child.isDirectory()) yield* documentFolders(join(folder, child.name));
-  }
-}
-
-function documentSource({ map }: Entry): DocumentSource {
-  return {
-    documentId: map.documentId,
-    originalFileName: map.originalFileName ?? null,
-    ...(map.title !== undefined && { title: map.title }),
-  };
-}
-
-function passageSource(entry: Entry, range: DocumentLineRange, section?: DocumentSection): PassageSource {
-  const [fromLine, toLine] = range;
-  const containing = section ?? entry.map.sections.find(s => s.range[0] <= fromLine && toLine <= s.range[1]);
-  // A section's pageRange can include blank pages: cite only actual overlapping lines.
-  const pages = entry.pages?.flatMap(page => {
-    if (!page.range) return [];
-    const start = Math.max(fromLine, page.range[0]);
-    const end = Math.min(toLine, page.range[1]);
-    return start <= end ? [{ pageNumber: page.page, fromLine: start, toLine: end }] : [];
-  }) ?? null;
-  return {
-    ...documentSource(entry), fromLine, toLine, pages,
-    ...(containing && { sectionId: containing.id, sectionTitle: containing.title }),
-  };
-}
-
-function sectionSource(entry: Entry, section: DocumentSection): SectionSource {
-  return { ...passageSource(entry, section.range, section), sectionId: section.id, sectionTitle: section.title };
-}
-
-async function readText(entry: Entry) {
-  const markdown = await loadMarkdown(entry.folder, entry.map.originalFileName);
-  const lines = markdown ? markdown.split("\n") : [];
-  if (lines.length !== entry.map.lineCount) {
-    throw new Error(`Markdown line count differs from metadata in ${entry.folder}`);
-  }
-  return { markdown, lines };
-}
-
-function lineMatcher(query: SearchQuery): (line: string) => boolean {
-  if (query.kind === "regex") {
-    if (typeof query.pattern !== "string") throw new Error("Expected a regular expression string");
-    const expression = new RegExp(query.pattern, query.caseSensitive ? "u" : "iu");
-    return line => expression.test(line);
-  }
-  if (query.kind !== "keywords" || !Array.isArray(query.keywords) ||
-      !query.keywords.length || query.keywords.some(word => typeof word !== "string" || !word.length)) {
-    throw new Error("Expected at least one non-empty search keyword");
-  }
-  const normalize = (text: string) => query.caseSensitive ? text : text.toLowerCase();
-  const keywords = query.keywords.map(normalize);
-  return line => {
-    const text = normalize(line);
-    return keywords.some(word => text.includes(word));
-  };
-}
+type TocMode = NonNullable<AgentSearchOptions["tocMode"]>;
 
 export class KbSmartManager {
   private constructor(
-    private readonly documents: Map<number, Entry>,
+    private readonly roots: readonly string[],
+    private documents: Map<number, KbDocumentEntry>,
     private readonly llm?: Pick<BaseChatModel, "bindTools">,
-    private readonly selectDocuments?: ReturnType<typeof createDocumentSelector>,
-    private readonly tocMode: NonNullable<AgentSearchOptions["tocMode"]> = "prompt",
+    private readonly selectDocuments?: DocumentSelector,
+    private readonly tocMode: TocMode = "prompt",
   ) {}
 
-  static async open(
+  static open(baseFolder: string | readonly string[], options?: KbOpenOptions): Promise<KbSmartManager>;
+  static open(
     baseFolder: string | readonly string[],
     llm?: Pick<BaseChatModel, "bindTools">,
     selection?: DocumentSelectionOptions,
     options?: AgentSearchOptions,
+  ): Promise<KbSmartManager>;
+  static async open(
+    baseFolder: string | readonly string[],
+    modelOrOptions?: Pick<BaseChatModel, "bindTools"> | KbOpenOptions,
+    legacySelection?: DocumentSelectionOptions,
+    legacyOptions?: AgentSearchOptions,
   ): Promise<KbSmartManager> {
+    const { llm, selection, tocMode } = modelOrOptions && !("bindTools" in modelOrOptions)
+      ? modelOrOptions as KbOpenOptions
+      : { llm: modelOrOptions, selection: legacySelection, tocMode: legacyOptions?.tocMode };
     const selectDocuments = selection && createDocumentSelector(selection);
-    const documents = new Map<number, Entry>();
-    for (const root of typeof baseFolder === "string" ? [baseFolder] : baseFolder) {
-      for await (const folder of documentFolders(resolve(root))) {
-        for (const data of await loadMetadataFiles(folder)) {
-          const id = data.map.documentId;
-          const previous = documents.get(id);
-          if (previous) throw new Error(`Duplicate document ${id}: ${previous.folder} and ${folder}`);
-          documents.set(id, { ...data, folder });
-        }
-      }
-    }
-    return new KbSmartManager(documents, llm, selectDocuments, options?.tocMode);
+    const roots = (typeof baseFolder === "string" ? [baseFolder] : baseFolder).map(folder => resolve(folder));
+    const documents = await KbUtils.loadCatalog(roots);
+    return new KbSmartManager(roots, documents, llm, selectDocuments, tocMode);
   }
 
-  private document(id: number): Entry {
-    const entry = this.documents.get(id);
-    if (!entry) throw new Error(`Unknown document ${id}`);
-    return entry;
+  async refresh(): Promise<void> {
+    this.documents = await KbUtils.loadCatalog(this.roots);
   }
 
   async deleteDocument(documentId: number): Promise<void> {
-    const { folder, manifestPath, map } = this.document(documentId);
+    const { folder, manifestPath, map } = this.getEntry(documentId);
     const markdown = await findMarkdownFile(folder, map.originalFileName);
     if (markdown) {
-      let shared = false;
-      for (const other of this.documents.values()) {
-        if (other.map.documentId === documentId || other.folder !== folder) continue;
-        const file = await findMarkdownFile(folder, other.map.originalFileName);
-        if (file && file.stats.dev === markdown.stats.dev && file.stats.ino === markdown.stats.ino) {
-          shared = true;
-          break;
-        }
+      const shared = await KbUtils.isMarkdownShared(this.documents.values(), documentId, folder, markdown);
+      if (!shared) {
+        await unlink(markdown.path);
       }
-      if (!shared) await unlink(markdown.path);
     }
     await unlink(manifestPath);
     this.documents.delete(documentId);
   }
 
   getAgentSearchTool(): StructuredToolInterface {
-    return tool(({ question }) => this.searchWithReferences(question), {
-      name: "kbAgentSearch",
-      description: "Search the knowledge base and return a Markdown answer with references to cited search hits and explicitly read passages.",
-      schema: z.object({ question: z.string().trim().min(1) }),
-    });
+    return createAgentSearchTool(this);
   }
 
   getTools(): StructuredToolInterface[] {
-    const document = z.object({ documentId: z.int() });
-    const fileTool = (name: "kbFileGetTableOfContents" | "kbFileGetInfo" | "kbFileReadSummary" | "kbFileRead", description: string) =>
-      tool(({ documentId }) => this[name](documentId), { name, description, schema: document });
-    const section = z.union([z.object({ sectionId: z.int() }), z.object({ fromLine: z.int(), toLine: z.int() })]);
-    const query = z.discriminatedUnion("kind", [
-      z.object({ kind: z.literal("keywords"), keywords: z.array(z.string()), caseSensitive: z.boolean().optional() }),
-      z.object({ kind: z.literal("regex"), pattern: z.string(), caseSensitive: z.boolean().optional() }),
-    ]);
-    return [
-      tool(() => this.kbGetTableOfContents(), { name: "kbGetTableOfContents", description: "List the documents in the knowledge base.", schema: z.object({}) }),
-      fileTool("kbFileGetTableOfContents", "List the sections of a document and their IDs."),
-      fileTool("kbFileGetInfo", "Read the metadata for a document."),
-      fileTool("kbFileReadSummary", "Read a document summary to guide your search."),
-      fileTool("kbFileRead", "Read the full text of a document and its source information."),
-      tool(({ documentId, section }) => "sectionId" in section
-        ? this.kbFileReadSection(documentId, section.sectionId)
-        : this.kbFileReadSection(documentId, section.fromLine, section.toLine), {
-        name: "kbFileReadSection", description: "Read a document section by ID or read an inclusive line range.",
-        schema: document.extend({ section }),
-      }),
-      tool(({ query, fileSpec, beforeLines, afterLines }) => this.kbFileSearchByKeywords(query, fileSpec, { beforeLines, afterLines }), {
-        name: "kbFileSearchByKeywords", description: "Search document text by keyword or regular expression. Optionally filter by document ID and request surrounding lines via beforeLines and afterLines (0 by default). If truncated, narrow the query or filter by document ID.",
-        schema: searchContext.extend({ query, fileSpec: z.object({ documentIds: z.array(z.int()) }).optional() }),
-      }),
-    ];
+    return createKbTools(this);
   }
 
-  async kbAgenticSearch(question: string): Promise<string> {
-    const { answer } = await this.searchWithReferences(question);
-    return answer;
-  }
-
-  private async searchWithReferences(question: string): Promise<AgentSearchResult> {
-    if (!question.trim()) throw new Error("La domanda non può essere vuota.");
-    const agent = { tools: this.getTools(), question, llm: this.llm };
-    if (!this.selectDocuments && this.tocMode === "tools") return runKbAgent(agent);
-
-    let entries: Iterable<Entry> = this.documents.values();
-    if (this.selectDocuments) {
-      const ids = await this.selectDocuments(question, Array.from(entries, entry => ({
-        ...documentSource(entry),
-        shortDescription: entry.map.short_description,
-        keywords: entry.map.keywords,
-      })));
-      entries = ids.flatMap(id => {
-        const entry = this.documents.get(id);
-        return entry ? [entry] : [];
-      });
+  async kbAgentSearch(question: string): Promise<AgentSearchResult> {
+    if (!question.trim()) {
+      throw new Error("La domanda non può essere vuota.");
     }
-    // Build the index from loaded metadata without reading the Markdown files.
-    const toc = Array.from(entries, entry => ({
-      ...documentSource(entry),
-      shortDescription: entry.map.short_description,
-      sections: entry.map.sections.map(section => ({
-        sectionId: section.id,
-        title: section.title,
-        shortDescription: section.short_description,
-      })),
-    }));
-    return runKbAgent({ ...agent, toc, hasSelection: !!this.selectDocuments });
+
+    const baseInput = { tools: this.getTools(), question, llm: this.llm };
+    if (!this.selectDocuments && this.tocMode === "tools") {
+      return runKbAgent(baseInput);
+    }
+
+    const entries = await this.resolveAgentTocEntries(question);
+    const toc = KbUtils.buildAgentToc(entries);
+    return runKbAgent({ ...baseInput, toc, hasSelection: Boolean(this.selectDocuments) });
   }
 
   async kbGetTableOfContents(): Promise<KbTableOfContents> {
     const documents = Array.from(this.documents.values(), entry => ({
-      source: documentSource(entry),
+      source: KbUtils.buildDocumentSource(entry),
       shortDescription: entry.map.short_description,
       sectionCount: entry.map.sections.length,
     }));
@@ -223,102 +111,113 @@ export class KbSmartManager {
   }
 
   async kbFileGetTableOfContents(documentId: number): Promise<FileTableOfContents> {
-    const entry = this.document(documentId);
+    const entry = this.getEntry(documentId);
     const sections = entry.map.sections.map(section => ({
-      source: sectionSource(entry, section),
+      source: KbUtils.buildSectionSource(entry, section),
       shortDescription: section.short_description,
     }));
-    return { source: documentSource(entry), sections };
+    return { source: KbUtils.buildDocumentSource(entry), sections };
   }
 
   async kbFileGetInfo(documentId: number): Promise<FileInfo> {
-    const entry = this.document(documentId);
+    const entry = this.getEntry(documentId);
     const { author, fileType, tags, keywords, short_description, lineCount, sections } = entry.map;
     return {
-      source: documentSource(entry), author, fileType, tags: tags?.slice(),
-      keywords: [...keywords], shortDescription: short_description, lineCount, sectionCount: sections.length,
+      source: KbUtils.buildDocumentSource(entry),
+      author,
+      fileType,
+      tags: tags?.slice(),
+      keywords: [...keywords],
+      shortDescription: short_description,
+      lineCount,
+      sectionCount: sections.length,
     };
   }
 
   async kbFileReadSummary(documentId: number): Promise<FileSummary> {
-    const entry = this.document(documentId);
-    return { source: documentSource(entry), kind: "summary", summary: entry.map.summary };
+    const entry = this.getEntry(documentId);
+    return {
+      source: KbUtils.buildDocumentSource(entry),
+      kind: "summary",
+      summary: entry.map.summary,
+    };
   }
 
   async kbFileRead(documentId: number): Promise<FileContent> {
-    const entry = this.document(documentId);
-    const { markdown, lines } = await readText(entry);
-    if (!lines.length) return { markdown: "", source: documentSource(entry) };
-    return { markdown, source: passageSource(entry, [1, lines.length]) };
+    const entry = this.getEntry(documentId);
+    const { markdown, lines } = await KbUtils.readDocumentText(entry);
+    if (!lines.length) {
+      return { markdown: "", source: KbUtils.buildDocumentSource(entry) };
+    }
+    return { markdown, source: KbUtils.buildPassageSource(entry, [1, lines.length]) };
   }
 
   async kbFileReadSection(documentId: number, sectionId: number): Promise<SectionContent>;
   async kbFileReadSection(documentId: number, fromLine: number, toLine: number): Promise<SectionContent>;
   async kbFileReadSection(documentId: number, startOrId: number, end?: number): Promise<SectionContent> {
-    const entry = this.document(documentId);
-    let source: PassageSource;
-    if (end === undefined) {
-      const section = entry.map.sections.find(s => s.id === startOrId);
-      if (!section) throw new Error(`Unknown section ${startOrId} in document ${documentId}`);
-      source = sectionSource(entry, section);
-    } else {
-      if (!Number.isSafeInteger(startOrId) || !Number.isSafeInteger(end) ||
-          startOrId < 1 || end < startOrId || end > entry.map.lineCount) {
-        throw new RangeError(`Invalid line range ${startOrId}-${end} in document ${documentId}`);
-      }
-      source = passageSource(entry, [startOrId, end]);
-    }
-    const { lines } = await readText(entry);
-    return { markdown: lines.slice(source.fromLine - 1, source.toLine).join("\n"), source };
+    const entry = this.getEntry(documentId);
+    const source = this.resolvePassageSource(entry, documentId, startOrId, end);
+    const { lines } = await KbUtils.readDocumentText(entry);
+    return {
+      markdown: lines.slice(source.fromLine - 1, source.toLine).join("\n"),
+      source,
+    };
   }
 
-  async kbFileSearchByKeywords(query: SearchQuery, fileSpec?: FileSpec, context?: SearchContextOptions): Promise<SearchResult> {
-    const matchesLine = lineMatcher(query);
-    const { beforeLines = 0, afterLines = 0 } = searchContext.parse(context === undefined ? {} : context);
-    const withContext = beforeLines > 0 || afterLines > 0;
-    if (fileSpec !== undefined && !Array.isArray(fileSpec.documentIds)) {
+  async kbFileSearchByKeywords(
+    query: SearchQuery,
+    fileSpec?: FileSpec,
+    context?: SearchContextOptions,
+  ): Promise<SearchResult> {
+    const request = parseSearchRequest(query, context);
+    const entries = this.resolveSearchEntries(fileSpec);
+    return executeKeywordSearch(entries, request);
+  }
+
+  private getEntry(id: number): KbDocumentEntry {
+    const entry = this.documents.get(id);
+    if (!entry) {
+      throw new Error(`Unknown document ${id}`);
+    }
+    return entry;
+  }
+
+  private resolvePassageSource(
+    entry: KbDocumentEntry,
+    documentId: number,
+    startOrId: number,
+    end?: number,
+  ): PassageSource {
+    if (end === undefined) {
+      const section = entry.map.sections.find(item => item.id === startOrId);
+      if (!section) {
+        throw new Error(`Unknown section ${startOrId} in document ${documentId}`);
+      }
+      return KbUtils.buildSectionSource(entry, section);
+    }
+    KbUtils.validateLineRange(documentId, startOrId, end, entry.map.lineCount);
+    return KbUtils.buildPassageSource(entry, [startOrId, end]);
+  }
+
+  private resolveSearchEntries(fileSpec?: FileSpec): Iterable<KbDocumentEntry> {
+    if (fileSpec === undefined) {
+      return this.documents.values();
+    }
+    if (!Array.isArray(fileSpec.documentIds)) {
       throw new Error("Expected fileSpec.documentIds to be an array");
     }
-    const entries = fileSpec === undefined
-      ? this.documents.values()
-      : Array.from(new Set(fileSpec.documentIds), id => this.document(id));
-    const result: SearchResult = { matches: [] };
-    let remainingCharacters = MAX_CONTEXT_CHARACTERS;
-    const truncate = (): SearchResult => ({ ...result, truncated: true });
-    for (const entry of entries) {
-      const { lines } = await readText(entry);
-      let window: { fromLine: number; toLine: number; matchLines: number[] } | undefined;
-      const appendWindow = ({ fromLine, toLine, matchLines }: NonNullable<typeof window>) => {
-        if (result.matches.length >= MAX_CONTEXT_WINDOWS) return false;
-        let length = toLine - fromLine; // Newlines between the selected lines.
-        for (let i = fromLine - 1; i < toLine; i++) {
-          length += lines[i].length;
-          if (length > remainingCharacters) return false;
-        }
-        remainingCharacters -= length;
-        const snippet = lines.slice(fromLine - 1, toLine).join("\n");
-        result.matches.push({ snippet, source: passageSource(entry, [fromLine, toLine]), matchLines });
-        return true;
-      };
-      for (const [index, snippet] of lines.entries()) {
-        if (!matchesLine(snippet)) continue;
-        const line = index + 1;
-        if (!withContext) {
-          result.matches.push({ snippet, source: passageSource(entry, [line, line]) });
-          continue;
-        }
-        const fromLine = Math.max(1, line - beforeLines);
-        const toLine = Math.min(lines.length, line + afterLines);
-        if (window && fromLine <= window.toLine) {
-          window.toLine = toLine;
-          window.matchLines.push(line);
-        } else {
-          if (window && !appendWindow(window)) return truncate();
-          window = { fromLine, toLine, matchLines: [line] };
-        }
-      }
-      if (window && !appendWindow(window)) return truncate();
+    return Array.from(new Set(fileSpec.documentIds), id => this.getEntry(id));
+  }
+
+  private async resolveAgentTocEntries(question: string): Promise<Iterable<KbDocumentEntry>> {
+    if (!this.selectDocuments) {
+      return this.documents.values();
     }
-    return result;
+    const cards = KbUtils.buildSelectionCards(this.documents.values());
+    const selectedIds = await this.selectDocuments(question, cards);
+    return selectedIds.flatMap(id => {
+      const entry = this.documents.get(id);
+      return entry ? [entry] : [];
+    });
   }
 }

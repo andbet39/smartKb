@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { getEncoding } from "js-tiktoken";
-import { createDocumentParser, getDocumentModel, persist } from "workspace-document-parser";
+import { createDocumentParser, getDocumentModel, persist } from "smartDocKb";
 import { createProgressLogger } from "./cli-progress.mjs";
 
 async function main(args, log) {

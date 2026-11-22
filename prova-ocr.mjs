@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { convert } from "./dist/parser/convert.js";
+import { convertDocument } from "smartDocKb";
 import { createProgressLogger } from "./cli-progress.mjs";
 
 const progress = createProgressLogger();
@@ -7,7 +7,7 @@ try {
   const [path, ...rest] = process.argv.slice(2);
   if (!path || rest.length) throw new Error('Uso: npm run prova:ocr -- "percorso del PDF"');
   progress.log("Lettura del documento.");
-  const { markdown } = await convert({ documentId: 1, fileName: path, bytes: await readFile(path) }, progress.log);
+  const { markdown } = await convertDocument({ fileName: path, bytes: await readFile(path) }, progress.log);
   console.log(markdown);
   progress.log("Conversione completata. Markdown scritto su stdout.");
 } catch (error) {

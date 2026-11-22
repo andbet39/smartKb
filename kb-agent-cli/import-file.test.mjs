@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { KbSmartManager } from "workspace-document-parser/kb";
+import { KbSmartManager } from "smartDocKb/kb";
 import { mockRootEnv, offlineAzure, offlineAzureChat } from "../test/azure-model.mjs";
 import { importFile } from "./import-file.mjs";
 
@@ -25,12 +25,14 @@ test("import: avanzamento reale, file omonimi distinti e ricerca dopo riapertura
     await writeFile(file, `prodotto,prezzo\nlibro,${id * 100}`);
     await importFile(file, folder, id, documentLlm, step => progress.push(step));
   }
-  assert.ok(progress.some(step => step.includes("100%")));
+  assert.ok(progress.some(step => step.phase === "segmentation" && step.step === "window-done" && step.phasePercent === 100));
+  assert.ok(progress.some(step => step.phase === "completed" && step.percent === 100 && step.sectionCount === 1));
+  assert.ok(progress.every(step => step.fileName === "listino prezzi.csv" && typeof step.message === "string"));
   const kb = await KbSmartManager.open(folder, searchLlm);
   assert.equal((await kb.kbGetTableOfContents()).documents.length, 2);
   for (const id of [1, 2]) {
     const { matches } = await kb.kbFileSearchByKeywords({ kind: "keywords", keywords: [String(id * 100)] });
     assert.deepEqual(matches.map(m => m.source.documentId), [id]);
   }
-  assert.equal(await kb.kbAgenticSearch("Quali listini sono disponibili?"), "I due listini sono disponibili.");
+  assert.equal((await kb.kbAgentSearch("Quali listini sono disponibili?")).answer, "I due listini sono disponibili.");
 });

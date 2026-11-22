@@ -13,6 +13,11 @@ export interface DocumentSelectionOptions {
   maxDocuments?: number;
 }
 
+export interface KbOpenOptions extends AgentSearchOptions {
+  llm?: Pick<BaseChatModel, "bindTools">;
+  selection?: DocumentSelectionOptions;
+}
+
 export interface DocumentSource {
   documentId: number;
   originalFileName: string | null;

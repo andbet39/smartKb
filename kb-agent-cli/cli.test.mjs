@@ -10,8 +10,8 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
-import { persist } from "workspace-document-parser";
-import { KbSmartManager } from "workspace-document-parser/kb";
+import { persist } from "smartDocKb";
+import { KbSmartManager } from "smartDocKb/kb";
 import { createCliDocumentSelection, createCliModel } from "./models.mjs";
 
 const run = promisify(execFile);

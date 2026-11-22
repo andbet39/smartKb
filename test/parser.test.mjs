@@ -1,4 +1,5 @@
 import test from "node:test";
+import { convertDocument } from "smartDocKb";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -6,7 +7,7 @@ import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { createDocumentParser, getDocumentTableOfContents, getSectionMarkdown, load, persist, saveDocumentMarkdown } from "../dist/index.js";
 import { offlineAzure } from "./azure-model.mjs";
-import { KbSmartManager } from "workspace-document-parser/kb";
+import { KbSmartManager } from "smartDocKb/kb";
 
 const countTokens = text => text.length;
 const csv = { documentId: 1, bytes: Buffer.from("name,price\nBook,10"), fileName: "prices.csv" };
@@ -265,6 +266,52 @@ test("a blank document has an empty TOC and does not call the model", async () =
   assert.deepEqual(getDocumentTableOfContents(doc), { documentId: 7, short_description: "", sections: [] });
 });
 
+test("refresh picks up uploads across roots and preserves the last valid catalog on error", async t => {
+  const first = await mkdtemp(join(tmpdir(), "first-kb-"));
+  const second = await mkdtemp(join(tmpdir(), "second-kb-"));
+  t.after(() => Promise.all([first, second].map(root => rm(root, { recursive: true }))));
+  const kb = await KbSmartManager.open([first, second]);
+  const parser = createDocumentParser({ countTokens, llm: offlineAzure(() => assert.fail("Unexpected model call")) });
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const input = { bytes: await pdf.save(), fileName: "upload.pdf", documentId: 1, kbFolder: second };
+  const doc = await parser.importDocument(input);
+  assert.deepEqual(await load(join(second, "doc-1")), doc);
+  assert.deepEqual((await kb.kbGetTableOfContents()).documents, []);
+  await kb.refresh();
+  assert.equal((await kb.kbFileGetInfo(1)).source.originalFileName, "upload.pdf");
+  await assert.rejects(parser.importDocument(input), { code: "EEXIST" });
+  await parser.importDocument({ ...input, kbFolder: first });
+  await assert.rejects(kb.refresh(), /Duplicate document 1/);
+  assert.equal((await kb.kbGetTableOfContents()).documents.length, 1);
+  await rm(join(first, "doc-1"), { recursive: true });
+  await rm(join(second, "doc-1"), { recursive: true });
+  await kb.refresh();
+  assert.deepEqual((await kb.kbGetTableOfContents()).documents, []);
+});
+
+test("importFile creates the KB, rolls back failed imports and never replaces an existing folder", async t => {
+  const root = await mkdtemp(join(tmpdir(), "parser-import-"));
+  t.after(() => rm(root, { recursive: true }));
+  const options = { kbFolder: join(root, "kb"), documentId: 7 };
+  const phases = [];
+  const parser = createDocumentParser({ countTokens, llm: offlineAzure(() => assert.fail("Unexpected model call")),
+    onProgress: event => phases.push(event.phase) });
+  const file = join(root, "manual.pdf");
+  await writeFile(file, "invalid PDF");
+  await assert.rejects(parser.importFile(file, options), { name: "DocumentParseError" });
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  await writeFile(file, await pdf.save());
+  phases.length = 0;
+  const doc = await parser.importFile(file, options);
+  assert.equal(phases[0], "reading");
+  assert.equal(phases.at(-1), "saving");
+  assert.equal(doc.map.originalFileName, "manual.pdf");
+  await assert.rejects(parser.importFile(file, options), { code: "EEXIST" });
+  assert.deepEqual(await load(join(options.kbFolder, "doc-7")), doc);
+});
+
 test("persistent gaps recover the whole window from its original text", async () => {
   const calls = [];
   let recoveredText;
@@ -332,7 +379,6 @@ test("independent character targets guide but do not truncate a single-section d
 test("local OCR reads an Italian scan between a native page and a blank page", async () => {
   const { PDFiumLibrary } = await import("@hyzyla/pdfium");
   const { renderPage } = await import("../dist/parser/ocr.js");
-  const { convert } = await import("../dist/parser/convert.js");
   const original = await PDFDocument.create();
   original.addPage([320, 100]).drawText("Fattura numero 1742", { x: 15, y: 50, size: 22 });
   const pdf = await PDFDocument.create();
@@ -346,8 +392,25 @@ test("local OCR reads an Italian scan between a native page and a blank page", a
   }
   pdf.addPage();
   const progress = [];
-  const { markdown, pages } = await convert({ documentId: 10, bytes: await pdf.save() }, message => progress.push(message));
-  const logs = progress.join("\n");
+  const { markdown, pages } = await convertDocument({ bytes: await pdf.save() }, event => progress.push(event));
+  assert.ok(progress.every(e => !("documentId" in e) && e.phase === "conversion" && e.format === "pdf" && e.totalPages === 3 && e.unit === "pages"));
+  for (let i = 1; i < progress.length; i++) {
+    assert.ok(progress[i].percent >= progress[i - 1].percent);
+  }
+  assert.equal(progress[0].step, "start");
+  assert.equal(progress[0].percent, 0);
+  assert.deepEqual(
+    progress.filter(e => e.step === "page-done").map(e => ({ page: e.page, source: e.pageSource, current: e.current, phasePercent: e.phasePercent })),
+    [
+      { page: 1, source: "native", current: 1, phasePercent: 33 },
+      { page: 2, source: "ocr", current: 2, phasePercent: 66 },
+      { page: 3, source: "blank", current: 3, phasePercent: 100 },
+    ],
+  );
+  assert.ok(progress.some(e => e.step === "ocr-progress" && e.page === 2 && e.ocrPercent === 100));
+  assert.equal(progress.at(-1).step, "done");
+  assert.equal(progress.at(-1).percent, 100);
+  const logs = progress.map(e => e.message).join("\n");
   assert.match(logs, /Pagina 1\/3: completata \(testo nativo/);
   assert.match(logs, /Pagina 2\/3: OCR 100%/);
   assert.match(logs, /Pagina 3\/3: vuota/);
@@ -360,7 +423,6 @@ test("local OCR reads an Italian scan between a native page and a blank page", a
 
 test("ImageBased rejection triggers local OCR and resumes extraction; other unsupported errors propagate", async t => {
   const { default: anydoc } = await import("@firecrawl/anydoc");
-  const { convert } = await import("../dist/parser/convert.js");
   const pdf = await PDFDocument.create();
   pdf.addPage([320, 100]).drawText("Fattura numero 29", { x: 15, y: 50, size: 22 });
   pdf.addPage().drawText("Conclusione");
@@ -368,11 +430,11 @@ test("ImageBased rejection triggers local OCR and resumes extraction; other unsu
   const mock = t.mock.method(anydoc, "toMarkdownBytes");
   const reject = message => async () => { throw Object.assign(new Error(message), { code: "unsupported" }); };
   mock.mock.mockImplementationOnce(reject("unsupported input: PDF has no extractable text (ImageBased, 1pages)"));
-  const result = await convert(input);
+  const result = await convertDocument(input);
   assert.match(result.markdown, /Fattura numero 29\nConclusione/);
   assert.deepEqual(result.pages.map(p => p.range), [[1, 1], [2, 2]]);
   mock.mock.mockImplementation(reject("unsupported input: unknown PDF feature"));
-  await assert.rejects(convert(input), /PDF page 1: unsupported input: unknown PDF feature/);
+  await assert.rejects(convertDocument(input), /PDF page 1: unsupported input: unknown PDF feature/);
 });
 
 test("batch preserves order and rejects invalid size, unknown files and unreadable scans before inference", async () => {
@@ -389,4 +451,75 @@ test("batch preserves order and rejects invalid size, unknown files and unreadab
   pdf.addPage().drawImage(await pdf.embedPng(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=", "base64")));
   await assert.rejects(parser.parseDocument({ documentId: 9, bytes: await pdf.save() }), /Document 9: PDF page 1/);
   assert.equal(calls, 2);
+});
+
+test("onProgress emits structured phase and batch progress with monotonic percentages", async () => {
+  const events = [];
+  let windowCalls = 0;
+  const parser = createDocumentParser({
+    countTokens,
+    windowTokens: 230,
+    targetChars: { documentSummary: 40 },
+    onProgress: event => events.push(event),
+    llm: offlineAzure((name, messages) => {
+      if (name === "summarize_section") {
+        return { summary: "Merged section", short_description: "Merged", keywords: ["k"] };
+      }
+      if (name === "summarize_document") {
+        return { summary: "Doc overview", short_description: "Overview", keywords: ["doc"] };
+      }
+      const [, start, end] = messages[0].content.match(/assigned lines (\d+) through (\d+)/);
+      windowCalls++;
+      if (windowCalls === 1) {
+        return { continuesPrevious: false, sections: [section(+start + 1, +end)] }; // trigger retry on attempt 1
+      }
+      return { continuesPrevious: +start > 1, sections: [section(+start, +end, `part-${windowCalls}`)] };
+    }),
+  });
+
+  const multiWindowBytes = Buffer.from("label,value\n" + ["a", "b", "c"].map(x => `${x},${x.repeat(75)}`).join("\n"));
+  const blankPdf = await PDFDocument.create();
+  blankPdf.addPage();
+
+  await parser.parseDocuments([
+    { documentId: 11, fileName: "dir\\multi.csv", bytes: multiWindowBytes, sectionSize: { minChars: 100, maxChars: 160 } },
+    { documentId: 12, fileName: "empty.pdf", bytes: await blankPdf.save() },
+  ]);
+
+  for (let i = 1; i < events.length; i++) {
+    assert.ok(events[i].batch.percent >= events[i - 1].batch.percent);
+  }
+  assert.equal(events[0].batch.percent, 0);
+  assert.equal(events.at(-1).batch.percent, 100);
+
+  const doc11 = events.filter(e => e.documentId === 11);
+  assert.ok(doc11.every(e => e.fileName === "multi.csv" && e.batch.current === 1 && e.batch.total === 2));
+  for (let i = 1; i < doc11.length; i++) {
+    assert.ok(doc11[i].percent >= doc11[i - 1].percent);
+    if (doc11[i].percent < 100) assert.notEqual(doc11[i].phase, "completed");
+  }
+  assert.equal(doc11[0].percent, 0);
+  assert.equal(doc11.at(-1).phase, "completed");
+  assert.equal(doc11.at(-1).percent, 100);
+  assert.equal(doc11.at(-1).sectionCount, 1);
+
+  const seenPhases = doc11.map(e => e.phase).filter((phase, idx, arr) => phase !== arr[idx - 1]);
+  assert.deepEqual(seenPhases, ["conversion", "segmentation", "sections", "overview", "completed"]);
+
+  const retry = doc11.find(e => e.phase === "segmentation" && e.step === "window-request" && e.attempt === 2);
+  assert.ok(retry);
+  assert.equal(retry.maxAttempts, 2);
+  assert.equal(retry.window, 1);
+  assert.ok(retry.totalWindows >= 2);
+  assert.ok(doc11.some(e => e.phase === "sections" && e.step === "llm-request" && e.sectionIndex === 1 && e.totalSections === 1));
+  assert.ok(doc11.some(e => e.phase === "overview" && e.step === "llm-request" && e.attempt === 1));
+
+  const doc12 = events.filter(e => e.documentId === 12);
+  assert.deepEqual(
+    doc12.map(e => e.phase).filter((phase, idx, arr) => phase !== arr[idx - 1]),
+    ["conversion", "completed"],
+  );
+  assert.equal(doc12.at(-1).sectionCount, 0);
+  assert.equal(doc12.at(-1).lineCount, 0);
+  assert.equal(doc12.at(-1).percent, 100);
 });

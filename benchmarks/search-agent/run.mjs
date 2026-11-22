@@ -74,7 +74,6 @@ export async function runBenchmark({ model = getDocumentModel(), selection, tocM
     bindTools: tools => model.bindTools(tools).withConfig({ callbacks: searchTracker.callbacks }),
   }, configuredSelection, { tocMode });
   const { documents } = await kb.kbGetTableOfContents();
-  const search = kb.getAgentSearchTool();
   const results = [];
   const searchTurns = [], decisionTurns = [];
 
@@ -85,7 +84,7 @@ export async function runBenchmark({ model = getDocumentModel(), selection, tocM
     const started = performance.now();
     let answer = null, references = [], error = null;
     try {
-      ({ answer, references } = await search.invoke({ question }));
+      ({ answer, references } = await kb.kbAgentSearch(question));
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
     }

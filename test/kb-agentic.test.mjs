@@ -3,8 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { persist } from "workspace-document-parser";
-import { KbSmartManager } from "workspace-document-parser/kb";
+import { persist } from "smartDocKb";
+import { KbSmartManager } from "smartDocKb/kb";
 import { mockDocumentAzure, mockRootEnv, offlineAzure, offlineAzureChat } from "./azure-model.mjs";
 
 async function tempFolder(t) {
@@ -37,8 +37,9 @@ function candidateToc(messages) {
 test("opening the KB does not require Azure; agentic search validates the root configuration on demand", async t => {
   mockRootEnv(t, "");
   const kb = await KbSmartManager.open(await tempFolder(t));
-  await assert.rejects(kb.kbAgenticSearch("   "), /non può essere vuota/);
-  await assert.rejects(kb.kbAgenticSearch("Cerca"), /AZURE_OPENAI_MODEL mancante/);
+  await assert.rejects(kb.kbAgentSearch("   "), /non può essere vuota/);
+  await assert.rejects(kb.getAgentSearchTool().invoke({ question: "   " }));
+  await assert.rejects(kb.kbAgentSearch("Cerca"), /AZURE_OPENAI_MODEL mancante/);
 });
 
 test("the supplied LangChain model handles both search entry points without root Azure configuration", async t => {
@@ -51,7 +52,9 @@ test("the supplied LangChain model handles both search entry points without root
     return { content: `Risposta: ${question}` };
   });
   const kb = await KbSmartManager.open(await tempFolder(t), llm);
-  assert.equal(await kb.kbAgenticSearch("Ricerca diretta"), "Risposta: Ricerca diretta");
+  assert.deepEqual(await kb.kbAgentSearch("Ricerca diretta"), {
+    answer: "Risposta: Ricerca diretta", references: [],
+  });
   assert.deepEqual(await kb.getAgentSearchTool().invoke({ question: "Ricerca via tool" }), {
     answer: "Risposta: Ricerca via tool", references: [],
   });
@@ -86,9 +89,9 @@ test("TOCs can be discovered through tools without putting document metadata in 
         assert.fail("Unexpected tool response");
     }
   });
-  const kb = await KbSmartManager.open(root, llm, undefined, { tocMode: "tools" });
+  const kb = await KbSmartManager.open(root, { llm, tocMode: "tools" });
   const { source } = await kb.kbFileReadSection(1, 5);
-  assert.deepEqual(await kb.getAgentSearchTool().invoke({ question: "What voltage?" }), {
+  assert.deepEqual(await kb.kbAgentSearch("What voltage?"), {
     answer: "Use 12 V.", references: [{ kind: "passage", source }],
   });
 });
@@ -112,10 +115,10 @@ test("the decision model scores compact metadata in batches and sends only the h
     observed.push(candidateToc(messages));
     return { content: "Comparison" };
   });
-  const kb = await KbSmartManager.open(root, llm, { decisionModel, threshold: 0.75, maxDocuments: 2 }, { tocMode: "tools" });
+  const kb = await KbSmartManager.open(root, { llm, selection: { decisionModel, threshold: 0.75, maxDocuments: 2 }, tocMode: "tools" });
   assert.equal(batches.length, 0);
-  await assert.rejects(kb.kbAgenticSearch("  "), /non può essere vuota/);
-  assert.equal(await kb.kbAgenticSearch("Compare sources"), "Comparison");
+  await assert.rejects(kb.kbAgentSearch("  "), /non può essere vuota/);
+  assert.equal((await kb.kbAgentSearch("Compare sources")).answer, "Comparison");
   assert.equal((await kb.getAgentSearchTool().invoke({ question: "Compare sources" })).answer, "Comparison");
   assert.deepEqual(batches, [ids.slice(0, 20), ids.slice(20), ids.slice(0, 20), ids.slice(20)]);
   assert.deepEqual(observed.map(toc => toc.map(({ documentId, sections }) => [documentId, sections[0].title])), [
@@ -141,7 +144,7 @@ test("selection with no candidates or bad decisions falls back to global keyword
       return { scores };
     });
     const kb = await KbSmartManager.open(root, llm, { decisionModel }, { tocMode: "tools" });
-    const result = await kb.getAgentSearchTool().invoke({ question: "What voltage?" });
+    const result = await kb.kbAgentSearch("What voltage?");
     assert.equal(result.answer, "Use 12 V.");
     assert.deepEqual(result.references.map(ref => ref.source.documentId), [1]);
   }
@@ -157,7 +160,7 @@ test("decision configuration validates bounds and does not call the model for an
     return { content: "Empty" };
   });
   const kb = await KbSmartManager.open(root, llm, { decisionModel });
-  assert.equal(await kb.kbAgenticSearch("What is in the KB?"), "Empty");
+  assert.equal((await kb.kbAgentSearch("What is in the KB?")).answer, "Empty");
   assert.equal(decisionModel.withStructuredOutput.mock.callCount(), 0);
 });
 
@@ -226,7 +229,7 @@ test("agentic search uses the root model, sends every TOC, and bounds tool round
 
   const kb = await KbSmartManager.open([manuali, procedure]);
   assert.equal(turns, 0);
-  const { answer: markdown, references } = await kb.getAgentSearchTool().invoke({ question });
+  const { answer: markdown, references } = await kb.kbAgentSearch(question);
   assert.equal(markdown, answer);
   assert.deepEqual(references.map(({ kind, source }) => [kind, source.documentId, source.originalFileName]), [
     ["passage", 1, "router.pdf"], ["passage", 2, "avvio.pdf"],
@@ -236,7 +239,7 @@ test("agentic search uses the root model, sends every TOC, and bounds tool round
     assert.deepEqual(source.pages, [{ pageNumber: 1, fromLine: 1, toLine: 1 }]);
   }
   assert.equal(turns, 3);
-  await assert.rejects(kb.kbAgenticSearch("Cerca"), /limite di 8 turni/);
+  await assert.rejects(kb.kbAgentSearch("Cerca"), /limite di 8 turni/);
   assert.equal(repeatedCalls, 9);
 });
 
@@ -262,13 +265,12 @@ test("only cited keyword hits become references, while explicitly read ranges ar
     return { content: "Use 12 V (router.pdf, line 2, page 1) [[kb:1:2]] [[kb:1:2]] [[kb:1:99]]." };
   });
   const kb = await KbSmartManager.open(root, llm);
-  const search = kb.getAgentSearchTool();
   const read = await kb.kbFileReadSection(2, 5);
   const { matches: [, cited] } = await kb.kbFileSearchByKeywords({ kind: "keywords", keywords: ["V."] });
   const expected = [read.source, cited.source].map(source => ({ kind: "passage", source }));
-  assert.deepEqual(await search.invoke({ question: "What is the operating voltage?" }), { answer, references: expected });
-  assert.deepEqual(await search.invoke({ question: "Read as well" }), { answer, references: expected });
-  assert.deepEqual(await search.invoke({ question: "Not found" }), { answer: "Not found.", references: expected.slice(0, 1) });
+  assert.deepEqual(await kb.kbAgentSearch("What is the operating voltage?"), { answer, references: expected });
+  assert.deepEqual(await kb.kbAgentSearch("Read as well"), { answer, references: expected });
+  assert.deepEqual(await kb.kbAgentSearch("Not found"), { answer: "Not found.", references: expected.slice(0, 1) });
 });
 
 test("contextual search merges overlapping windows and keeps actual match lines", async t => {
@@ -320,7 +322,7 @@ test("the agent cites only referenced contextual ranges, without leaking markers
     return { content: "Use 12 V. [[kb:1:1:3]] [[kb:1:1:3]] [[kb:1:2:3]]" };
   });
   const kb = await KbSmartManager.open(root, llm);
-  const result = await kb.getAgentSearchTool().invoke({ question: "What is the first value?" });
+  const result = await kb.kbAgentSearch("What is the first value?");
   assert.equal(result.answer, "Use 12 V.");
   const { source } = await kb.kbFileReadSection(1, 1, 3);
   assert.deepEqual(result.references, [{ kind: "passage", source }]);
