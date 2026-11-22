@@ -13,6 +13,8 @@ Libreria **TypeScript** per **Node.js 20.12+** (ESM). Il nome del pacchetto negl
 
 Parser e manager sono disponibili entrambi dall’entry point principale. Il manager è accessibile anche dal sotto-percorso `smartDocKb/kb`.
 
+Nel repository: [specifiche tecniche](./docs), [esempi eseguibili](./examples) e [report dei benchmark](./benchmarks/reports).
+
 <a id="quickstart"></a>
 
 ## 🚀 Quickstart: integra la libreria
@@ -276,7 +278,7 @@ Dalla root del repository:
 | `npm test` | Esegue i test con AnyDoc e `AzureChatOpenAI` reali e risposte HTTP locali predeterminate. Non serve un deployment. |
 | `npm run test:azure` | Esegue una prova live con un CSV sintetico. Consuma risorse sul deployment; risulta **skipped** se mancano le variabili Azure. |
 
-> **Attenzione:** `prova` può sovrascrivere un’esportazione omonima o creare un conflitto con il documento che ha già ID `1` in [KB1](./kb1). Per ottenere solo JSON su stdout e non toccare KB1, dopo la build esegui [lo script di prova](prova-documento.mjs) con `node` da una cartella temporanea, passando percorsi assoluti allo script e al PDF. Lo script salva la propria KB nella cartella corrente.
+> **Attenzione:** `prova` può sovrascrivere un’esportazione omonima o creare un conflitto con il documento che ha già ID `1` in [KB1](./kb1). Per ottenere solo JSON su stdout e non toccare KB1, dopo la build esegui [lo script di prova](examples/prova-documento.mjs) con `node` da una cartella temporanea, passando percorsi assoluti allo script e al PDF. Lo script salva la propria KB nella cartella corrente.
 
 La [guida ai benchmark](benchmarks/search-agent/README.md) confronta tre strategie su KB1 e KB2: indice nel prompt, selettore e indice via tool. Distingue le esecuzioni live, che consumano token sul deployment, dalle simulazioni offline di costo.
 

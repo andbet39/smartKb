@@ -1,4 +1,4 @@
-import { createSystemOneSelection } from '../../systemone-model.mjs';
+import { createSystemOneSelection } from '../../scripts/shared/systemone-model.mjs';
 
 export function getDecisionSelection(env = process.env) {
   const selection = createSystemOneSelection(env);

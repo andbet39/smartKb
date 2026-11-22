@@ -12,7 +12,7 @@ Questa specifica descrive l'implementazione corrente di `KbSmartManager`. Le voc
 
 **Enhancement prioritario.** Identificare esplicitamente i manifest e definire un modello di aggiornamento per revisione. Separare la rimozione logica dalla pulizia del testo, con riconciliazione in caso di errore. Verificare con test radici sovrapposte, cancellazioni parziali e modifiche concorrenti tra lettura e rimozione.
 
-Riferimenti: [scoperta e cancellazione](src/kb/index.ts), [risoluzione e validazione dei file](src/parser/persistence.ts).
+Riferimenti: [scoperta e cancellazione](../src/kb/index.ts), [risoluzione e validazione dei file](../src/parser/persistence.ts).
 
 ## 2. Consultazione diretta e fonti
 
@@ -30,7 +30,7 @@ Un `PassageSource` identifica documento e range assoluto; include la sezione sol
 
 **Enhancement.** Legare il testo a un hash di revisione del manifest. Per letture parziali ripetute, usare una cache limitata alla revisione o un indice degli offset di riga: oggi una singola sezione costa una lettura completa del documento.
 
-Riferimento: [fonti e operazioni dirette](src/kb/index.ts).
+Riferimento: [fonti e operazioni dirette](../src/kb/index.ts).
 
 ## 3. Ricerca testuale
 
@@ -42,7 +42,7 @@ Con contesto a zero, ogni riga corrispondente genera un risultato, senza `matchL
 
 **Enhancement prioritario.** Applicare limiti di esecuzione per regex e budget anche ai risultati senza contesto destinati all'agente. Se si introduce paginazione, mantenere ordine stabile e coordinarla con la revisione del corpus. Per corpus grandi valutare un indice lessicale, preservando coordinate e distinguendo esplicitamente ricerca letterale esatta da ranking.
 
-Riferimenti: [matching, finestre e limiti](src/kb/index.ts), [contratti dei risultati](src/kb/types.ts).
+Riferimenti: [matching, finestre e limiti](../src/kb/search.ts), [contratti dei risultati](../src/kb/types.ts).
 
 ## 4. Strategia di discovery e selezione documenti
 
@@ -58,7 +58,7 @@ Se un batch fallisce o dà un output invalido, si scarta l'intera selezione, anc
 
 **Enhancement.** Distinguere nei segnali di diagnostica selezione riuscita, nessun candidato e invocazione fallita. Per cataloghi grandi, confrontare pre-filtro deterministico, selezione attuale e discovery via tool su recall delle fonti, token complessivi e latenza, non soltanto sul numero di token del prompt iniziale.
 
-Riferimenti: [composizione TOC](src/kb/index.ts), [batching e ranking](src/kb/selection.ts), [istruzioni di discovery](src/kb/agent.ts).
+Riferimenti: [composizione TOC](../src/kb/index.ts), [batching e ranking](../src/kb/selection.ts), [istruzioni di discovery](../src/kb/agent.ts).
 
 ## 5. Esecuzione agentica e citazioni
 
@@ -72,10 +72,10 @@ Le letture esplicite di testo non bianco raccolgono sempre una fonte di passaggi
 
 **Enhancement prioritario.** Introdurre budget complessivi di tempo, chiamate e dimensione dei tool result, oltre a cancellazione. Separare in modo esplicito fonti consultate e citate; aggiungere diagnostica su marcatori non risolti e verificare le citazioni prima di offrire un'opzione di risposta con fonti obbligatorie.
 
-Riferimenti: [orchestrazione, errori e citazioni](src/kb/agent.ts), [modello Azure predefinito](src/document-model.ts).
+Riferimenti: [orchestrazione, errori e citazioni](../src/kb/agent.ts), [modello Azure predefinito](../src/document-model.ts).
 
 ## 6. Verifica e ordine degli interventi
 
-I [test agentici](test/kb-agentic.test.mjs) coprono le modalità TOC, ranking e fallback, limite dei turni, citazioni e truncation. I [test di persistenza e catalogo](test/parser.test.mjs) verificano anche compatibilità legacy, caricamento differito, manifest multipli e cancellazione di testo condiviso. Il [benchmark di ricerca](benchmarks/search-agent/README.md) confronta le tre modalità a parità di domande e misura accuratezza per fatti attesi e token del provider, separando selezione e ricerca. Il punteggio testuale non certifica l'assenza di contraddizioni né la validità delle citazioni.
+I [test agentici](../test/kb-agentic.test.mjs) coprono le modalità TOC, ranking e fallback, limite dei turni, citazioni e truncation. I [test di persistenza e catalogo](../test/parser.test.mjs) verificano anche compatibilità legacy, caricamento differito, manifest multipli e cancellazione di testo condiviso. Il [benchmark di ricerca](../benchmarks/search-agent/README.md) confronta le tre modalità a parità di domande e misura accuratezza per fatti attesi e token del provider, separando selezione e ricerca. Il punteggio testuale non certifica l'assenza di contraddizioni né la validità delle citazioni.
 
 Ordine proposto: **P1** integrità catalogo/testo e limiti di esecuzione; **P2** osservabilità di selezione e validazione delle citazioni; **P3** cache o indicizzazione solo dopo misure su corpus fissi. Per i confronti aggiungere latenza mediana e p95, errori separati per fase, recall delle fonti attese e, per i test di affidabilità, casi senza evidenze nel corpus.

@@ -24,4 +24,4 @@ Per le sezioni estese su più finestre, il modello combina sintesi, descrizioni 
 
 Le sezioni finali sono numerate da 1 nell’ordine del documento. Ogni `range` contiene gli estremi inclusivi nel Markdown originale, senza numeri di riga o marcatori aggiunti. Per un PDF, `pageRange` va dalla prima all’ultima pagina che contiene righe della sezione e può includere pagine vuote intermedie. La KB usa questi intervalli per leggere le sezioni senza rieseguire il sezionamento.
 
-**Riferimenti:** [costruzione delle finestre](src/parser/windows.ts), [analisi e ricomposizione](src/parser/analysis.ts), [mappa finale](src/parser/index.ts), [contratto dei servizi](parser-kbmanager.spec.md).
+**Riferimenti:** [costruzione delle finestre](../src/parser/windows.ts), [analisi e ricomposizione](../src/parser/analysis.ts), [mappa finale](../src/parser/index.ts), [contratto dei servizi](parser-kbmanager.spec.md).

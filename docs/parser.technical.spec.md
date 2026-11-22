@@ -12,7 +12,7 @@ La factory richiede un modello con `withStructuredOutput` e un contatore `countT
 
 **Enhancement.** Introdurre per prima cosa `AbortSignal`, timeout per fase e diagnostica strutturata (fase, righe o pagina, durata, causa). Se serve import massivo, aggiungere un'API separata con concorrenza limitata ed esito per documento, senza cambiare il comportamento fail-fast esistente.
 
-Riferimenti: [orchestrazione e API](src/parser/index.ts), [tipi ed errori](src/parser/types.ts), [configurazione dell'analisi](src/parser/analysis.ts).
+Riferimenti: [orchestrazione e API](../src/parser/index.ts), [tipi ed errori](../src/parser/types.ts), [configurazione dell'analisi](../src/parser/analysis.ts).
 
 ## 2. Conversione e OCR
 
@@ -26,7 +26,7 @@ PDFium rasterizza la singola pagina in memoria, a una scala nominale di 300 DPI 
 
 **Enhancement.** Rendere configurabili lingua, politica per pagine illeggibili e soglia di fallback per pagine miste. Prima di cambiare i default, misurare qualità testuale, tempo e picco di memoria su PDF nativi, scansionati, misti e multilingue; una modalità tollerante dovrebbe esplicitare quali pagine sono state omesse.
 
-Riferimenti: [conversione e fallback](src/parser/convert.ts), [rendering e worker OCR](src/parser/ocr.ts).
+Riferimenti: [conversione e fallback](../src/parser/convert.ts), [rendering e worker OCR](../src/parser/ocr.ts).
 
 ## 3. Finestre, segmentazione e sintesi
 
@@ -40,7 +40,7 @@ Riferimenti: [conversione e fallback](src/parser/convert.ts), [rendering e worke
 
 **Enhancement.** Misurare frequenza dei fallback, latenza e token per fase; usare una riserva esplicita per istruzioni e risposta. Per righe eccezionalmente lunghe, valutare frammenti interni con mappatura alla riga originale, senza cambiare l'unità delle citazioni. Confrontare l'euristica corrente con confini ottenuti da una struttura Markdown, misurando copertura e stabilità su corpus fisso prima di modificare la segmentazione.
 
-Riferimenti: [finestre](src/parser/windows.ts), [schema, retry e riduzione](src/parser/analysis.ts), [nota sul sezionamento](sezionamento-documenti.md).
+Riferimenti: [finestre](../src/parser/windows.ts), [schema, retry e riduzione](../src/parser/analysis.ts), [nota sul sezionamento](sezionamento-documenti.md).
 
 ## 4. Coordinate, indici ed esportazione
 
@@ -50,7 +50,7 @@ Le coordinate canoniche sono inclusive e partono da 1. `id` e `order` delle sezi
 
 **Enhancement.** Conservare nel manifest una revisione del documento e la provenienza di conversione, modello e tokenizer; non promettere ID di sezione stabili tra revisioni. Se l'export annotato serve a un editor, produrre una mappa esplicita tra righe della vista e righe canoniche.
 
-Riferimento: [mappatura ed esportazione](src/parser/index.ts).
+Riferimento: [mappatura ed esportazione](../src/parser/index.ts).
 
 ## 5. Persistenza e integrità
 
@@ -60,10 +60,10 @@ La validazione verifica forma del manifest, range ordinati e positivi, limiti di
 
 **Enhancement prioritario.** Usare un manifest versionato con riferimento esplicito a un Markdown immutabile e relativo hash; pubblicare il manifest con sostituzione atomica solo dopo aver scritto il testo. Definire migrazione legacy e validazione incrociata. Test di accettazione: scrittura interrotta, stessi nomi e stesso numero di righe con testo alterato.
 
-Riferimento: [persistenza e validazione](src/parser/persistence.ts).
+Riferimento: [persistenza e validazione](../src/parser/persistence.ts).
 
 ## 6. Verifica e ordine degli interventi
 
-I [test del parser](test/parser.test.mjs) coprono round trip, marcatori, pagine vuote e sezioni multipagina, recupero dei buchi, fusioni tra finestre, target indicativi, OCR italiano e fallimento prima dell'inferenza su input non elaborabili. I test con risposta simulata verificano la struttura, non la fedeltà delle sintesi reali.
+I [test del parser](../test/parser.test.mjs) coprono round trip, marcatori, pagine vuote e sezioni multipagina, recupero dei buchi, fusioni tra finestre, target indicativi, OCR italiano e fallimento prima dell'inferenza su input non elaborabili. I test con risposta simulata verificano la struttura, non la fedeltà delle sintesi reali.
 
 Ordine proposto: **P1** integrità del salvataggio e diagnostica per fase; **P2** budget effettivo del provider e comportamento su righe lunghe; **P3** OCR configurabile e miglioramento della segmentazione, guidati da benchmark riproducibili.

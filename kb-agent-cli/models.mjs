@@ -1,6 +1,6 @@
 import { AzureChatOpenAI } from "@langchain/openai";
 
-export { createSystemOneSelection as createCliDocumentSelection } from "../systemone-model.mjs";
+export { createSystemOneSelection as createCliDocumentSelection } from "../scripts/shared/systemone-model.mjs";
 
 export function createCliModel(prefix, env = process.env, overrides = {}) {
   const read = key => env[`${prefix}${key}`]?.trim() ?? "";
