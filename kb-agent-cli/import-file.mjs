@@ -1,17 +1,18 @@
 import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
-import { getEncoding } from "js-tiktoken";
-import { createDocumentParser } from "smartDocKb";
+import { basename, extname } from "node:path";
 
-/** Parses and saves a file, returning its ID. Pass undefined to let the parser assign it. */
-export async function importFile(file, store, documentId, llm, onProgress) {
-  const encoding = getEncoding("o200k_base");
-  const parser = createDocumentParser({ llm, onProgress, countTokens: text => encoding.encode(text).length });
-  const doc = await parser.parseDocument({
-    ...(documentId === undefined ? {} : { documentId }),
-    fileName: basename(file), bytes: await readFile(file),
-    sectionSize: { minChars: 1000, maxChars: 4000 },
-  });
-  await store.add(doc);
-  return doc.map.documentId;
+const contentTypes = new Map([
+  [".txt", "text/plain"],
+  [".md", "text/markdown"],
+  [".markdown", "text/markdown"],
+  [".csv", "text/csv"],
+  [".pdf", "application/pdf"],
+  [".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+  [".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+]);
+
+export async function importFile(file, kb, documentId) {
+  const contentType = contentTypes.get(extname(file).toLowerCase());
+  const originalFileName = basename(file);
+  return kb.write(await readFile(file), { originalFileName, contentType }, documentId);
 }

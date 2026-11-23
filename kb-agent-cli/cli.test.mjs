@@ -1,153 +1,114 @@
-import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { once } from "node:events";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
+import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { createPosixStore } from "smartDocKb";
-import { makeDocument } from "../test/kb-fixtures.mjs";
-import { createCliModel } from "./models.mjs";
+import { LocalObjectStore, openLocalKnowledgeBase } from "smartdoc-kb-v2";
+import { createCliEmbedder, createCliModel } from "./models.mjs";
 
 const run = promisify(execFile);
 const cliPath = fileURLToPath(new URL("./cli.mjs", import.meta.url));
-const env = {
-  AZURE_OPENAI_API_KEY: "deep-test-key",
-  AZURE_OPENAI_ENDPOINT: "https://deep.example.test",
-  AZURE_OPENAI_API_DEPLOYMENT_NAME: "deep-test",
-  AZURE_OPENAI_API_VERSION: "2024-10-21",
+const chatEnv = {
+  AZURE_OPENAI_API_KEY: "chat-test-key", AZURE_OPENAI_ENDPOINT: "https://chat.example.test",
+  AZURE_OPENAI_API_DEPLOYMENT_NAME: "chat-test", AZURE_OPENAI_API_VERSION: "2024-10-21",
   AZURE_OPENAI_MODEL: "gpt-4o",
-  KB_SEARCH_AZURE_OPENAI_API_KEY: "kb-test-key",
-  KB_SEARCH_AZURE_OPENAI_API_INSTANCE_NAME: "kb-instance",
-  KB_SEARCH_AZURE_OPENAI_API_DEPLOYMENT_NAME: "kb-test",
-  KB_SEARCH_AZURE_OPENAI_API_VERSION: "2025-04-01-preview",
-  KB_SEARCH_AZURE_OPENAI_MODEL: "gpt-4o-mini",
 };
 
-test("the CLI uses independent Azure configuration for each model", async t => {
-  const previousEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
-  process.env.AZURE_OPENAI_ENDPOINT = env.AZURE_OPENAI_ENDPOINT;
-  t.after(() => {
-    if (previousEndpoint === undefined) delete process.env.AZURE_OPENAI_ENDPOINT;
-    else process.env.AZURE_OPENAI_ENDPOINT = previousEndpoint;
-  });
+test("Azure chat ed embeddings usano configurazioni distinte; gli embeddings sono facoltativi", async t => {
+  assert.equal(createCliEmbedder(chatEnv), undefined);
+  const env = { ...chatEnv,
+    KB_SEARCH_AZURE_OPENAI_API_KEY: "embed-test-key",
+    KB_SEARCH_AZURE_OPENAI_ENDPOINT: "https://embed.example.test/",
+    KB_SEARCH_AZURE_OPENAI_API_VERSION: "2024-10-21",
+    KB_SEARCH_AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME: "embed-test",
+    KB_SEARCH_AZURE_OPENAI_EMBEDDINGS_DIMENSIONS: "3",
+  };
   const requests = [];
   t.mock.method(globalThis, "fetch", async (url, init) => {
-    const { model } = JSON.parse(init.body);
-    requests.push([String(url), new Headers(init.headers).get("api-key"), model]);
-    return Response.json({
-      id: "offline", object: "chat.completion", model,
-      choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content: "OK" } }],
-    });
-  });
-
-  await createCliModel("AZURE_OPENAI_", env).invoke("Cerca");
-  await createCliModel("KB_SEARCH_AZURE_OPENAI_", env).invoke("Cerca");
-  assert.deepEqual(requests, [
-    ["https://deep.example.test/openai/deployments/deep-test/chat/completions?api-version=2024-10-21", "deep-test-key", "gpt-4o"],
-    ["https://kb-instance.openai.azure.com/openai/deployments/kb-test/chat/completions?api-version=2025-04-01-preview", "kb-test-key", "gpt-4o-mini"],
-  ]);
-  assert.throws(() => createCliModel("KB_SEARCH_AZURE_OPENAI_", {
-    ...env, KB_SEARCH_AZURE_OPENAI_API_KEY: "",
-  }), /KB_SEARCH_AZURE_OPENAI_API_KEY/);
-});
-
-test("/delete rimuove per ID, aggiorna il pannello e segnala gli ID non validi", async t => {
-  const root = await mkdtemp(join(tmpdir(), "cli-delete-"));
-  t.after(() => rm(root, { recursive: true }));
-  const store = await createPosixStore({ root });
-  const uuid = "0195f876-18a4-7ba3-b8c2-7ba84c28cb94";
-  for (const documentId of [1, 2, 3]) await store.add(makeDocument(documentId, `${documentId}.txt`, "", "Test"));
-  await store.add(makeDocument(uuid, "uuid.txt", "", "Test"));
-  await store.close();
-
-  const cli = run(process.execPath, [cliPath, root], {
-    env,
-    timeout: 15_000,
-  });
-  cli.child.stdin.end(`/delete nope\n/delete 9007199254740992\n/delete 99\n/delete #2\n/delete 3\n/delete #${uuid}\n`);
-  const { stdout } = await cli;
-  assert.equal([...stdout.matchAll(/Uso: \/delete <ID documento>/g)].length, 2);
-  assert.match(stdout, /Unknown document 99/);
-  assert.match(stdout, /Rimosso dalla KB: #2 2\.txt/);
-  assert.match(stdout, /Rimosso dalla KB: #3 3\.txt/);
-  assert.ok(stdout.includes(`Rimosso dalla KB: #${uuid} uuid.txt`));
-  assert.match(stdout, /Documenti in KB \(1\)/);
-  const reopened = await createPosixStore({ root });
-  t.after(() => reopened.close());
-  assert.deepEqual((await reopened.list({ limit: 10 })).cards.map(card => card.documentId), [1]);
-});
-
-test("/add usa il deployment di importazione dal file di ambiente della CLI", async t => {
-  const root = await mkdtemp(join(tmpdir(), "cli-add-"));
-  t.after(() => rm(root, { recursive: true }));
-  const folder = join(root, "kb");
-  await mkdir(folder);
-  await writeFile(join(root, "listino.csv"), "prodotto,prezzo\nlibro,100");
-
-  const requests = [];
-  const embeddingUrls = [];
-  const server = createServer(async (req, res) => {
-    let raw = "";
-    for await (const chunk of req) raw += chunk;
-    const body = JSON.parse(raw);
-    if (req.url.includes("/embeddings")) {
-      embeddingUrls.push(req.url);
-      const inputs = [body.input].flat();
-      const vector = [1, 0, 0];
+    const body = JSON.parse(init.body);
+    requests.push([String(url), new Headers(init.headers).get("api-key"), body.dimensions]);
+    if (String(url).includes("/embeddings")) {
       const embedding = body.encoding_format === "base64"
-        ? Buffer.from(new Float32Array(vector).buffer).toString("base64") : vector;
-      res.writeHead(200, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({
-        object: "list", model: body.model,
-        data: inputs.map((_, index) => ({ object: "embedding", index, embedding })),
-      }));
+        ? Buffer.from(new Float32Array([1, 0, 0]).buffer).toString("base64") : [1, 0, 0];
+      return Response.json({ data: [{ index: 0, embedding }], model: body.model });
     }
-    requests.push([req.url, req.headers["api-key"], body.model, body.response_format?.type]);
-    const content = JSON.stringify({
-      continuesPrevious: false, sections: [{
-        fromLine: 1, toLine: Number(/through (\d+)/.exec(body.messages[0].content)?.[1]),
-        title: "Listino", summary: "Prezzi", keywords: ["prezzi"], shortDescription: "Prezzi",
-      }],
-    });
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      id: "offline-import", object: "chat.completion", model: body.model,
-      choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content } }],
-    }));
+    return Response.json({ id: "offline", object: "chat.completion", model: body.model,
+      choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content: "OK" } }] });
   });
-  server.listen(0, "127.0.0.1");
-  t.after(() => new Promise(resolve => server.close(resolve)));
-  await once(server, "listening");
-
-  const cliEnv = {
-    ...env,
-    AZURE_OPENAI_ENDPOINT: `http://127.0.0.1:${server.address().port}`,
-    KB_SEARCH_AZURE_OPENAI_ENDPOINT: `http://127.0.0.1:${server.address().port}`,
-    KB_IMPORT_AZURE_OPENAI_ENDPOINT: `http://127.0.0.1:${server.address().port}`,
-    KB_IMPORT_AZURE_OPENAI_API_KEY: "import-test-key",
-    KB_IMPORT_AZURE_OPENAI_API_DEPLOYMENT_NAME: "import-test",
-    KB_IMPORT_AZURE_OPENAI_API_VERSION: "2025-04-01-preview",
-    KB_IMPORT_AZURE_OPENAI_MODEL: "gpt-4o-mini",
-  };
-  await writeFile(join(root, ".env"), Object.entries(cliEnv).map(([key, value]) => `${key}=${value}`).join("\n"));
-  const cli = run(process.execPath, ["--env-file=.env", cliPath, folder], {
-    cwd: root, env: {}, timeout: 15_000,
-  });
-  cli.child.stdin.end("/add listino.csv\n");
-  const { stdout } = await cli;
-  const added = /Pronto nella KB: #([\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}) listino\.csv/i.exec(stdout);
-  assert.ok(added, stdout);
-  const [, id] = added;
-  const manifest = JSON.parse(await readFile(join(folder, `doc-${id}`, "manifest.json"), "utf8"));
-  assert.equal(manifest.map.documentId, id);
-  assert.deepEqual(requests, [[
-    "/openai/deployments/import-test/chat/completions?api-version=2025-04-01-preview",
-    "import-test-key", "gpt-4o-mini", "json_schema",
-  ]]);
-  assert.ok(embeddingUrls.length > 0);
-  assert.ok(embeddingUrls.every(url => url.startsWith("/openai/deployments/text-embedding-3-large/embeddings")));
+  await createCliModel("AZURE_OPENAI_", env).invoke("Cerca");
+  const embedder = createCliEmbedder(env);
+  assert.equal(embedder.dimensions, 3);
+  assert.deepEqual(await embedder.embedQuery("Cerca"), [1, 0, 0]);
+  assert.deepEqual(await embedder.embedDocuments(["Manuale"]), [[1, 0, 0]]);
+  const embeddingRequest = ["https://embed.example.test/openai/deployments/embed-test/embeddings?api-version=2024-10-21", "embed-test-key", 3];
+  assert.deepEqual(requests, [
+    ["https://chat.example.test/openai/deployments/chat-test/chat/completions?api-version=2024-10-21", "chat-test-key", undefined],
+    embeddingRequest, embeddingRequest,
+  ]);
+  assert.throws(() => createCliEmbedder({ ...env, KB_SEARCH_AZURE_OPENAI_EMBEDDINGS_DIMENSIONS: "0" }), /DIMENSIONS/);
 });
+
+test("/add salva una mappa prodotta dal modello chat; /delete rimuove gli originali", async t => {
+  const root = await mkdtemp(join(tmpdir(), "kb-cli-"));
+  t.after(() => rm(root, { recursive: true }));
+  const directory = join(root, "kb");
+  const options = { id: "kb-studio", directory };
+  const seed = openLocalKnowledgeBase(options);
+  try {
+    for (const id of ["ERP/42", "#letterale"]) {
+      await seed.kb.write(Buffer.from("Da rimuovere"), { contentType: "text/plain" }, id);
+    }
+    await seed.reconcile();
+  } finally { await seed.close(); }
+
+  const markdown = "# Manuale\nTurbina idraulica.";
+  await writeFile(join(root, "manuale tecnico.md"), markdown);
+  const offline = await mockSectionModel(root);
+  const cli = run(process.execPath, ["--import", offline, cliPath, directory], { cwd: root, env: chatEnv, timeout: 15_000 });
+  cli.child.stdin.end('/add "manuale tecnico.md"\n/delete #ERP/42\n/delete #ERP/42\n/delete "#letterale"\n/delete\n');
+  const { stdout } = await cli;
+  const added = /Pronto nella KB: #(\S+) manuale tecnico\.md/.exec(stdout);
+  assert.ok(added, stdout);
+  assert.equal([...stdout.matchAll(/Cancellazione richiesta per #ERP\/42/g)].length, 2);
+  assert.match(stdout, /Cancellazione richiesta per ##letterale/);
+  assert.match(stdout, /Uso: \/delete <ID documento>/);
+
+  const [, documentId] = added;
+  const store = new LocalObjectStore(join(directory, "originals"));
+  assert.equal((await store.readDocumentSection(documentId, 1)).shortDescription, "Descrizione dal modello");
+  assert.deepEqual((await store.readDocumentSection(documentId, 1)).keywords, ["energia idraulica"]);
+  assert.deepEqual((await store.readDocumentMap(documentId)).metadata, {
+    title: "Manuale tecnico", createdAt: new Date("2026-11-23"), tags: ["turbine"],
+  });
+  store.close();
+  const reopened = openLocalKnowledgeBase(options);
+  try {
+    assert.deepEqual((await reopened.kb.list()).items, [documentId]);
+    assert.match((await reopened.kb.read(documentId)).text, /Turbina idraulica/);
+    assert.deepEqual((await reopened.kb.searchKeyword("turbina")).hits.map(hit => hit.documentId), [documentId]);
+    assert.equal((await readdir(join(directory, "originals"))).length, 1);
+  } finally { await reopened.close(); }
+});
+
+async function mockSectionModel(directory) {
+  const path = join(directory, "mock-azure.mjs");
+  await writeFile(path, `
+    globalThis.fetch = async (url, init) => {
+      const body = JSON.parse(init.body);
+      const tool = body.tools?.[0]?.function.name;
+      const range = /^Map lines (\\d+)–(\\d+)/u.exec(body.messages.at(-1).content);
+      const content = JSON.stringify(range ? { sections: [{ title: 'Titolo dal modello', shortDescription: 'Descrizione dal modello',
+        summary: 'Sintesi dal modello', keywords: [' energia idraulica ', 'Energia idraulica'], lineStart: Number(range[1]), lineEnd: Number(range[2]) }] }
+        : { title: 'Manuale tecnico', author: null, createdAt: '2026-11-23', modifiedAt: '2026-02-30', tags: [' turbine ', 'turbine'] });
+      const message = tool ? { role: 'assistant', content: null, tool_calls: [
+        { id: 'tool-1', type: 'function', function: { name: tool, arguments: content } },
+      ] } : { role: 'assistant', content };
+      return Response.json({ id: 'offline', object: 'chat.completion', model: body.model,
+        choices: [{ index: 0, finish_reason: tool ? 'tool_calls' : 'stop', message }] });
+    };
+  `);
+  return path;
+}

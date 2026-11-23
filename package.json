@@ -15,6 +15,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:v2": "npm --prefix srcV2 run build",
+    "test:v2": "npm --prefix srcV2 test",
     "preprova": "npm run build",
     "preprova:ocr": "npm run build",
     "prova:ocr": "node examples/prova-ocr.mjs",

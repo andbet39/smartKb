@@ -2,7 +2,12 @@
   "name": "kb-agent-cli",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node --env-file=.env cli.mjs" },
+  "scripts": {
+    "prestart": "npm --prefix ../srcV2 run build",
+    "start": "node --env-file=.env cli.mjs",
+    "pretest": "npm --prefix ../srcV2 run build",
+    "test": "node --test *.test.mjs"
+  },
   "dependencies": {
     "@langchain/core": "^1.5.0",
     "@langchain/openai": "1.5.8",
@@ -11,9 +16,8 @@
     "marked": "^15.0.12",
     "marked-terminal": "^7.3.0",
     "ink-text-input": "^6.0.0",
-    "js-tiktoken": "^1.0.21",
     "react": "^18.3.1",
-    "smartDocKb": "file:..",
+    "smartdoc-kb-v2": "file:../srcV2",
     "zod": "^4.6.7"
   }
 }

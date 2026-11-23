@@ -287,7 +287,7 @@ Dalla root del repository:
 | `npm run --silent prova:ocr -- "./scansione.pdf"` | Stampa il Markdown senza credenziali, senza chiamate al modello e senza modificare la KB. |
 | `npm run prova -- "./manuale.pdf"` | Compila, analizza il PDF usando la [configurazione Azure della root](.env.example) e salva il risultato in KB1 con ID `1`. |
 | `npm test` | Esegue i test con AnyDoc e `AzureChatOpenAI` reali e risposte HTTP locali predeterminate. Non serve un deployment. |
-| `node --test kb-agent-cli/*.test.mjs` | Dopo la build e l’installazione delle dipendenze della CLI, esegue i test della CLI senza un deployment. |
+| `npm --prefix kb-agent-cli test` | Compila la V2 ed esegue i test della CLI senza un deployment, dopo aver installato le dipendenze di entrambi i pacchetti. |
 | `npm run test:azure` | Esegue una prova live con un CSV sintetico. Consuma risorse sul deployment; risulta **skipped** se mancano le variabili Azure. |
 
 > **Attenzione:** `prova` usa l’ID esplicito `1` e fallisce con `ALREADY_EXISTS` se l’ID è già in [KB1](./kb1), senza sovrascriverlo. Per non toccare KB1, dopo la build esegui [lo script di prova](examples/prova-documento.mjs) con `node` da una cartella temporanea, passando percorsi assoluti allo script e al PDF. Lo script salva in `./kb1`, relativo alla cartella corrente.
@@ -298,33 +298,30 @@ La [guida ai benchmark](benchmarks/search-agent/README.md) distingue le esecuzio
 
 ## 💬 KB Studio — CLI opzionale
 
-[KB Studio](./kb-agent-cli/cli.mjs) è un’applicazione separata che usa la libreria per fare domande a una KB da terminale e gestirne i documenti. Non serve per integrare il parser o il manager in un’altra applicazione.
+[KB Studio](./kb-agent-cli/cli.mjs) usa [SmartDoc KB V2](srcV2/README.md) per interrogare e gestire documenti da terminale. Non dipende dalla libreria V1.
 
 ### Configurazione Azure
 
-I file di configurazione locali sono indipendenti ed esclusi da Git. La configurazione della root è usata dagli script di esempio; nella CLI, le variabili già presenti nell’ambiente di processo hanno precedenza sul file locale. Per ogni gruppo configura chiave, istanza oppure endpoint, deployment, versione API e modello. Non inserire le chiavi nel sorgente.
+Usa il file di configurazione locale della CLI, escluso da Git; le variabili dell’ambiente di processo hanno precedenza. Non inserire le chiavi nel sorgente.
 
 | Configurazione | Variabili | Uso |
 | --- | --- | --- |
-| [Esempio della CLI](kb-agent-cli/.env.example) | `AZURE_OPENAI_*` | Deep Agent della CLI; richiede tool calling. |
-| [Esempio della CLI](kb-agent-cli/.env.example) | `KB_SEARCH_AZURE_OPENAI_*` | Agente di ricerca nella KB; richiede tool calling. |
-| [Esempio della CLI](kb-agent-cli/.env.example) | `KB_IMPORT_AZURE_OPENAI_*` | Parser per `/add`; richiede output strutturato. Non usa la configurazione della root come fallback. |
+| [Esempio della CLI](kb-agent-cli/.env.example) | `AZURE_OPENAI_*` | Modello chat con tool calling. Configura modello, chiave, deployment, versione API e istanza oppure endpoint. |
+| [Esempio della CLI](kb-agent-cli/.env.example) | `KB_SEARCH_AZURE_OPENAI_*` | Ricerca semantica opzionale. Configura un `EMBEDDINGS_DEPLOYMENT_NAME` per `text-embedding-3-large`, chiave, versione API e istanza oppure endpoint. `EMBEDDINGS_DIMENSIONS` vale 3072 di default. |
 
 Per le istanze configurate con `gpt-6-luna`, la CLI invia `reasoning_effort: "none"` per poter usare i tool su Chat Completions.
 
 ### Avvio
 
-Parti dall’esempio di configurazione della CLI nella tabella, senza sovrascrivere un file locale già presente. Una volta configurato, dalla root del repository esegui:
+Con Node.js 22.13 o successivo, parti dall’esempio di configurazione della CLI senza sovrascrivere un file locale già presente. Dalla root del repository esegui:
 
 ```sh
-npm ci
-npm run build
-cd kb-agent-cli
-npm ci
-npm start -- ../kb1
+npm --prefix srcV2 ci
+npm --prefix kb-agent-cli ci
+npm --prefix kb-agent-cli start
 ```
 
-Il comando apre la [KB1 di esempio](./kb1). Al prompt `›` puoi chiedere, per esempio, **«Come funziona una porta XOR?»**.
+La CLI apre la cartella `.kb/cli-v2` nella root. Per usarne un’altra, passa un percorso come argomento di `start` dopo `--`. Usa una cartella nuova e reimporta i file originali con `/add`: le KB V1 non vengono migrate automaticamente.
 
 ### Comandi interattivi
 
@@ -332,21 +329,19 @@ Il comando apre la [KB1 di esempio](./kb1). Al prompt `›` puoi chiedere, per e
 | --- | --- |
 | Una domanda al prompt `›` | Avvia una ricerca indipendente e mostra la risposta in Markdown. |
 | `/tools`, `/tools on`, `/tools off` | Mostra lo stato oppure abilita o disabilita la visualizzazione dei risultati dei tool per le domande successive. I risultati sono nascosti all’avvio. |
-| `/add "./Manuale tecnico.pdf"` | Importa un file con un nuovo UUID v7. I percorsi relativi partono dalla cartella di avvio. |
-| `/delete <ID>` oppure `/delete #<ID>` | Rimuove il documento dalla KB e aggiorna il pannello, senza cancellare l’originale. Usa l’UUID esattamente come appare in **Documenti in KB** oppure un ID numerico legacy, per esempio `/delete #42`. |
+| `/add "./Manuale tecnico.pdf"` | Salva una copia del file con un nuovo ID e la indicizza. I percorsi relativi partono dalla directory di lavoro della CLI (la cartella del pacchetto con `npm start`). |
+| `/delete <ID>` oppure `/delete #<ID>` | Rimuove il documento e la copia salvata nella KB, senza toccare il file sorgente. Ripetere il comando è innocuo. Racchiudi tra virgolette gli ID che iniziano letteralmente con `#`. |
 | Invio a vuoto | Esce dalla CLI. |
 
-Durante `/add` il pannello destro mostra le fasi reali del parser e, quando disponibili, le percentuali. **Pronto nella KB** mostra l’ID salvato e compare solo dopo il salvataggio. Il documento è subito interrogabile. La CLI elabora una richiesta alla volta. Importa solo file che puoi inviare al deployment di importazione.
+**Pronto nella KB** compare solo dopo l’indicizzazione. Se il file viene salvato ma non indicizzato, la CLI mostra lo stato separatamente. La conversione PDF → Markdown e l’OCR avvengono in locale; per creare la mappa delle sezioni la CLI invia il Markdown al modello chat configurato per il Deep Agent. Con la ricerca semantica abilitata, l’indicizzazione invia inoltre il testo delle sezioni al deployment di embeddings.
 
 ### Come avviene la ricerca
 
-Il Deep Agent della CLI ha accesso solo a `kbAgentSearch`, fornito da `kb.getAgentSearchTool()`: non usa un motore di ricerca esterno. I deployment del Deep Agent e dell’agente di ricerca ricevono le domande e i risultati dei rispettivi tool.
-
-Il tool restituisce `answer` (Markdown) e `references` (passaggi senza duplicati, con documento, righe, sezione e pagine quando disponibili). I riferimenti possono includere passaggi letti ma non citati nella risposta finale; le sintesi non diventano riferimenti.
+Un solo Deep Agent usa i tool V2 di sola lettura: elenco, ricerca per parole chiave, lettura per ID e intervallo di righe e, se configurata, ricerca semantica. Le domande e i risultati dei tool sono inviati al modello chat. L’agente è istruito a citare ID e righe o pagine quando disponibili.
 
 ### Traccia e metriche
 
 - **Avvio interattivo.** KB Studio pulisce l’area visibile del terminale e mostra un libro in ASCII sopra il prompt. Dopo Invio, il campo si svuota e il benvenuto scorre con la traccia. Con input o output rediretto, lo schermo non viene pulito e il benvenuto non viene mostrato.
 - **Traccia Ink.** Chiamate, argomenti ed errori appaiono in tempo reale. Ogni evento mostra i millisecondi trascorsi; il numero della chiamata collega i risultati ai tool anche in parallelo. La risposta Markdown ha un riquadro separato. Gli errori e le metriche restano visibili anche con `/tools off`.
-- **Metriche elaborazione.** Per ogni domanda, anche in caso di errore, il riquadro mostra durata totale, turni del modello (una chiamata avviata vale un turno), chiamate ai tool ed errori. I token di input e output sono sommati separatamente per **Deep Agent (CLI)** e **Agente KbSmartManager**. `—` indica che il modello non è stato chiamato, `n/d` che i conteggi non sono disponibili, e `(2/3 turni)` che la somma copre solo due turni su tre.
-- **Documenti in KB.** `car.` conta i caratteri del Markdown indicizzato, inclusi spazi e a capo. Non misura il peso del file originale in byte.
+- **Metriche elaborazione.** Per ogni domanda il riquadro mostra durata, turni del modello chat, chiamate ai tool, errori e token del modello chat. `—` indica che il modello non è stato chiamato, `n/d` che i conteggi non sono disponibili, e `(2/3 turni)` che la somma copre solo due turni su tre.
+- **Documenti in KB.** Il pannello mostra la prima pagina del catalogo. `car.` conta i caratteri del Markdown indicizzato, non i byte del file originale.

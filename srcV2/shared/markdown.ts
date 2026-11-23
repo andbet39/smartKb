@@ -1,0 +1,1 @@
+export function splitLines(text: string): string[] { return text === '' ? [] : text.split('\n'); }

@@ -3,91 +3,94 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { persist } from "smartDocKb";
-import { KbSmartManager } from "smartDocKb/kb";
-import { mockRootEnv, offlineAzureChat } from "../test/azure-model.mjs";
+import { AzureChatOpenAI } from "@langchain/openai";
+import { openLocalKnowledgeBase } from "smartdoc-kb-v2";
 import { makeAgent } from "./agent.mjs";
 import { traceQuestion } from "./trace.mjs";
 
-test("the CLI Deep Agent delegates to kbAgentSearch without exposing any other tools", async t => {
-  const folder = await mkdtemp(join(tmpdir(), "kb-cli-agent-"));
-  t.after(() => rm(folder, { recursive: true }));
-  const question = "Quali documenti ci sono?";
-  const answer = "È caricato il manuale.";
-  await persist({ markdown: "Manuale", map: {
-    documentId: 1, originalFileName: "manuale.txt", lineCount: 1,
-    summary: "Manuale", short_description: "Manuale", keywords: [], sections: [],
-  } }, folder);
-  let outerTurns = 0;
-  let searchTurns = 0;
-  mockRootEnv(t, "");
-  const searchLlm = offlineAzureChat(({ tools, messages }) => {
-    const names = tools.map(tool => tool.function.name);
-    assert.equal(names.length, 7);
-    assert.ok(names.includes("kbFileReadSection"));
-    assert.equal(messages[1].content, question);
-    if (++searchTurns === 1) return { content: null, tool_calls: [{
-      id: "call-index", type: "function",
-      function: { name: "kbGetTableOfContents", arguments: "{}" },
-    }] };
-    assert.equal(messages.at(-1).tool_call_id, "call-index");
-    return { content: answer, usage: { prompt_tokens: 100, completion_tokens: 12, total_tokens: 112 } };
+function offlineChat(reply) {
+  let completionId = 0;
+  return new AzureChatOpenAI({
+    model: "gpt-4o", azureOpenAIApiKey: "offline", azureOpenAIApiInstanceName: "offline",
+    azureOpenAIApiDeploymentName: "test", azureOpenAIApiVersion: "2024-10-21", maxRetries: 0,
+    configuration: { fetch: async (_url, init) => {
+      const message = reply(JSON.parse(init.body));
+      return Response.json({
+        id: `offline-${++completionId}`, object: "chat.completion", model: "gpt-4o",
+        usage: { prompt_tokens: 20, completion_tokens: 4, total_tokens: 24 },
+        choices: [{ index: 0, finish_reason: message.tool_calls ? "tool_calls" : "stop",
+          message: { role: "assistant", ...message } }],
+      });
+    } },
   });
-  const llm = offlineAzureChat(({ tools, messages }) => {
-    assert.deepEqual(tools.map(tool => tool.function.name), ["kbAgentSearch"]);
-    if (++outerTurns === 1) return {
-      content: null,
-      usage: { prompt_tokens: 20, completion_tokens: 4, total_tokens: 24 },
-      tool_calls: [{
-        id: "call-search", type: "function",
-        function: { name: "kbAgentSearch", arguments: JSON.stringify({ question }) },
-      }],
-    };
-    assert.equal(messages.at(-1).tool_call_id, "call-search");
-    assert.deepEqual(JSON.parse(messages.at(-1).content), { answer, references: [] });
-    return { content: answer, usage: { prompt_tokens: 30, completion_tokens: 6, total_tokens: 36 } };
+}
+
+function call(name, args) {
+  return { content: null, tool_calls: [{ id: `call-${name}`, type: "function",
+    function: { name, arguments: JSON.stringify(args) } }] };
+}
+
+test("l'agente cerca e verifica le righe tramite i soli tool V2", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "kb-cli-agent-"));
+  const local = openLocalKnowledgeBase({ id: "test", directory });
+  t.after(async () => { await local.close(); await rm(directory, { recursive: true }); });
+  const documentId = "ERP-42";
+  const { sha } = await local.kb.write(Buffer.from("# Manuale\nPressione nominale: 5 bar."),
+    { title: "Manuale", contentType: "text/markdown" }, documentId);
+  await local.reconcile();
+
+  const answer = "5 bar (ERP-42, riga 2).";
+  let turn = 0;
+  const llm = offlineChat(({ tools, messages }) => {
+    assert.deepEqual(tools.map(tool => tool.function.name), ["kbList", "kbSearchKeyword", "kbRead"]);
+    if (++turn === 1) return call("kbSearchKeyword", { text: "pressione" });
+    const result = JSON.parse(messages.at(-1).content);
+    if (turn === 2) {
+      assert.equal(result.hits[0].documentId, documentId);
+      assert.equal(result.hits[0].sha, sha);
+      return call("kbRead", { documentId, lines: { start: 2, end: 2 } });
+    }
+    assert.equal(result.sha, sha);
+    assert.equal(result.text, "Pressione nominale: 5 bar.");
+    return { content: answer };
   });
-  const decisionModel = offlineAzureChat(({ response_format }) => {
-    assert.equal(response_format.json_schema.name, "kb_document_relevance");
-    return {
-      content: JSON.stringify({ scores: [{ documentId: 1, score: 1 }] }),
-      usage: { prompt_tokens: 40, completion_tokens: 8, total_tokens: 48 },
-    };
-  });
-  const kb = await KbSmartManager.open(folder, searchLlm, { decisionModel });
-  const getAgentSearchTool = t.mock.method(kb, "getAgentSearchTool");
-  const agent = makeAgent(kb, llm);
-  assert.equal(getAgentSearchTool.mock.callCount(), 1);
+
   const events = [];
-  await traceQuestion(agent, question, event => events.push(event));
-  assert.equal(outerTurns, 2);
+  await traceQuestion(makeAgent(local.kb, llm), "Qual è la pressione?", event => events.push(event), true);
+  assert.equal(turn, 3);
   assert.equal(events.find(event => event.title === "Risposta finale")?.detail, answer);
-  assert.ok(events.some(event => event.title === "Deep Agent (CLI): richiede kbAgentSearch"));
-  assert.ok(events.some(event => event.title === "Agente KbSmartManager: richiede kbGetTableOfContents"));
-  assert.ok(events.some(event => event.title === "Agente KbSmartManager: risultato per kbAgentSearch pronto"));
-  assert.deepEqual(events.filter(event => event.title.startsWith("Chiamata")).map(event => event.title), [
-    "Chiamata #1 kbAgentSearch [Deep Agent (CLI)]",
-    "Chiamata #2 kbGetTableOfContents [Agente KbSmartManager]",
-  ]);
-  assert.equal(searchTurns, 2);
-  const metrics = events.find(event => event.title === "Metriche elaborazione").detail;
-  assert.ok(metrics.includes("Deep Agent (CLI) (2 turni): Token input: 50  ·  Token output: 10"));
-  assert.ok(metrics.includes("Agente KbSmartManager (2 turni): Token input: 100 (1/2 turni)  ·  Token output: 12 (1/2 turni)"));
-  assert.ok(metrics.includes("Selettore documenti KB (1 turni): Token input: 40  ·  Token output: 8"));
+  assert.ok(events.some(event => event.title.startsWith("Risultato #2 kbRead")));
+  assert.match(events.find(event => event.title === "Metriche elaborazione").detail,
+    /Token input: 60  ·  Token output: 12/);
 });
 
-test("the CLI Deep Agent refuses a built-in tool call", async t => {
-  const llm = offlineAzureChat(() => ({ content: null, tool_calls: [{
-    id: "call-todos", type: "function",
-    function: { name: "write_todos", arguments: JSON.stringify({ todos: [] }) },
-  }] }));
-  const folder = await mkdtemp(join(tmpdir(), "kb-cli-agent-"));
-  t.after(() => rm(folder, { recursive: true }));
-  const kb = await KbSmartManager.open(folder);
-  t.mock.method(kb, "kbAgentSearch", () => assert.fail("Unexpected search"));
-  const agent = makeAgent(kb, llm);
-  await assert.rejects(
-    agent.invoke({ messages: [{ role: "user", content: "Quali documenti ci sono?" }] }),
-    /Only kbAgentSearch is available/,
-  );
+test("il tool semantico inoltra query e cursore alla KB", async () => {
+  const searchResult = { hits: [], nextCursor: "pagina-3" };
+  const kb = { searchSemantic(text, options) {
+    assert.equal(text, "alimentazione");
+    assert.deepEqual(options, { topK: 5, cursor: "pagina-2" });
+    return searchResult;
+  } };
+  let turn = 0;
+  const llm = offlineChat(({ tools, messages }) => {
+    assert.ok(tools.some(tool => tool.function.name === "kbSearchSemantic"));
+    if (++turn === 1) return call("kbSearchSemantic", { text: "alimentazione", cursor: "pagina-2" });
+    assert.deepEqual(JSON.parse(messages.at(-1).content), searchResult);
+    return { content: "Nessun risultato in questa pagina." };
+  });
+  const { messages } = await makeAgent(kb, llm, { semantic: true }).invoke({
+    messages: [{ role: "user", content: "Come è alimentata la turbina?" }],
+  });
+  assert.equal(turn, 2);
+  assert.equal(messages.at(-1).text, "Nessun risultato in questa pagina.");
+});
+
+test("con embeddings espone il tool semantico ma rifiuta i tool integrati", async () => {
+  const llm = offlineChat(({ tools }) => {
+    assert.deepEqual(tools.map(tool => tool.function.name), ["kbList", "kbSearchKeyword", "kbRead", "kbSearchSemantic"]);
+    return call("write_todos", { todos: [] });
+  });
+  await assert.rejects(makeAgent({}, llm, { semantic: true }).invoke({
+    messages: [{ role: "user", content: "Quali documenti ci sono?" }],
+  }), /Only KB tools are available/);
 });

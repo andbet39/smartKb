@@ -1,17 +1,12 @@
 import { stripVTControlCharacters } from "node:util";
 
 const CLI_AGENT = "Deep Agent (CLI)";
-const KB_AGENT = "Agente KbSmartManager";
 
 function display(value) {
   if (typeof value === "string") {
     try { value = JSON.parse(value); } catch (error) { if (!(error instanceof SyntaxError)) throw error; }
   }
   return stripVTControlCharacters(typeof value === "string" ? value : JSON.stringify(value, null, 2) ?? "");
-}
-
-function agentLabel(tags) {
-  return tags?.includes("kb-internal-search") ? KB_AGENT : CLI_AGENT;
 }
 
 function formatTokens({ turns, usage }, key) {
@@ -25,34 +20,27 @@ function formatTokens({ turns, usage }, key) {
 export async function traceQuestion(agent, question, append, showToolResults = false) {
   const started = Date.now();
   const runs = new Map();
-  const modelRuns = new Map();
-  const modelMetrics = new Map([CLI_AGENT, KB_AGENT].map(label => [label, { turns: 0, usage: [] }]));
-  let turns = 0, toolErrors = 0;
+  const modelRuns = new Set();
+  const modelMetrics = { turns: 0, usage: [] };
+  let toolErrors = 0;
   function log(title, value, color = "cyan", panel = false, format) {
     append({ title, detail: format === "markdown" ? value : display(value), color, elapsed: Date.now() - started, panel, format });
   }
   const callbacks = [{
     name: "kb-trace",
-    handleChatModelStart(_model, _messages, id, _parent, _extra, tags) {
-      const label = agentLabel(tags);
-      modelRuns.set(id, label);
-      if (!modelMetrics.has(label)) modelMetrics.set(label, { turns: 0, usage: [] });
-      modelMetrics.get(label).turns++;
-      log(`${label}: turno modello ${++turns} in corso`);
+    handleChatModelStart(_model, _messages, id) {
+      modelRuns.add(id);
+      log(`${CLI_AGENT}: turno modello ${++modelMetrics.turns} in corso`);
     },
-    handleLLMEnd({ generations }, id, _parent, tags) {
-      // Match the completion to its start; internal and external model calls can interleave.
-      const label = modelRuns.get(id) ?? agentLabel(tags);
+    handleLLMEnd({ generations }, id) {
       const message = generations[0][0].message;
-      if (message.usage_metadata && modelRuns.has(id)) modelMetrics.get(label).usage.push(message.usage_metadata);
-      modelRuns.delete(id);
+      if (modelRuns.delete(id) && message.usage_metadata) modelMetrics.usage.push(message.usage_metadata);
       const calls = message.tool_calls ?? [];
-      const ready = label === KB_AGENT ? "risultato per kbAgentSearch pronto" : "risposta pronta";
-      log(`${label}: ` + (calls.length ? `richiede ${calls.map(c => c.name).join(", ")}` : ready),
+      log(`${CLI_AGENT}: ` + (calls.length ? `richiede ${calls.map(c => c.name).join(", ")}` : "risposta pronta"),
         calls.length ? message.text : "");
     },
-    handleToolStart(tool, input, id, _parent, tags, _metadata, name) {
-      const label = `#${runs.size + 1} ${name ?? tool.id.at(-1)} [${agentLabel(tags)}]`;
+    handleToolStart(tool, input, id, _parent, _tags, _metadata, name) {
+      const label = `#${runs.size + 1} ${name ?? tool.id.at(-1)} [${CLI_AGENT}]`;
       runs.set(id, label);
       log(`Chiamata ${label}`, input, "yellow");
     },
@@ -60,10 +48,9 @@ export async function traceQuestion(agent, question, append, showToolResults = f
       if (showToolResults) log(`Risultato ${runs.get(id)}`, output?.content ?? output, "green");
     },
     handleToolError(error, id) { toolErrors++; log(`Errore ${runs.get(id)}`, error.message, "red"); },
-    handleLLMError(error, id, _parent, tags) {
-      const label = modelRuns.get(id) ?? agentLabel(tags);
+    handleLLMError(error, id) {
       modelRuns.delete(id);
-      log(`${label}: errore modello`, error.message, "red");
+      log(`${CLI_AGENT}: errore modello`, error.message, "red");
     },
   }];
   try {
@@ -73,12 +60,10 @@ export async function traceQuestion(agent, question, append, showToolResults = f
   } catch (error) {
     log("Richiesta interrotta", error.message, "red", true);
   } finally {
-    const tokenLines = Array.from(modelMetrics, ([label, metrics]) =>
-      `${label} (${metrics.turns} turni): Token input: ${formatTokens(metrics, "input_tokens")}  ·  Token output: ${formatTokens(metrics, "output_tokens")}`,
-    );
+    const { turns } = modelMetrics;
     log("Metriche elaborazione", [
       `Turni modello: ${turns}  ·  Chiamate tool: ${runs.size}  ·  Errori tool: ${toolErrors}`,
-      ...tokenLines,
+      `Token input: ${formatTokens(modelMetrics, "input_tokens")}  ·  Token output: ${formatTokens(modelMetrics, "output_tokens")}`,
       `Durata totale: ${Date.now() - started} ms`,
     ].join("\n"), "cyan", true);
   }
