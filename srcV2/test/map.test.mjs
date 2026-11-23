@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -70,11 +70,9 @@ test('keyword hits group passages, honor filters, paginate, and can be read by e
     assert.equal(first.metadata, undefined);
     await local.reconcile();
     const artifacts = join(directory, 'map.sqlite.artifacts');
-    const [key, ...others] = await readdir(artifacts);
-    assert.deepEqual(others, []);
-    const artifact = join(artifacts, key);
-    assert.match(await readFile(join(artifact, 'document.md'), 'utf8'), /Calibration of valves/);
-    const map = JSON.parse(await readFile(join(artifact, 'map.json'), 'utf8'));
+    await assert.rejects(readdir(artifacts), { code: 'ENOENT' });
+    assert.match(await local.store.readDocumentMarkdown(first.documentId), /Calibration of valves/);
+    const map = await local.store.readDocumentMap(first.documentId);
     assert.equal(map.sections.length, 2);
     assert.equal('text' in map, false);
     assert.equal(await local.indexer.status(first.documentId), 'indexed');
@@ -107,13 +105,12 @@ test('keyword hits group passages, honor filters, paginate, and can be read by e
     await local.reconcile();
     await assert.rejects(kb.read(first.documentId), { code: 'not_found' });
     assert.match((await kb.read(second.documentId)).text, /Calibration/);
-    assert.deepEqual(await readdir(artifacts), [key]);
     assert.equal((await kb.searchKeyword('calibration')).hits.length, 2);
     await kb.delete(second.documentId);
     await kb.delete(third.documentId);
     await local.reconcile();
     assert.deepEqual((await kb.searchKeyword('calibration')).hits, []);
-    assert.deepEqual(await readdir(artifacts), []);
+    await assert.rejects(readdir(artifacts), { code: 'ENOENT' });
   } finally { await local.close(); }
 });
 
@@ -220,11 +217,17 @@ test('reconciliation rebuilds from originals, retries errors and updates source 
     await backend.reconcile();
     assert.equal((await backend.engine.searchKeyword('calibration')).hits[0].originalFileName, 'second.md');
     assert.equal(attempts, 2);
+    await backend.close();
     const artifacts = `${filename}.artifacts`;
-    const [key] = await readdir(artifacts);
-    await rm(join(artifacts, key, 'document.md'));
+    const legacy = join(artifacts, `${'a'.repeat(64)}-${'b'.repeat(64)}`);
+    await mkdir(legacy, { recursive: true });
+    await writeFile(join(legacy, 'document.md'), 'calibration');
+    await writeFile(join(legacy, 'map.json'), '{}');
+    backend = mapBackend(store, options);
     await backend.reconcile();
     assert.equal((await backend.engine.searchKeyword('calibration')).hits[0].passages[0].text, 'calibration');
+    await assert.rejects(readdir(artifacts), { code: 'ENOENT' });
+    assert.equal(await store.readDocumentMarkdown('external'), 'calibration');
     assert.equal(attempts, 2);
   } finally {
     await backend?.close();
@@ -392,7 +395,7 @@ test('stale jobs do not publish overwritten or deleted documents', async t => {
     await kb.write(Buffer.from('deleted'), markdown, 'race');
     await deleteEntered.promise;
     await assert.rejects(kb.read('race'), { code: 'not_found' });
-    assert.equal((await kb.searchKeyword('current')).hits[0].sha, current.sha);
+    assert.deepEqual((await kb.searchKeyword('current')).hits, []);
     await kb.delete('race');
     deleteRelease.resolve();
     await local.reconcile();

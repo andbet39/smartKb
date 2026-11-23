@@ -1,4 +1,4 @@
-import type { CanonicalMetadata, DocumentId, DocumentInfo, DocumentSourceInfo } from '../contracts/types.js';
+import type { CanonicalMetadata, DocumentInfo, DocumentSourceInfo } from '../contracts/types.js';
 
 export function serializeMetadata(metadata: CanonicalMetadata): string {
   return JSON.stringify({
@@ -14,11 +14,6 @@ export function sourceInfo({ originalFileName, contentType }: DocumentSourceInfo
 
 export function sourceFingerprint(info: DocumentInfo): string {
   return JSON.stringify([info.sha, info.originalFileName, info.contentType]);
-}
-
-export function publishedInfo(documentId: DocumentId, sha: string, json: string): DocumentInfo & { metadata: CanonicalMetadata } {
-  const { originalFileName, contentType, ...metadata } = JSON.parse(json);
-  return { documentId, sha, ...sourceInfo({ originalFileName, contentType }), metadata: parseMetadata(JSON.stringify(metadata)) };
 }
 
 export function parseMetadata(json: string): CanonicalMetadata {
