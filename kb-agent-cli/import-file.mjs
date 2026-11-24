@@ -11,8 +11,8 @@ const contentTypes = new Map([
   [".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
 ]);
 
-export async function importFile(file, kb, documentId) {
+export async function importFile(file, kb, documentId, onProgress) {
   const contentType = contentTypes.get(extname(file).toLowerCase());
   const originalFileName = basename(file);
-  return kb.write(await readFile(file), { originalFileName, contentType }, documentId);
+  return kb.write(await readFile(file), { originalFileName, contentType }, documentId, onProgress);
 }

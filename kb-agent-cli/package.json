@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prestart": "npm --prefix ../srcV2 run build",
+    "prestart": "npm --prefix .. run build",
     "start": "node --env-file=.env cli.mjs",
-    "pretest": "npm --prefix ../srcV2 run build",
+    "pretest": "npm --prefix .. run build",
     "test": "node --test *.test.mjs"
   },
   "dependencies": {
@@ -17,7 +17,7 @@
     "marked-terminal": "^7.3.0",
     "ink-text-input": "^6.0.0",
     "react": "^18.3.1",
-    "smartdoc-kb-v2": "file:../srcV2",
+    "smartdoc-kb-v2": "file:..",
     "zod": "^4.6.7"
   }
 }

@@ -1,14 +1,12 @@
 import { createInterface } from "node:readline";
-import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openLocalKnowledgeBase } from "smartdoc-kb-v2";
+import { createLlmIngestionEngine, openLocalKnowledgeBase } from "smartdoc-kb-v2";
 import { makeAgent } from "./agent.mjs";
 import { traceQuestion } from "./trace.mjs";
 import { openScreen } from "./screen.mjs";
 import { importFile } from "./import-file.mjs";
 import { createCliModel, createCliEmbedder } from "./models.mjs";
-import { createCliSectionAnalyzer } from "./section-analyzer.mjs";
 
 const folder = process.argv[2] ? resolve(process.argv[2]) : fileURLToPath(new URL("../.kb/cli-v2", import.meta.url));
 let local, kb, agent, screen;
@@ -19,11 +17,11 @@ async function refreshDocuments() {
   const { items } = await kb.list();
   const documents = await Promise.all(items.map(async documentId => {
     try {
-      const { text, metadata, originalFileName } = await kb.read(documentId);
-      return { documentId, title: metadata.title ?? originalFileName, characters: text.length };
+      const { text, title, originalFileName } = await kb.read(documentId);
+      return { documentId, title: title ?? originalFileName, characters: text.length };
     } catch (error) {
       if (error.code !== "not_found") throw error;
-      return { documentId, status: await local.indexer.status(documentId) };
+      return { documentId, status: await local.indexStatus(documentId) };
     }
   }));
   screen.documents(documents);
@@ -42,13 +40,14 @@ async function submit(line) {
     } else if (/^\/add(?:\s|$)/.test(line)) {
       const file = line.slice(4).trim().replace(/^(["'])(.*)\1$/, "$2");
       if (!file) throw new Error('Uso: /add "percorso del file"');
-      const { documentId, originalFileName } = await importFile(file, kb);
-      screen.progress(`Salvato #${documentId} · indicizzazione in corso…`);
+      const { documentId, originalFileName } = await importFile(file, kb, undefined, ({ percent, message }, id) => {
+        screen.progress(`#${id} · ${percent}% · ${message}`);
+      });
       await local.reconcile();
-      const status = await local.indexer.status(documentId);
+      const status = await local.indexStatus(documentId);
       await refreshDocuments();
-      const title = status === "indexed" ? "Pronto nella KB" : `Salvato, indicizzazione: ${status}`;
-      screen.append({ title: `${title}: #${documentId} ${originalFileName}`, color: status === "indexed" ? "green" : "yellow" });
+      if (status !== "indexed") throw new Error(`Indicizzazione di #${documentId} non completata: ${status}`);
+      screen.append({ title: `Pronto nella KB: #${documentId} ${originalFileName}`, color: "green" });
     } else if (/^\/delete(?:\s|$)/.test(line)) {
       const value = line.slice(7).trim();
       const quotedId = /^(["'])(.*)\1$/.exec(value);
@@ -61,8 +60,6 @@ async function submit(line) {
     } else {
       await traceQuestion(agent, line, screen.append, showToolResults);
     }
-  } catch (error) {
-    screen.append({ title: "Operazione non riuscita", detail: error.message, color: "red" });
   } finally {
     screen.progress("");
     screen.busy(false);
@@ -78,17 +75,13 @@ let pendingSubmission;
 try {
   const deepAgentLlm = createCliModel("AZURE_OPENAI_");
   const embedder = createCliEmbedder();
-  const analyzer = createCliSectionAnalyzer(deepAgentLlm);
-  const pipelineVersion = createHash("sha256").update(JSON.stringify(["cli-llm-sections-v1", deepAgentLlm.model,
-    ...["ENDPOINT", "BASE_PATH", "API_INSTANCE_NAME", "API_DEPLOYMENT_NAME", "API_VERSION"].map(
-      key => process.env[`AZURE_OPENAI_${key}`]?.trim()),
-  ])).digest("hex");
-  local = openLocalKnowledgeBase({ id: "kb-studio", directory: folder, embedder, analyzer, pipelineVersion });
+  const ingestionEngine = createLlmIngestionEngine(deepAgentLlm);
+  local = openLocalKnowledgeBase({ id: "kb-studio", name: "KB Studio", directory: folder, embedder, ingestionEngine });
   kb = local.kb;
   agent = makeAgent(kb, deepAgentLlm, { semantic: Boolean(embedder) });
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
   screen = openScreen(folder, deepAgentLlm.model, line => {
-    pendingSubmission = submit(line).catch(reportError);
+    pendingSubmission = submit(line).catch(error => { reportError(error); screen.close(); });
   }, interactive);
   await refreshDocuments();
 

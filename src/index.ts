@@ -1,36 +1,19 @@
-// Public API. Everything not listed here is internal.
-
-// Document data types
-export type {
-  DocumentId,
-  DocumentMap,
-  DocumentPage,
-  DocumentSection,
-  DocumentSource,
-  DocumentTableOfContents,
-  ParsedDocument,
-  PassageSource,
-  SectionSource,
-} from "./document/types.ts";
-
-// Parser: file → ParsedDocument, independent of any store
-export {
-  convertDocument,
-  createDocumentParser,
-  getDocumentTableOfContents,
-  getSectionMarkdown,
-  saveDocumentMarkdown,
-  type LocalConversionProgress,
-} from "./parser/index.ts";
-export { DocumentParseError } from "./parser/errors.ts";
-export type { DocumentParser } from "./parser/interfaces.ts";
-// Narrow a progress event with its `phase`, e.g. Extract<DocumentParseProgress, { phase: "conversion" }>.
-export type { DocumentInput, DocumentParseProgress, ParserOptions } from "./parser/types.ts";
-
-// Store: persistence and catalog
-export * from "./store/index.ts";
-
-export * from "./search/index.ts";
-
-// KB manager: kb* methods, LangChain tools and the search agent
-export * from "./kb/index.ts";
+export type { DocumentStore, IndexEngine, IngestionEngine, KnowledgeBase, KnowledgeBaseComposition,
+  MarkdownConverter, ObjectStore, SearchEngine } from './contracts/interfaces.js';
+export type { DocumentFields, ConvertedMarkdown, Document, DocumentId, DocumentInfo, DocumentMap, DocumentPage,
+  DocumentSection, DocumentSectionContent, DocumentSectionOverview, DocumentSourceInfo, DocumentToc, Filter, Hit, IndexMatch, IndexSearchOptions,
+  IndexSearchResult, IndexStatus, KbErrorCode, LineRange, MarkdownPage, Passage, DocumentArtifacts, SearchOptions, SearchResult,
+  ProgressReporter, ProgressUpdate, SemanticIndexSearchOptions } from './contracts/types.js';
+export { KbError } from './contracts/errors.js';
+export { toMarkdown, type ConversionOptions } from './services/document-to-markdown/index.js';
+export { DefaultKnowledgeBase } from './knowledge-base/knowledge-base.js';
+export { LocalObjectStore } from './object-store/local-object-store.js';
+export { DocumentMapStore } from './document-store/document-map-store.js';
+export { createLlmIngestionEngine } from './ingestion/llm-ingestor.js';
+export { mapBackend } from './indexing/map/factory.js';
+export type { Embedder, ManagedMapBackend } from './indexing/map/interfaces.js';
+export type { MapBackendConfig } from './indexing/map/types.js';
+export { composeKnowledgeBase } from './composition/knowledge-base.js';
+export type { ComposeKnowledgeBaseConfig, ManagedKnowledgeBase, LocalKnowledgeBase,
+  LocalKnowledgeBaseConfig } from './composition/types.js';
+export { openLocalKnowledgeBase } from './composition/local-knowledge-base.js';

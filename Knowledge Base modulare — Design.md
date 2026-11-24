@@ -267,7 +267,6 @@ Nel backend locale, Markdown e mappa sono file distinti sul filesystem. Il datab
 ```json
 {
   "sha": "9f2c41...",
-  "pipelineVersion": "1",
   "sections": [
     { "id": "s1", "title": "Oggetto del contratto", "summary": "...", "lineStart": 1, "lineEnd": 42 },
     { "id": "s2", "title": "Penali", "summary": "...", "lineStart": 43, "lineEnd": 97, "parentId": "s1" }

@@ -15,6 +15,7 @@ export function createCliModel(prefix, env = process.env, overrides = {}) {
   // Explicit empty values prevent LangChain from inheriting the other model's Azure settings.
   return new AzureChatOpenAI({
     model,
+    maxRetries: 1,
     azureOpenAIApiKey: required("API_KEY"),
     azureOpenAIApiDeploymentName: overrides.deployment ?? required("API_DEPLOYMENT_NAME"),
     azureOpenAIApiVersion: required("API_VERSION"),

@@ -1,51 +1,33 @@
 {
-  "name": "smartDocKb",
-  "version": "0.1.0",
+  "name": "smartdoc-kb-v2",
+  "version": "2.0.0",
+  "private": true,
   "type": "module",
-  "exports": {
-    ".": "./dist/index.js",
-    "./kb": "./dist/kb/index.js"
-  },
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "exports": "./dist/index.js",
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "tsc",
-    "build:v2": "npm --prefix srcV2 run build",
-    "test:v2": "npm --prefix srcV2 test",
-    "preprova": "npm run build",
-    "preprova:ocr": "npm run build",
-    "prova:ocr": "node examples/prova-ocr.mjs",
-    "prova": "node examples/prova-documento.mjs",
-    "benchmark:kb2:prepare": "npm run build && node benchmarks/search-agent/kb2-corpus.mjs",
-    "benchmark:kb2": "node benchmarks/search-agent/simulate-cost.mjs",
-    "benchmark:kb2:live": "node benchmarks/search-agent/run-kb2.mjs",
-    "test": "npm run build && node --test test/parser.test.mjs test/store.test.mjs test/kb-agentic.test.mjs",
-    "test:azure": "npm run build && node --test test/azure.test.mjs"
+    "build": "tsc -p tsconfig.json",
+    "predemo:documento": "npm run build",
+    "demo:documento": "node scripts/demo-documento.mjs",
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@langchain/core": "^1.3.5",
+    "zod": "^4.1.0",
     "@firecrawl/anydoc": "0.2.5",
     "@hyzyla/pdfium": "^2.1.13",
-    "@langchain/openai": "1.5.8",
     "@tesseract.js-data/ita": "1.0.0",
     "pdf-lib": "^1.17.1",
     "pngjs": "^7.0.0",
     "sqlite-vec": "0.1.9",
     "tesseract.js": "^7.0.0",
-    "uuid": "^14.0.3",
-    "zod": "^4.1.0"
-  },
-  "peerDependencies": {
-    "@langchain/core": "^1.0.0"
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/pngjs": "^6.0.0",
-    "js-tiktoken": "^1.0.21",
     "typescript": "^5.9.0"
   }
 }

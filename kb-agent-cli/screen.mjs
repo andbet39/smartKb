@@ -52,7 +52,14 @@ export function openScreen(folder, model, submit, interactive) {
   const refresh = () => ui.rerender(view());
   return {
     documents(list) { documents = list; refresh(); },
-    progress(text) { progress = text; refresh(); },
+    progress(text) {
+      if (interactive) {
+        progress = text;
+        refresh();
+      } else if (text) {
+        process.stdout.write(`${clean(text)}\n`);
+      }
+    },
     busy(value) { busy = value; refresh(); },
     append(event) { events.push(event); refresh(); },
     close: ui.unmount,

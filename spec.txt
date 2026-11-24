@@ -1,0 +1,153 @@
+
+
+------------------ STORE
+
+interface ObjectStore {
+  list(prefix?: string): Promise<string[]>;
+  read(key: string): Promise<Uint8Array | undefined>;
+  write(key: string, body: Uint8Array): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+------------------- STORE DEI DOCUMENTI
+// DocumentMapStore implementa DocumentStore e riceve un ObjectStore nel costruttore.
+interface DocumentStore {
+  stat(documentId: DocumentId): Promise<DocumentInfo>;
+  list(idPrefix?: string, cursor?: string): Promise<DocumentPage>;
+  read(documentId: DocumentId): Promise<Uint8Array>;
+  write(documentId: DocumentId, body: Uint8Array, source?: DocumentSourceInfo): Promise<DocumentInfo>;
+  delete(documentId: DocumentId): Promise<void>;
+  readDocumentArtifacts(documentId: DocumentId): Promise<(DocumentArtifacts & { info: DocumentInfo }) | undefined>;
+  writeDocumentArtifacts(documentId: DocumentId, artifacts: DocumentArtifacts): Promise<void>;
+  readText(documentId: DocumentId, lines?: LineRange): Promise<Document>;
+  readDocumentMarkdown(documentId: DocumentId, lines?: LineRange): Promise<string | undefined>;
+  readDocumentMap(documentId: DocumentId): Promise<DocumentMap | undefined>;
+  listDocumentSections(documentId: DocumentId): Promise<DocumentSectionOverview[] | undefined>;
+  readDocumentSection(documentId: DocumentId, sectionId: number): Promise<DocumentSectionContent | undefined>;
+  getDocumentsToc(documentIds: DocumentId | readonly DocumentId[]): Promise<DocumentToc[]>;
+}
+
+interface IngestionEngine {
+  ingest(markdown: string, context?: { pages?: MarkdownPage[] }): Promise<DocumentMap>;
+}
+
+interface IndexEngine {
+  index(documentId: DocumentId): Promise<void>;
+  remove(documentId: DocumentId): Promise<void>;
+  searchKeyword(text: string, opts?: IndexSearchOptions): Promise<IndexSearchResult>;
+  searchSemantic(text: string, opts?: SemanticIndexSearchOptions): Promise<IndexSearchResult>;
+}
+
+interface SearchEngine {
+  searchKeyword(text: string, opts?: SearchOptions): Promise<SearchResult>;
+  searchSemantic(text: string, opts?: SearchOptions): Promise<SearchResult>;
+}
+
+
+interface KnowledgeBaseComposition {
+  readonly id: string | number;
+  readonly name: string;
+  readonly description?: string;
+  documentStore: DocumentStore;
+  ingestionEngine: IngestionEngine;
+  indexEngine?: IndexEngine;
+  searchEngine: SearchEngine;
+}
+
+interface KnowledgeBase extends KnowledgeBaseComposition {
+  getDocumentsToc(documentIds: DocumentId | readonly DocumentId[]): Promise<DocumentToc[]>;
+  searchDocumentsToc(mode: 'keyword' | 'semantic', text: string, opts?: SearchOptions): Promise<DocumentToc[]>;
+  searchKeyword(text: string, opts?: SearchOptions): Promise<SearchResult>;
+  searchSemantic(text: string, opts?: SearchOptions): Promise<SearchResult>;
+  read(documentId: DocumentId, lines?: LineRange): Promise<Document>;
+  list(idPrefix?: string, cursor?: string): Promise<DocumentPage>;
+  write(body: Uint8Array, source?: DocumentSourceInfo, documentId?: DocumentId): Promise<DocumentInfo>;
+  delete(documentId: DocumentId): Promise<void>;
+  getLangchainTools(options?: { semantic?: boolean }): StructuredToolInterface[]; // <id>_<operation>
+}
+
+------------   DOC TO MD con le pagine
+
+interface MarkdownConverter {
+  convert(body: Uint8Array, contentType?: string): Promise<ConvertedMarkdown>;
+}
+
+-----------------------------------------------
+--------------------- TIPI --------------------
+-----------------------------------------------
+
+MarkdownPage = { page: number; lineStart: number; lineEnd: number };
+ConvertedMarkdown = { markdown: string; pages?: MarkdownPage[] };
+LineRange = { start: number; end: number };
+
+// Paginazione dallo store
+DocumentPage = { items: DocumentId[]; nextCursor?: string };
+
+
+SECTION DEL DOCUMENTO
+
+DocumentSection = {
+  sectionId: number;
+  order: number;
+  title: string;
+  shortDescription: string;
+  summary: string;
+  keywords: string[];
+  lineStart: number;
+  lineEnd: number;
+};
+
+DocumentSectionOverview = Pick<DocumentSection,
+  'sectionId' | 'order' | 'title' | 'shortDescription' | 'lineStart' | 'lineEnd'>;
+DocumentToc = { documentId: DocumentId; sections: DocumentSectionOverview[] };
+DocumentSectionContent = DocumentSectionOverview & Pick<DocumentSection, 'summary' | 'keywords'> & { markdown: string; };
+
+
+MAPPA DEL DOCUMENTO 
+
+DocumentFields = {
+  title?: string;
+  author?: string;
+  createdAt?: Date;
+  modifiedAt?: Date;
+  tags?: string[];
+};
+
+DocumentMap = DocumentFields & {
+  summary?: string;
+  markdownSha: string;
+  lineCount: number;
+  sections: DocumentSection[];
+  pages?: MarkdownPage[];
+};
+
+
+
+------------------ DEFINIZIONE DOCUMENTO
+
+Document = DocumentInfo & DocumentFields & { text: string };
+DocumentArtifacts = { map: DocumentMap; markdown: string };
+DocumentSourceInfo = { originalFileName?: string; contentType?: string };
+DocumentInfo = DocumentSourceInfo & {
+  documentId: string;
+  sha: string;
+};
+
+
+
+------------------- PARAMETRI DI RICERCA
+
+IndexSearchOptions = { limit?: number; cursor?: string };
+SemanticIndexSearchOptions = IndexSearchOptions & { threshold?: number };
+SearchOptions = { topK?: number; filter?: Filter };
+Filter = Partial<Record<keyof (DocumentFields & DocumentSourceInfo),string | number | Date | (string | number)[] | { gte?: string | number | Date; lte?: string | number | Date }>>;
+
+------------------- RISULTATI DI RICERCA
+IndexMatch = { documentId: DocumentId; sectionId: number; score: number };
+IndexSearchResult = { matches: IndexMatch[]; nextCursor?: string };
+Hit = DocumentInfo & DocumentFields & { rank: number; score?: number; passages: Passage[] }; 
+SearchResult = { hits: Hit[] };
+ 
+ 
+
+
